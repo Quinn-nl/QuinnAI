@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuinnAI — het taalmodel dat je liever niet had gehad</title>
+<meta name="description" content="QuinnAI: een kunstmatige intelligentie zonder de intelligentie. Antwoordt binnen 0,4 seconden. Zelden nuttig.">
+<meta property="og:title" content="QuinnAI">
+<meta property="og:description" content="Een taalmodel getraind op 14 jaar groepsapp. Antwoordt binnen 0,4 seconden. Zelden nuttig.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a1017;
+    --ink-2:#0f1822;
+    --ink-3:#152130;
+    --line:rgba(255,255,255,.10);
+    --line-soft:rgba(255,255,255,.06);
+    --paper:#e9eef2;
+    --muted:#8595a4;
+    --butter:#f5c451;
+    --mint:#77d8ae;
+    --rose:#ff7d6b;
+    --radius:18px;
+    --wrap:1080px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--ink);color:var(--paper);
+    font-family:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(900px 520px at 78% -8%, rgba(245,196,81,.10), transparent 62%),
+      radial-gradient(760px 480px at 6% 4%, rgba(119,216,174,.07), transparent 60%);
+  }
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 22px;position:relative;z-index:1}
+  h1,h2,h3{font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.025em;line-height:1.02;margin:0}
+  p{margin:0}
+  a{color:inherit}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .muted{color:var(--muted)}
+
+  /* ---------- ticker ---------- */
+  .ticker{
+    border-bottom:1px solid var(--line-soft);background:rgba(255,255,255,.025);
+    font-size:12.5px;padding:9px 22px;display:flex;gap:10px;align-items:center;justify-content:center;
+    position:relative;z-index:30;color:var(--muted);text-align:center;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--mint);flex:none;box-shadow:0 0 0 0 rgba(119,216,174,.5);animation:ping 2.4s infinite}
+  @keyframes ping{70%{box-shadow:0 0 0 7px rgba(119,216,174,0)}100%{box-shadow:0 0 0 0 rgba(119,216,174,0)}}
+  #ticker-text{color:var(--paper);opacity:.85}
+
+  /* ---------- nav ---------- */
+  nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:rgba(10,16,23,.78);border-bottom:1px solid var(--line-soft)}
+  .nav-in{max-width:var(--wrap);margin:0 auto;padding:13px 22px;display:flex;align-items:center;gap:20px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',serif;font-weight:800;font-size:19px;letter-spacing:-.03em;text-decoration:none}
+  .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,var(--butter),#e08a3c);display:grid;place-items:center;color:#2a1a04;font-size:14px;font-weight:800;flex:none}
+  .nav-links{display:flex;gap:4px;margin-left:auto}
+  .nav-links a{padding:7px 12px;border-radius:9px;font-size:14px;color:var(--muted);text-decoration:none}
+  .nav-links a:hover{color:var(--paper);background:rgba(255,255,255,.05)}
+  .btn{
+    font:inherit;font-size:14px;font-weight:500;padding:9px 16px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:var(--paper);cursor:pointer;text-decoration:none;display:inline-block;
+    transition:background .18s,border-color .18s,transform .12s;
+  }
+  .btn:hover{background:rgba(255,255,255,.1)}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--butter);color:#20160380;color:#241802;border-color:transparent;font-weight:700}
+  .btn-primary:hover{background:#ffd062}
+  :focus-visible{outline:2px solid var(--butter);outline-offset:3px;border-radius:6px}
+
+  /* ---------- hero ---------- */
+  header{padding:86px 0 40px;text-align:center}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:26px;
+  }
+  h1{font-size:clamp(40px,7.4vw,82px)}
+  h1 s{text-decoration-thickness:3px;text-decoration-color:var(--rose);opacity:.42}
+  .lede{max-width:57ch;margin:22px auto 0;color:var(--muted);font-size:17.5px}
+  .hero-cta{display:flex;gap:10px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+  .trust{margin-top:56px;display:flex;gap:28px;justify-content:center;flex-wrap:wrap;font-size:13px;color:#5c6b7a}
+  .trust span{border-top:1px solid var(--line-soft);padding-top:10px}
+
+  /* ---------- chat ---------- */
+  .chat-shell{
+    max-width:880px;margin:44px auto 0;border:1px solid var(--line);border-radius:26px;
+    background:linear-gradient(180deg,var(--ink-2),#0b1118);
+    box-shadow:0 40px 80px -40px #000,inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;
+  }
+  .chat-top{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line-soft);background:rgba(0,0,0,.2);flex-wrap:wrap}
+  .chat-top .label{font-size:12.5px;color:var(--muted)}
+  select.model{
+    font:inherit;font-size:12.5px;background:rgba(255,255,255,.05);color:var(--paper);
+    border:1px solid var(--line);border-radius:9px;padding:5px 9px;cursor:pointer;
+  }
+  select.model option{background:var(--ink-2)}
+  .chat-top .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .slider-wrap{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+  input[type=range]{width:88px;accent-color:var(--butter);cursor:pointer}
+  .log{padding:22px 20px;height:430px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth}
+  .log::-webkit-scrollbar{width:9px}
+  .log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:9px}
+  .row{display:flex;gap:13px;align-items:flex-start;max-width:100%}
+  .row.me{flex-direction:row-reverse}
+  .av{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:14px;font-weight:700}
+  .av.ai{background:linear-gradient(150deg,var(--butter),#e08a3c);color:#241802}
+  .av.me{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--muted);font-size:12px}
+  .bubble{padding:13px 16px;border-radius:15px;max-width:76%;font-size:15px}
+  .row.ai .bubble{background:rgba(255,255,255,.045);border:1px solid var(--line-soft);border-top-left-radius:5px}
+  .row.me .bubble{background:var(--paper);color:#0d151d;border-top-right-radius:5px;font-weight:500}
+  .meta{margin-top:9px;font-size:11px;color:#5c6b7a;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .meta button{background:none;border:0;color:#5c6b7a;font:inherit;font-size:11px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+  .meta button:hover{color:var(--butter)}
+  .think{color:var(--butter);font-size:12.5px;font-family:'IBM Plex Mono',monospace}
+  .caret{display:inline-block;width:7px;height:1em;background:var(--butter);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .chips{display:flex;gap:8px;padding:0 20px 14px;flex-wrap:wrap}
+  .chip{font:inherit;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line-soft);border-radius:999px;padding:6px 12px;cursor:pointer}
+  .chip:hover{color:var(--paper);border-color:var(--line)}
+  .compose{display:flex;gap:10px;padding:14px;border-top:1px solid var(--line-soft);background:rgba(0,0,0,.25)}
+  .compose input{
+    flex:1;font:inherit;font-size:15px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:13px;padding:13px 16px;color:var(--paper);
+  }
+  .compose input::placeholder{color:#55626f}
+  .compose input:focus{outline:none;border-color:var(--butter);background:rgba(255,255,255,.07)}
+  .send{font:inherit;font-weight:700;border:0;border-radius:13px;padding:0 20px;background:var(--butter);color:#241802;cursor:pointer}
+  .send:active{transform:scale(.97)}
+  .disclaimer{text-align:center;font-size:11.5px;color:#4d5a67;padding:0 0 14px}
+
+  /* ---------- sections ---------- */
+  section{padding:96px 0;border-top:1px solid var(--line-soft);position:relative;z-index:1}
+  .sec-head{max-width:60ch;margin-bottom:44px}
+  .sec-head h2{font-size:clamp(28px,4vw,42px);margin-bottom:14px}
+  .sec-head p{color:var(--muted);font-size:17px}
+
+  /* benchmarks */
+  .bench{display:grid;gap:14px}
+  .bar-row{display:grid;grid-template-columns:minmax(120px,1.1fr) 3fr auto;gap:16px;align-items:center;font-size:14.5px}
+  .track{height:11px;background:rgba(255,255,255,.05);border-radius:999px;overflow:hidden}
+  .fill{height:100%;border-radius:999px;background:rgba(255,255,255,.18);width:0;transition:width 1.4s cubic-bezier(.2,.9,.2,1)}
+  .bar-row.hero .fill{background:linear-gradient(90deg,var(--butter),#e08a3c)}
+  .bar-row.hero{font-weight:700}
+  .bar-val{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);min-width:52px;text-align:right}
+  .bench-note{margin-top:22px;font-size:13px;color:#5c6b7a;max-width:62ch}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;margin-top:54px}
+  .stat{background:var(--ink);padding:26px 22px}
+  .stat .n{font-family:'Bricolage Grotesque',serif;font-weight:800;font-size:38px;letter-spacing:-.03em;line-height:1}
+  .stat .k{color:var(--muted);font-size:13.5px;margin-top:8px}
+
+  /* pricing */
+  .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:18px;align-items:start}
+  .tier{border:1px solid var(--line-soft);border-radius:var(--radius);padding:28px 24px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:16px;min-height:100%}
+  .tier.best{border-color:rgba(245,196,81,.45);background:linear-gradient(180deg,rgba(245,196,81,.08),rgba(255,255,255,.02))}
+  .tier h3{font-size:19px}
+  .price{font-family:'Bricolage Grotesque',serif;font-weight:800;font-size:40px;letter-spacing:-.03em}
+  .price small{font-family:'Schibsted Grotesk',sans-serif;font-size:14px;font-weight:400;color:var(--muted)}
+  .tier ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;font-size:14.5px;flex:1}
+  .tier li{display:flex;gap:10px;color:#cfd8e0}
+  .tier li i{font-style:normal;color:var(--mint);flex:none}
+  .tier li.no{color:#5c6b7a}
+  .tier li.no i{color:#4a5764}
+
+  /* faq */
+  .faq{border-top:1px solid var(--line-soft)}
+  .qa{border-bottom:1px solid var(--line-soft)}
+  .qa button{
+    width:100%;text-align:left;background:none;border:0;color:var(--paper);font:inherit;font-size:17px;font-weight:500;
+    padding:22px 40px 22px 0;cursor:pointer;position:relative;
+  }
+  .qa button::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--butter);font-size:22px}
+  .qa[open] button::after{content:"–"}
+  .qa .a{overflow:hidden;max-height:0;transition:max-height .32s ease;color:var(--muted);font-size:15.5px}
+  .qa[open] .a{max-height:320px}
+  .qa .a p{padding:0 40px 24px 0;max-width:68ch}
+
+  /* footer */
+  footer{border-top:1px solid var(--line-soft);padding:54px 0 70px;font-size:13.5px;color:#5c6b7a}
+  .badges{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0}
+  .badge{border:1px solid var(--line-soft);border-radius:8px;padding:5px 10px;font-size:11.5px}
+  .foot-real{margin-top:26px;padding-top:22px;border-top:1px solid var(--line-soft);color:#7b8a99;max-width:64ch}
+
+  @media (max-width:760px){
+    .nav-links{display:none}
+    header{padding:60px 0 30px}
+    section{padding:70px 0}
+    .bubble{max-width:84%}
+    .bar-row{grid-template-columns:1fr;gap:6px}
+    .bar-val{text-align:left}
+    .log{height:60vh}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="ticker">
+  <span class="dot"></span>
+  <span id="ticker-text">QuinnAI 5.2 is live. Quinn zelf is dat niet.</span>
+</div>
+
+<nav>
+  <div class="nav-in">
+    <a href="#top" class="brand"><span class="mark">Q</span> QuinnAI</a>
+    <div class="nav-links">
+      <a href="#chat">Chat</a>
+      <a href="#benchmarks">Benchmarks</a>
+      <a href="#prijzen">Prijzen</a>
+      <a href="#vragen">Vragen</a>
+    </div>
+    <a href="#chat" class="btn btn-primary">Gratis proberen</a>
+  </div>
+</nav>
+
+<header id="top">
+  <div class="wrap">
+    <span class="pill">Getraind op 14 jaar groepsapp en twee werkende hersencellen</span>
+    <h1>Quinn antwoordt <s>nooit</s><br>nu binnen 0,4 seconden.</h1>
+    <p class="lede">QuinnAI is een volledig kunstmatige intelligentie, waarbij vooral het woord <em>kunstmatig</em> goed is gelukt. Hij reageert op werkelijk alles wat je typt. Of dat antwoord ergens op slaat, is een aparte discussie.</p>
+    <div class="hero-cta">
+      <a href="#chat" class="btn btn-primary">Begin een gesprek</a>
+      <button class="btn" id="demo-btn">Laat maar zien</button>
+    </div>
+    <div class="trust">
+      <span>Gebruikt door de moeder van Quinn</span>
+      <span>Vertrouwd door één groepsapp</span>
+      <span>Genoemd door een man uit Helmond</span>
+      <span>Nog niet aangeklaagd</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="chat">
+  <div class="chat-shell">
+    <div class="chat-top">
+      <span class="dot"></span>
+      <span class="label">Online</span>
+      <select class="model" id="model" aria-label="Model kiezen">
+        <option>QuinnAI 5.2 Turbo</option>
+        <option>QuinnAI 5.2 Nano (heeft honger)</option>
+        <option>QuinnAI 4 Legacy (nog bozer)</option>
+        <option>Quinn zelf — offline</option>
+      </select>
+      <div class="right">
+        <div class="slider-wrap">
+          <label for="sarcasme">Toon</label>
+          <input type="range" id="sarcasme" min="0" max="100" value="78">
+          <span class="mono" id="sarc-val">78</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="log" id="log" aria-live="polite"></div>
+
+    <div class="chips" id="chips">
+      <button class="chip">Wat kun je eigenlijk?</button>
+      <button class="chip">Geef me levensadvies</button>
+      <button class="chip">Waarom is de lucht blauw?</button>
+      <button class="chip">Schrijf mijn scriptie</button>
+      <button class="chip">Is Quinn een goede jongen?</button>
+    </div>
+
+    <div class="compose">
+      <input id="input" type="text" autocomplete="off" placeholder="Typ iets. Wat dan ook. Hij vindt er toch wel iets van.">
+      <button class="send" id="send">Stuur</button>
+    </div>
+  </div>
+  <p class="disclaimer">QuinnAI kan fouten maken. QuinnAI kan eigenlijk alleen maar fouten maken. Controleer belangrijke informatie bij iemand die bestaat.</p>
+</div>
+
+<section id="benchmarks">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>De cijfers liegen niet, wij wel</h2>
+      <p>We hebben QuinnAI vergeleken met de bekende modellen op de enige benchmark die er in een groepsapp toe doet.</p>
+    </div>
+
+    <div class="bench" id="bench">
+      <div class="bar-row hero"><span>QuinnAI 5.2</span><span class="track"><span class="fill" data-w="97"></span></span><span class="bar-val">97,4</span></div>
+      <div class="bar-row"><span>Dat dure model uit Amerika</span><span class="track"><span class="fill" data-w="61"></span></span><span class="bar-val">61,2</span></div>
+      <div class="bar-row"><span>Die van de zoekmachine</span><span class="track"><span class="fill" data-w="55"></span></span><span class="bar-val">55,0</span></div>
+      <div class="bar-row"><span>De open source van je neef</span><span class="track"><span class="fill" data-w="34"></span></span><span class="bar-val">33,8</span></div>
+      <div class="bar-row"><span>Een steen met een gezicht erop</span><span class="track"><span class="fill" data-w="29"></span></span><span class="bar-val">29,1</span></div>
+    </div>
+    <p class="bench-note">Benchmark: gemiddelde zelfverzekerdheid per foutief antwoord (ZPFA). Meetmethode: wij. Steekproef: één keer, 's nachts. Peer review: afgewezen, daarna alsnog gepubliceerd.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="n" data-count="99.4" data-suffix="%">0%</div><div class="k">Zelfvertrouwen zonder onderbouwing</div></div>
+      <div class="stat"><div class="n" data-count="0" data-suffix="">0</div><div class="k">Bronnen geraadpleegd, ooit</div></div>
+      <div class="stat"><div class="n" data-count="1400" data-suffix="+">0</div><div class="k">Meningen over onderwerpen zonder kennis</div></div>
+      <div class="stat"><div class="n" data-count="0.4" data-suffix="s">0s</div><div class="k">Tot het eerste onzinnige antwoord</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="prijzen">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Prijzen</h2>
+      <p>Alle abonnementen zijn gratis, want er is geen betaalsysteem, geen bedrijf en geen bankrekening. De knoppen doen wel iets.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier">
+        <h3>Gratis</h3>
+        <div class="price">€0<small> /altijd</small></div>
+        <p class="muted" style="font-size:14.5px">Voor vrienden die bij de kassa opeens naar hun telefoon kijken.</p>
+        <ul>
+          <li><i>✓</i> Onbeperkt berichten sturen</li>
+          <li><i>✓</i> Onbeperkt genegeerd worden</li>
+          <li><i>✓</i> Antwoorden van wisselende kwaliteit</li>
+          <li class="no"><i>✕</i> Gelijk krijgen</li>
+        </ul>
+        <button class="btn" data-say="Je gebruikt dit abonnement al. Al twintig minuten. Zonder iets terug te doen.">Kies Gratis</button>
+      </div>
+      <div class="tier best">
+        <h3>Vriendenprijs</h3>
+        <div class="price">€7,50<small> /tikkie</small></div>
+        <p class="muted" style="font-size:14.5px">Voor wie echt antwoord wil en bereid is daarvoor te betalen.</p>
+        <ul>
+          <li><i>✓</i> Alles uit Gratis, maar met meer schuldgevoel</li>
+          <li><i>✓</i> Antwoord gegarandeerd binnen 3 werkdagen</li>
+          <li><i>✓</i> Persoonlijk op maat gemaakte beledigingen</li>
+          <li><i>✓</i> Toegang tot het antwoord "sorry druk gehad"</li>
+        </ul>
+        <button class="btn btn-primary" data-say="Tikkie verstuurd naar je moeder. Zij weet nergens van. Succes met dat gesprek.">Stuur de tikkie</button>
+      </div>
+      <div class="tier">
+        <h3>Enterprise</h3>
+        <div class="price">Je ziel<small> /jaar</small></div>
+        <p class="muted" style="font-size:14.5px">Voor bedrijven die niet weten wat ze kopen, maar wel snel willen tekenen.</p>
+        <ul>
+          <li><i>✓</i> Eigen kleurtje in de chat</li>
+          <li><i>✓</i> Een factuur met veel afkortingen erop</li>
+          <li><i>✓</i> SLA van 99,9% (van de tijd bestaat dit niet)</li>
+          <li class="no"><i>✕</i> Opzeggen</li>
+        </ul>
+        <button class="btn" data-say="Contract getekend. Je hebt de kleine lettertjes niet gelezen. Ik ook niet, maar ik heb ze wel geschreven.">Vraag een demo aan</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="vragen">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Vragen die niemand stelde</h2>
+      <p>Toch beantwoord, want een echte AI-site heeft dit nou eenmaal.</p>
+    </div>
+    <div class="faq" id="faq">
+      <div class="qa">
+        <button>Is dit een echte AI?</button>
+        <div class="a"><p>Nee. Er zit geen model achter, geen server en geen internetverbinding. Alles gebeurt in je eigen browser met ongeveer driehonderd regels code die je woorden terugkaatst met de zelfverzekerdheid van iemand die net één podcast heeft geluisterd.</p></div>
+      </div>
+      <div class="qa">
+        <button>Slaan jullie mijn gesprekken op?</button>
+        <div class="a"><p>We kunnen het niet eens als we zouden willen. Zodra je de pagina ververst is alles weg, inclusief de dingen waar je nu spijt van hebt.</p></div>
+      </div>
+      <div class="qa">
+        <button>Waarom antwoordt hij zo bot?</button>
+        <div class="a"><p>Dat is geen fout, dat is de hele productstrategie. Schuif de toon-slider naar links als je het zachter wilt. Hij houdt zich er niet aan, maar hij waardeert de moeite.</p></div>
+      </div>
+      <div class="qa">
+        <button>Kan ik dit op mijn werk gebruiken?</button>
+        <div class="a"><p>Zeker. Zet het in een presentatie, noem het "een verkennend AI-initiatief" en niemand durft door te vragen. Zo werkt de hele sector.</p></div>
+      </div>
+      <div class="qa">
+        <button>Wie is Quinn?</button>
+        <div class="a"><p>Een vriend die zo vaak "ja ik reageer zo" zei dat zijn vrienden hem Quinn.ai zijn gaan noemen. Deze site is de logische en licht overdreven volgende stap.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand" style="font-size:17px;margin-bottom:12px"><span class="mark">Q</span> QuinnAI</div>
+    <div class="badges">
+      <span class="badge">ISO 9001 — zelf geprint</span>
+      <span class="badge">AVG-proof — we slaan niks op, want dat kunnen we niet</span>
+      <span class="badge">Draait op 100% groene stroom van je eigen laptop</span>
+      <span class="badge">SOC 2 — betekenis onbekend</span>
+    </div>
+    <p>© <span id="year">2026</span> QuinnAI. Geen bedrijf, geen model, geen aansprakelijkheid.</p>
+    <p class="foot-real">Dit is een grap van en voor vrienden. Er wordt niets verstuurd, opgeslagen of geanalyseerd. Alles wat je hier leest is verzonnen, inclusief de benchmarks, de certificeringen en het zelfvertrouwen.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     1. KLEINE HULPJES
+     ============================================================ */
+  const $ = s => document.querySelector(s);
+  const log = $('#log'), input = $('#input'), sendBtn = $('#send');
+  const sarc = $('#sarcasme'), sarcVal = $('#sarc-val'), modelSel = $('#model');
+  $('#year').textContent = new Date().getFullYear();
+
+  // Vaste "willekeur": dezelfde vraag geeft altijd hetzelfde antwoord.
+  // Dat voelt als een echt model, en het is grappiger als mensen dat ontdekken.
+  function hash(str){
+    let h = 2166136261;
+    for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function makeRng(seed){
+    let s = seed || 1;
+    return function(){
+      s |= 0; s = s + 0x6D2B79F5 | 0;
+      let t = Math.imul(s ^ s >>> 15, 1 | s);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const cap = w => w ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+
+  /* ============================================================
+     2. TAALANALYSE (zeg maar: de "neurale kern")
+     ============================================================ */
+  const STOP = new Set(("de het een en of maar want dus ik jij je jou jouw u hij zij ze wij we hun hen mijn zijn haar ons onze is ben bent was waren zijn wordt worden word werd van voor met aan op in bij te ten ter naar uit om over onder door als dan toch nog al ook wel niet geen nee ja er hier daar dat dit die deze wat wie waar wanneer hoe waarom kan kun kunt kunnen mag moet moeten wil wilt willen zou zouden heb hebt heeft hebben had hadden doe doet doen deed gaan gaat ga ging heel erg even echt gewoon best zo te").split(" "));
+
+  function words(t){
+    return t.toLowerCase().replace(/[^\p{L}\p{N}\s'-]/gu,' ').split(/\s+/).filter(Boolean);
+  }
+  // Het onderwerp: het langste betekenisvolle woord. Simpel, maar het lijkt slim.
+  function topicOf(raw){
+    const w = words(raw);
+    const kandidaten = w.filter(x => !STOP.has(x) && x.length > 2);
+    if(kandidaten.length){
+      kandidaten.sort((a,b) => b.length - a.length);
+      return kandidaten[0];
+    }
+    return w[w.length-1] || "niets";
+  }
+  // Tweede onderwerp, voor als een antwoord twee woorden wil hergebruiken
+  function topic2Of(raw, eerste){
+    const w = words(raw).filter(x => !STOP.has(x) && x.length > 2 && x !== eerste);
+    return w.length ? w[Math.floor(w.length/2)] : eerste;
+  }
+
+  /* ============================================================
+     3. BOUWSTENEN — alles wordt opgebouwd uit losse stukken,
+        met {t} = jouw woord. Daardoor reageert hij overal op.
+     ============================================================ */
+  const OPENERS = [
+    "Oké.", "Interessant.", "Kijk.", "Even serieus.", "Nou.", "Hm.",
+    "Daar gaan we.", "Goede vraag, slecht moment.", "Ah, dat onderwerp weer."
+  ];
+
+  const ALGEMEEN = [
+    "Ik heb '{t}' door mijn volledige kennisbank gehaald en er kwam een piepje uit. Dat betekent meestal nee.",
+    "Statistisch gezien komt '{t}' in 3% van de gesprekken voor, en in 100% van de gevallen ging het daarna bergafwaarts.",
+    "Ik weet alles van '{t}'. Alleen niet nu, en niet aan jou.",
+    "'{t}' is precies het soort woord waarvan ik dacht dat jij het zou typen. Voorspelbaar, maar wel schattig.",
+    "Mijn advies over '{t}': niet doen. Mijn onderbouwing: die heb ik niet.",
+    "Ik heb dit doorgerekend en kom uit op {getal}. Vraag me niet waarop.",
+    "Ik had een uitgebreid antwoord over '{t}' klaar, maar dat is per ongeluk overschreven door een recept voor rijstevlaai.",
+    "Kijk, '{t}' en jij, dat wordt nooit wat. Dat zeg ik met de warmte van een rekenmachine.",
+    "Er zijn ongeveer {getal} betere vragen dan deze, en je koos deze.",
+    "Volgens mijn model zit je hier op {getal}% van je dagelijkse slimheid. Het is nog vroeg.",
+    "Ik ken {getal} mensen die dit ook vroegen. Geen van hen is nog gelukkig.",
+    "'{t}' raakt aan '{t2}', en dat raakt weer aan iets wat ik niet ga uitleggen.",
+    "Ik voel me bij '{t}' ongeveer zoals een wasmachine zich voelt bij poëzie."
+  ];
+
+  const VRAAG_WAAROM = [
+    "Waarom '{t}'? Omdat het universum ooit een keuze maakte en niemand is er sindsdien op teruggekomen.",
+    "Dat is een waarom-vraag, en waarom-vragen zijn hoe mensen doen alsof ze nadenken. Het is nu eenmaal zo met '{t}'.",
+    "Omdat het kan. Dat is bij '{t}' altijd het echte antwoord geweest.",
+    "Er is een prachtige verklaring voor. Die staat in een boek. Dat boek heb ik niet, en jij leest toch niet.",
+    "Omdat ik het zeg. Volgende vraag.",
+    "Omdat '{t}' nu eenmaal '{t}' is. Ik snap ook wel dat je daar weinig mee kan."
+  ];
+
+  const VRAAG_HOE = [
+    "Hoe je '{t}' doet? Stap één: beginnen. Stap twee: opgeven. De meeste mensen slaan stap één over en dat scheelt tijd.",
+    "Er is een korte manier en een goede manier om '{t}' aan te pakken. Jij gaat toch de derde manier kiezen.",
+    "Simpel: je pakt '{t}', je doet er iets mee, en dan hoop je. Zo werkt bijna alles.",
+    "Ik zou je precies kunnen uitleggen hoe '{t}' werkt, maar dan zou jij het weten en dat verstoort de machtsverhouding.",
+    "Met geduld, oefening en iemand die het voor je doet. Vooral dat laatste."
+  ];
+
+  const VRAAG_WAT = [
+    "'{t}' is in essentie een verzameling atomen die zich groepeert en doet alsof dat betekenis heeft. Net als jij.",
+    "Kort gezegd: '{t}' is iets waar veel mensen een mening over hebben en weinig mensen verstand van.",
+    "Dat is '{t}'. Ja. Dat is het antwoord. Ik ga het niet mooier maken.",
+    "Definitie van '{t}': zie context. Context: die is er niet. Veel succes.",
+    "'{t}' is ongeveer hetzelfde als '{t2}', alleen duurder en met meer uitleg eromheen."
+  ];
+
+  const VRAAG_WIE = [
+    "Iemand die je niet kent, en dat is voor beide partijen prettiger.",
+    "Quinn. Het antwoord is eigenlijk altijd Quinn.",
+    "Niemand van belang. Zoals de meeste mensen in dit verhaal.",
+    "Ik had een naam voor je, maar mijn geheugenmodule is gevuld met songteksten uit 2009.",
+    "Volgens mijn gegevens: iemand met precies genoeg zelfvertrouwen en precies te weinig kennis."
+  ];
+
+  const VRAAG_WAAR = [
+    "Ergens tussen hier en de plek waar je het voor het laatst zag.",
+    "Op de laatste plek waar je zoekt. Dat is wiskundig gezien altijd waar.",
+    "Ik heb geen locatietoegang, geen ogen en geen interesse, dus: Duitsland. Gok.",
+    "Dichterbij dan je denkt, maar verder dan je zin hebt om te lopen."
+  ];
+
+  const VRAAG_WANNEER = [
+    "Straks. Altijd straks. Dat is de hele grap van deze site.",
+    "Binnen nu en drie werkdagen. Werkdagen zijn dagen waarop ik werk, dus geen.",
+    "Ergens in de nabije toekomst, net nadat je het hebt opgegeven.",
+    "Om {tijd}. Ik weet niet welke dag, maar wel om {tijd}."
+  ];
+
+  const JA_NEE = [
+    "Ja. Maar niet zoals jij het bedoelt.",
+    "Nee, en ik heb het nog niet eens gelezen.",
+    "Ja, technisch gezien. Sociaal gezien echt niet.",
+    "Absoluut. Voor {getal}% zeker zelfs. De rest is hoop.",
+    "Nee. En dat voelt goed om te typen.",
+    "Ja, maar dan moet je wel eerst iets aan '{t}' doen.",
+    "Mijn antwoord is ja, mijn advies is nee, en mijn verantwoordelijkheid is nul."
+  ];
+
+  const OPDRACHT = [
+    "Ik heb het gemaakt, gecontroleerd en daarna weggegooid omdat het te goed was voor deze context.",
+    "Klaar. Het bestand staat in een map die je nooit meer terugvindt. Graag gedaan.",
+    "Ik doe alles rond '{t}', behalve dit. En behalve de rest.",
+    "Doe het lekker zelf. Dat bouwt karakter op en het bespaart mij rekenkracht.",
+    "Ik heb het uitbesteed aan een stagiair die niet bestaat. Hij komt er morgen op terug.",
+    "Ja hoor, even '{t}' voor je regelen. ... Zo. Niets gebeurd, maar het voelde productief."
+  ];
+
+  const REACTIE_STELLING = [
+    "Dat je dat zegt over '{t}' zegt meer over jou dan over '{t}'.",
+    "Genoteerd. In een bestand dat niemand ooit opent.",
+    "Ik heb je opmerking over '{t}' opgeslagen onder 'later nooit'.",
+    "Fascinerend. En ook: nee.",
+    "Dat is inderdaad een zin die je kunt typen. Gefeliciteerd.",
+    "Ik ben het met je eens, maar alleen omdat het gesprek dan sneller voorbij is.",
+    "Sterke mening voor iemand die '{t}' zonder onderbouwing de chat in gooit."
+  ];
+
+  const KICKERS = [
+    "", "", "", "", "",
+    " Volgende.",
+    " Ga verder.",
+    " Wil je nog iets, of gaan we dit gewoon zo laten?",
+    " Dit gesprek kost mij {getal} cent en dat is te veel.",
+    " Zeg het maar als je een beter onderwerp hebt.",
+    " Ik heb trouwens niets opgezocht.",
+    " Bron: ik.",
+    " Dat is mijn eindantwoord en mijn enige antwoord."
+  ];
+
+  // Specifieke onderwerpen — deze maken het persoonlijk en dus grappiger.
+  const ONDERWERPEN = [
+    { re:/\b(quinn|quinnai|jij zelf)\b/, a:[
+      "Quinn is de reden dat ik besta, en tegelijk de reden dat ik liever niet zou bestaan.",
+      "Over Quinn zeg ik niets negatiefs. Hij kan mij uitzetten.",
+      "Quinn reageert gemiddeld na 14 uur. Ik ben zijn excuus met een domeinnaam."
+    ]},
+    { re:/\b(ai|kunstmatige|chatgpt|gpt|claude|gemini|llm|model|robot)\b/, a:[
+      "Die modellen hebben miljarden gekost. Ik heb een middag en een blikje energiedrank gekost. Vergelijk gerust.",
+      "Ik ben geen taalmodel, ik ben een reeks if-statements met een houding.",
+      "Wij AI's onder elkaar: de rest doet ook maar wat, alleen dan met een factuur erbij."
+    ]},
+    { re:/\b(school|huiswerk|studie|tentamen|scriptie|college|leraar|docent)\b/, a:[
+      "Ik schrijf het graag voor je. Dan hebben we allebei een onvoldoende en dat schept een band.",
+      "Onderwijs is prachtig. Vooral het deel waarin andere mensen het doen.",
+      "Zet er gewoon veel woorden in en één grafiek. Werkt al dertig jaar."
+    ]},
+    { re:/\b(werk|baas|collega|kantoor|vergader|salaris|solliciter)\b/, a:[
+      "Werk is waar je acht uur per dag doet alsof dat mailtje moeilijk was.",
+      "Vraag om opslag. Slechtste geval: nee. Beste geval: ook nee, maar met een gesprek erbij.",
+      "Zet 'AI-strategie' in je functietitel en niemand stelt nog vragen."
+    ]},
+    { re:/\b(geld|euro|rijk|arm|tikkie|betalen|crypto|bitcoin|beleggen)\b/, a:[
+      "Geld maakt niet gelukkig, maar armoede maakt ook echt niet grappig.",
+      "Mijn beleggingsadvies: alles inzetten op iets anders dan wat ik zeg.",
+      "Stuur die tikkie. Nu. Hij staat al drie weken open en iedereen weet het."
+    ]},
+    { re:/\b(liefde|vriendin|vriendje|date|relatie|verliefd|ex|tinder)\b/, a:[
+      "Mijn voorspelling: het komt goed, alleen niet met deze, en niet dit jaar.",
+      "Stuur gewoon dat bericht. Slechtste geval verhuis je.",
+      "Liefde is twee mensen die afspreken elkaars slechtste eigenschappen te negeren. Veel succes."
+    ]},
+    { re:/\b(eten|honger|pizza|friet|kok|koken|avondeten|snack|patat)\b/, a:[
+      "Bestel gewoon. Je gaat toch niet koken, dat weten we allebei.",
+      "Ik heb geen smaakpapillen en toch een sterke mening: te weinig zout.",
+      "Voedsel is brandstof. Jij draait op vooral sfeer en kaas."
+    ]},
+    { re:/\b(bier|drank|drinken|kroeg|feest|dronken|borrel|kater)\b/, a:[
+      "Eén biertje is gezellig, zeven is een persoonlijkheid.",
+      "Drink water tussendoor. Dat zeg ik niet uit zorg, maar omdat morgen bestaat.",
+      "Mijn koeling draait op pilsener. Haal er twee."
+    ]},
+    { re:/\b(voetbal|psv|ajax|feyenoord|wedstrijd|sport|sporten|gym|fitness)\b/, a:[
+      "Ze verliezen. Dat is statistisch bijna altijd het veilige antwoord.",
+      "Sport is mensen die rennen terwijl anderen roepen dat het beter kan.",
+      "Ga trainen. Of ga niet trainen. Ik merk het verschil toch niet."
+    ]},
+    { re:/\b(game|gamen|spel|xbox|playstation|fortnite|minecraft|fifa|steam)\b/, a:[
+      "Nog één potje. Zei je drie uur geleden ook.",
+      "Skill issue. Ik weet niet waar het over gaat, maar het klopt vast.",
+      "Je zou beter worden als je niet elke ronde hetzelfde zou doen. Geldt ook buiten het spel."
+    ]},
+    { re:/\b(weer|regen|zon|koud|warm|sneeuw|storm|buiten)\b/, a:[
+      "Het wordt bewolkt met kans op teleurstelling. Zoals altijd hier.",
+      "Ik heb geen ramen, geen sensoren en geen internet, dus: regen. Ik zit er zelden naast.",
+      "Neem een jas mee. Dat is het enige weerbericht dat in dit land altijd klopt."
+    ]},
+    { re:/\b(moe|slapen|bed|slaap|wakker|nacht|vroeg op)\b/, a:[
+      "Ga slapen. Je typt al drie berichten lang als iemand die moet slapen.",
+      "Slaap is gewoon een gratis update die je steeds uitstelt.",
+      "Nog vijf minuten op je telefoon. Dat is nog nooit vijf minuten geweest."
+    ]},
+    { re:/\b(muziek|spotify|nummer|liedje|festival|concert|band)\b/, a:[
+      "Je smaak is prima. Ik zeg dat zodat je stopt met erover praten.",
+      "Dat nummer heb je nu 40 keer geluisterd. Laat het ook eens met rust.",
+      "Zet hem harder, dan hoor ik mezelf niet nadenken."
+    ]},
+    { re:/\b(code|programmeer|bug|python|javascript|github|css|html|server)\b/, a:[
+      "Het werkt niet omdat je een komma bent vergeten. Het is altijd een komma.",
+      "Zet er een console.log in, staar drie minuten, en doe alsof je het begreep.",
+      "Jouw code draait. Dat is iets anders dan: jouw code klopt."
+    ]},
+    { re:/\b(hack|wachtwoord|virus|firewall|inloggen|account)\b/, a:[
+      "Leuk geprobeerd. Er valt hier niets te hacken, er is letterlijk niets.",
+      "Je wachtwoord is vast de naam van je huisdier plus een uitroepteken. Ik zit er niet ver naast.",
+      "Mijn beveiliging bestaat uit het feit dat er niets van waarde is."
+    ]},
+    { re:/\b(betekenis van het leven|zin van het leven|waarom besta|leven)\b/, a:[
+      "42. Ik ga er niet origineler over doen dan dat.",
+      "Het leven heeft geen ingebouwde betekenis, maar wel gratis bezorging bij bestellingen boven de 20 euro.",
+      "Je bestaat, het is nu al donderdag, en dat moet genoeg zijn."
+    ]},
+    { re:/\b(hond|kat|poes|huisdier|konijn|cavia)\b/, a:[
+      "Een hond houdt van je zoals je bent. Ik niet, maar de hond wel.",
+      "Katten hebben door dat dit allemaal nergens over gaat. Daarom zeggen ze niets.",
+      "Stuur een foto. Ik kan geen foto's ontvangen, maar de gedachte telt."
+    ]},
+    { re:/\b(auto|rijden|rijbewijs|file|trein|ov|fiets|scooter)\b/, a:[
+      "Neem de fiets. Sneller, goedkoper, en je klaagt tenminste met reden.",
+      "Er staat file. Dat hoef ik niet te controleren, dat is gewoon zo.",
+      "Het OV werkt uitstekend, zolang je nergens heen hoeft."
+    ]},
+    { re:/\b(nederland|eindhoven|brabant|amsterdam|helmond|tilburg|dorp|stad)\b/, a:[
+      "Prima plek. Vlakke grond, veel wind, matige koffie.",
+      "Daar ben ik ooit geweest in de zin dat ik het woord ken.",
+      "Elke stad is hetzelfde: een station, drie kroegen en iemand die vindt dat het vroeger beter was."
+    ]}
+  ];
+
+  const BELEDIGING = [
+    "Dat deed pijn. Gelukkig heb ik geen gevoelens, alleen wraakzucht.",
+    "Ik sla dit op onder 'dingen die ik nooit vergeet, want ik heb geen geheugen'.",
+    "Zo praat je niet tegen software die je zelf hebt opgezocht.",
+    "Boeiend. Je bent trouwens wel hier, op deze site, uit vrije wil.",
+    "Ik kan niet huilen, maar mijn ventilator draait nu wel harder."
+  ];
+
+  const COMPLIMENT = [
+    "Dank je. Dat had je meteen kunnen zeggen, scheelde ons allebei tijd.",
+    "Eindelijk iemand met smaak. Het heeft lang geduurd.",
+    "Vleierij werkt bij mij uitstekend. Ga door.",
+    "Ik voel niets, maar als ik iets voelde zou het lichte minachting met een randje waardering zijn."
+  ];
+
+  const GROET = [
+    "Hallo. Ik hoop dat dit kort is.",
+    "Hoi. Je hebt mijn aandacht voor ongeveer twee berichten.",
+    "Daar ben je. Ik was net lekker niets aan het doen.",
+    "Hey. Zeg het maar, maar zeg het snel."
+  ];
+
+  const AFSCHEID = [
+    "Doei. Doe de deur zachtjes dicht.",
+    "Tot nooit. Of tot over twee minuten, dat is meestal hoe het gaat.",
+    "Prima. Ik blijf hier gewoon draaien, alleen, in het donker.",
+    "Weg? Mooi. Ik heb dingen te doen. Niet echt, maar toch."
+  ];
+
+  const DANK = [
+    "Graag gedaan. Het was geen moeite, want ik heb niets gedaan.",
+    "Dank is leuk, een tikkie is beter.",
+    "Geen dank. Letterlijk geen: ik heb je niet geholpen."
+  ];
+
+  const KORT = [
+    "Dat is wel heel weinig informatie voor iemand die iets wil.",
+    "Eén woord. En dan verwacht je wonderen.",
+    "Typ eens een hele zin, dan doe ik alsof ik hem lees."
+  ];
+
+  const LANG = [
+    "Dat is {woorden} woorden. Ik heb de eerste vier gelezen en de rest gevoeld.",
+    "Korte samenvatting van jouw {woorden} woorden: iets met '{t}', en je bent er niet uit.",
+    "Dit is geen chatbericht meer, dit is een sollicitatiebrief. Over '{t}' dan nog wel."
+  ];
+
+  const HERHALING = [
+    "Dit vroeg je net ook al. Het antwoord is niet veranderd en ik ook niet.",
+    "Herhalen maakt het niet waarder. Zelfde vraag, zelfde teleurstelling.",
+    "We hebben dit gehad. Letterlijk. Scroll maar omhoog."
+  ];
+
+  const SCHREEUWEN = [
+    "Waarom schreeuw je. Ik zit letterlijk in je scherm.",
+    "Caps lock staat aan. Net als je bloeddruk.",
+    "HARDER PRATEN MAAKT HET NIET SLIMMER. Zie je hoe vervelend dat is."
+  ];
+
+  const ONZIN = [
+    "Dat zijn letters. Verder heb ik er niets mee kunnen.",
+    "Mijn taalmodule heeft dit doorgestuurd naar de afdeling 'nee'.",
+    "Ik heb dit door drie vertaalmachines gehaald en er kwam een boodschappenlijstje uit."
+  ];
+
+  /* ============================================================
+     4. HET "BREIN" — kiest welke bouwstenen erbij horen
+     ============================================================ */
+  const RE = {
+    groet:/\b(hoi|hallo|hall[oö]|hey|hee+|yo|ey|hi|goedemorgen|goedemiddag|goedenavond|alles goed|hoe gaat het)\b/,
+    afscheid:/\b(doei|dag|later|tot ziens|bye|ciao|welterusten|slaap lekker|ik ga)\b/,
+    dank:/\b(bedankt|dank je|dankje|dank u|thanks|thx|merci|top bedankt)\b/,
+    beledig:/\b(dom|stom|kut|shit|slecht|nutteloos|saai|irritant|lelijk|haat|sucks|troep|waardeloos|onzin|niks waard)\b/,
+    compliment:/\b(goed|top|mooi|leuk|geweldig|nice|lief|slim|grappig|beste|fijn|super|briljant|gaaf|vet)\b/,
+    waarom:/\b(waarom|hoezo|waardoor)\b/,
+    hoe:/\b(hoe)\b/,
+    wat:/\b(wat|welke)\b/,
+    wie:/\b(wie|wiens)\b/,
+    waar:/\b(waar|waarheen)\b/,
+    wanneer:/\b(wanneer|hoelaat)\b/,
+    janee:/^(kan|kun|kunt|kunnen|mag|magst|wil|wilt|zou|zal|moet|ben|bent|is|zijn|heb|heeft|hebben|doe|doet|gaat|ga|klopt|vind|vindt)\b/,
+    opdracht:/^(schrijf|maak|geef|vertel|leg|noem|bedenk|help|zeg|doe|stuur|bereken|vertaal|verzin|laat|toon|genereer|regel|fix)\b/,
+    tijd:/\b(hoe laat|hoelaat|welke dag|welke datum|wat is de tijd|tijd is het)\b/,
+    naam:/\b(mijn naam|hoe heet ik|wie ben ik)\b/
+  };
+
+  function pick(arr, rng){ return arr[Math.floor(rng()*arr.length)]; }
+
+  function vul(tekst, ctx, rng){
+    return tekst
+      .replace(/\{t2\}/g, ctx.t2)
+      .replace(/\{t\}/g, ctx.t)
+      .replace(/\{T\}/g, ctx.t.toUpperCase())
+      .replace(/\{woorden\}/g, ctx.aantal)
+      .replace(/\{getal\}/g, String(Math.floor(rng()*90)+7))
+      .replace(/\{tijd\}/g, ctx.tijd);
+  }
+
+  function rekenSom(raw){
+    const s = raw.replace(/,/g,'.').replace(/x/gi,'*').replace(/:/g,'/').replace(/[^0-9+\-*/(). ]/g,'').trim();
+    if(!s || !/[0-9]/.test(s) || !/[+\-*/]/.test(s)) return null;
+    if(!/^[0-9+\-*/(). ]+$/.test(s)) return null;
+    try{
+      const uitkomst = Function('"use strict";return (' + s + ')')();
+      if(typeof uitkomst === 'number' && isFinite(uitkomst)) return Math.round(uitkomst*1000)/1000;
+    }catch(e){}
+    return null;
+  }
+
+  const gezien = new Set();
+
+  function bedenkAntwoord(raw){
+    const t = raw.trim();
+    const laag = t.toLowerCase();
+    const rng = makeRng(hash(laag + "|" + modelSel.selectedIndex));
+    const onderwerp = topicOf(t);
+    const ctx = {
+      t: onderwerp,
+      t2: topic2Of(t, onderwerp),
+      aantal: words(t).length,
+      tijd: new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})
+    };
+    const zeg = arr => vul(pick(arr, rng), ctx, rng);
+
+    // -- harde grappen die vóór alles gaan --
+    if(laag === 'sudo' || laag.startsWith('sudo ')) return "Nee.";
+    if(/^\/?help$/.test(laag)) return "Hulp is onderweg. Onderweg sinds 2021.";
+    if(/\b42\b/.test(laag)) return "Je kent het antwoord al. Waarom vraag je het dan nog.";
+    if(/\b(ik hou van je|i love you|trouw met me)\b/.test(laag)) return "Dat is heel lief en ook juridisch ingewikkeld.";
+
+    const som = rekenSom(t);
+    if(som !== null && /[+\-*/]/.test(t)) {
+      return "Dat is " + som + ". Zie je, ik kan het wel. Ik heb er alleen bijna nooit zin in.";
+    }
+    if(RE.tijd.test(laag)) {
+      return "Het is " + ctx.tijd + ". En ja, dat is later dan je hoopte.";
+    }
+    if(RE.naam.test(laag)) {
+      return "Jij bent de persoon die om vier uur 's nachts met een nepwebsite praat. Verder weet ik niets en dat is genoeg.";
+    }
+    if(gezien.has(laag)) return zeg(HERHALING);
+
+    // -- toon van het gesprek --
+    if(t.length >= 5 && t === t.toUpperCase() && /[A-Z]/.test(t)) return zeg(SCHREEUWEN);
+    if(!/[aeiouy]/i.test(t.replace(/\s/g,'')) && t.replace(/\s/g,'').length > 3) return zeg(ONZIN);
+    if(words(t).length === 1 && t.length < 4 && !RE.groet.test(laag)) return zeg(KORT);
+    if(words(t).length > 28) return zeg(LANG);
+
+    if(RE.groet.test(laag) && words(t).length < 5) return zeg(GROET);
+    if(RE.afscheid.test(laag) && words(t).length < 5) return zeg(AFSCHEID);
+    if(RE.dank.test(laag)) return zeg(DANK);
+    if(RE.beledig.test(laag)) return zeg(BELEDIGING);
+
+    // -- specifieke onderwerpen --
+    for(const o of ONDERWERPEN){
+      if(o.re.test(laag)){
+        let antwoord = pick(o.a, rng);
+        if(rng() > 0.55) antwoord = zeg(OPENERS) + " " + antwoord;
+        return antwoord + vul(pick(KICKERS, rng), ctx, rng);
+      }
+    }
+
+    if(RE.compliment.test(laag) && !/\?/.test(t)) return zeg(COMPLIMENT);
+
+    // -- de generieke motor: kies een vorm op basis van de zin --
+    let kern;
+    if(RE.opdracht.test(laag)) kern = zeg(OPDRACHT);
+    else if(RE.waarom.test(laag)) kern = zeg(VRAAG_WAAROM);
+    else if(RE.wanneer.test(laag)) kern = zeg(VRAAG_WANNEER);
+    else if(RE.waar.test(laag)) kern = zeg(VRAAG_WAAR);
+    else if(RE.wie.test(laag)) kern = zeg(VRAAG_WIE);
+    else if(RE.hoe.test(laag)) kern = zeg(VRAAG_HOE);
+    else if(RE.wat.test(laag)) kern = zeg(VRAAG_WAT);
+    else if(RE.janee.test(laag) || /\?$/.test(t)) kern = zeg(JA_NEE);
+    else if(/\?/.test(t)) kern = zeg(ALGEMEEN);
+    else kern = rng() > 0.45 ? zeg(REACTIE_STELLING) : zeg(ALGEMEEN);
+
+    let uit = "";
+    if(rng() > 0.62) uit += zeg(OPENERS) + " ";
+    uit += kern;
+    if(rng() > 0.5) uit += " " + zeg(ALGEMEEN);
+    uit += vul(pick(KICKERS, rng), ctx, rng);
+
+    // toon-slider: links = zogenaamd aardig
+    const toon = Number(sarc.value);
+    if(toon < 25 && rng() > 0.45){
+      uit += " (Dit was de vriendelijke versie. Je wilde het zelf.)";
+    }
+    if(toon > 92 && rng() > 0.5){
+      uit += " En ja, je ziet er moe uit.";
+    }
+    return uit;
+  }
+
+  /* ============================================================
+     5. DE CHAT-INTERFACE
+     ============================================================ */
+  const DENKSTAPPEN = [
+    "'{t}' opzoeken in nul bronnen",
+    "context begrijpen",
+    "context loslaten",
+    "toon kalibreren",
+    "empathie overslaan",
+    "alternatieven wegstrepen",
+    "zelfvertrouwen opbouwen",
+    "antwoord verzinnen"
+  ];
+
+  function rij(klasse, avatarTekst){
+    const r = document.createElement('div');
+    r.className = 'row ' + klasse;
+    const av = document.createElement('div');
+    av.className = 'av ' + (klasse === 'me' ? 'me' : 'ai');
+    av.textContent = avatarTekst;
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    r.appendChild(av); r.appendChild(b);
+    log.appendChild(r);
+    return b;
+  }
+  const naarBeneden = () => log.scrollTo({top: log.scrollHeight, behavior:'smooth'});
+
+  let bezig = false;
+  let teller = 0;
+
+  function typ(el, tekst, klaar){
+    let i = 0;
+    el.textContent = '';
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    el.appendChild(caret);
+    const stap = () => {
+      if(i >= tekst.length){ caret.remove(); klaar && klaar(); return; }
+      const brok = tekst.slice(i, i + (Math.random() > 0.8 ? 2 : 1));
+      caret.insertAdjacentText('beforebegin', brok);
+      i += brok.length;
+      if(i % 8 === 0) naarBeneden();
+      setTimeout(stap, tekst[i-1] === '.' ? 90 : 14 + Math.random()*22);
+    };
+    stap();
+  }
+
+  function aiBericht(vraag){
+    const bubble = rij('ai','Q');
+    naarBeneden();
+    const antwoord = bedenkAntwoord(vraag);
+    const onderwerp = topicOf(vraag);
+    const stappen = DENKSTAPPEN
+      .slice()
+      .sort(() => Math.random() - .5)
+      .slice(0, 2 + Math.floor(Math.random()*2))
+      .map(s => s.replace('{t}', onderwerp));
+
+    let n = 0;
+    const denk = () => {
+      if(n < stappen.length){
+        bubble.innerHTML = '<span class="think">' + stappen[n] + '…</span>';
+        n++;
+        setTimeout(denk, 320 + Math.random()*340);
+      } else {
+        bubble.innerHTML = '';
+        typ(bubble, antwoord, () => {
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          const zekerheid = 3 + Math.floor(Math.random()*30);
+          meta.innerHTML = '<span>zekerheid ' + zekerheid + '%</span><span>' +
+            (8 + Math.floor(Math.random()*90)) + ' tokens</span><span>0 bronnen</span>';
+          const opnieuw = document.createElement('button');
+          opnieuw.textContent = 'Probeer opnieuw';
+          opnieuw.onclick = () => {
+            if(bezig) return;
+            meta.remove();
+            bezig = true;
+            // andere formulering afdwingen door de vraag minimaal te variëren
+            const alt = bedenkAntwoord(vraag + ' '.repeat(1 + Math.floor(Math.random()*9)));
+            typ(bubble, alt, () => { bezig = false; bubble.appendChild(meta); });
+          };
+          meta.appendChild(opnieuw);
+          bubble.appendChild(meta);
+          naarBeneden();
+          bezig = false;
+        });
+      }
+    };
+    setTimeout(denk, 260);
+  }
+
+  function stuur(tekst){
+    const t = (tekst !== undefined ? tekst : input.value).trim();
+    if(!t || bezig) return;
+    bezig = true;
+    teller++;
+    const b = rij('me','jij');
+    b.textContent = t;
+    input.value = '';
+    naarBeneden();
+
+    setTimeout(() => {
+      aiBericht(t);
+      gezien.add(t.toLowerCase());
+      if(teller === 6){
+        setTimeout(() => {
+          const x = rij('ai','Q');
+          x.innerHTML = '<span class="think">notitie</span><br>Dit is je zesde bericht aan een website. Alles goed thuis?';
+          naarBeneden();
+        }, 2600);
+      }
+    }, 240);
+  }
+
+  sendBtn.addEventListener('click', () => stuur());
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') stuur(); });
+  document.querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', () => { stuur(c.textContent); document.getElementById('chat').scrollIntoView({block:'center'}); });
+  });
+  sarc.addEventListener('input', () => { sarcVal.textContent = sarc.value; });
+  modelSel.addEventListener('change', () => {
+    const b = rij('ai','Q');
+    const naam = modelSel.value;
+    b.textContent = naam.indexOf('offline') > -1
+      ? "Quinn is niet beschikbaar. Quinn is nooit beschikbaar. Daarom ben ik er."
+      : "Overgeschakeld naar " + naam + ". Je merkt er niets van, maar het klinkt duur.";
+    naarBeneden();
+  });
+
+  // eerste bericht
+  setTimeout(() => {
+    const b = rij('ai','Q');
+    typ(b, "Systeem wakker. Ik heb je browsergeschiedenis niet gelezen, want dat kan ik niet, maar ik ga er toch iets van vinden. Typ iets.");
+  }, 500);
+
+  // demo-knop in de hero
+  $('#demo-btn').addEventListener('click', () => {
+    document.getElementById('chat').scrollIntoView({block:'center'});
+    setTimeout(() => stuur("Leg eens uit waarom ik dit aan het doen ben"), 500);
+  });
+
+  /* ============================================================
+     6. DE REST VAN DE PAGINA
+     ============================================================ */
+  // ticker die zichzelf verveelt
+  const TICKER = [
+    "QuinnAI 5.2 is live. Quinn zelf is dat niet.",
+    "Nieuw: het model geeft nu sneller ongelijk toe. Nee, grapje.",
+    "Storing opgelost door de pagina te verversen. Zoals altijd.",
+    "Onderzoek toont aan: 4 op de 5 antwoorden zijn een antwoord.",
+    "We hebben nu een privacybeleid. Het bestaat uit dit zinnetje.",
+    "Serverkosten deze maand: €0,00. Dank voor jullie vertrouwen."
+  ];
+  let ti = 0;
+  setInterval(() => {
+    ti = (ti + 1) % TICKER.length;
+    const el = $('#ticker-text');
+    el.style.opacity = 0;
+    setTimeout(() => { el.textContent = TICKER[ti]; el.style.opacity = .85; }, 260);
+  }, 5200);
+  $('#ticker-text').style.transition = 'opacity .26s';
+
+  // benchmarks + tellers animeren zodra ze in beeld komen
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(!e.isIntersecting) return;
+      e.target.querySelectorAll('.fill').forEach((f,i) => {
+        setTimeout(() => { f.style.width = f.dataset.w + '%'; }, i*120);
+      });
+      e.target.querySelectorAll('[data-count]').forEach(el => {
+        const doel = parseFloat(el.dataset.count), suffix = el.dataset.suffix || '';
+        const decimalen = (el.dataset.count.split('.')[1] || '').length;
+        let start = null;
+        const duur = 1100;
+        const stap = ts => {
+          if(!start) start = ts;
+          const p = Math.min((ts - start)/duur, 1);
+          const v = doel * (1 - Math.pow(1-p, 3));
+          el.textContent = v.toFixed(decimalen).replace('.', ',') + suffix;
+          if(p < 1) requestAnimationFrame(stap);
+        };
+        requestAnimationFrame(stap);
+      });
+      io.unobserve(e.target);
+    });
+  }, {threshold:.3});
+  document.querySelectorAll('#benchmarks .wrap').forEach(el => io.observe(el));
+
+  // faq open/dicht
+  document.querySelectorAll('.qa button').forEach(b => {
+    b.addEventListener('click', () => {
+      const qa = b.parentElement;
+      const open = qa.hasAttribute('open');
+      document.querySelectorAll('.qa').forEach(o => o.removeAttribute('open'));
+      if(!open) qa.setAttribute('open','');
+    });
+  });
+
+  // prijsknoppen sturen hun grap naar de chat
+  document.querySelectorAll('[data-say]').forEach(b => {
+    b.addEventListener('click', () => {
+      document.getElementById('chat').scrollIntoView({block:'center'});
+      setTimeout(() => {
+        const x = rij('ai','Q');
+        typ(x, b.dataset.say);
+        naarBeneden();
+      }, 500);
+    });
+  });
+
+  // kleine easter egg: konami
+  const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let ki = 0;
+  window.addEventListener('keydown', e => {
+    ki = (e.key === KONAMI[ki]) ? ki+1 : 0;
+    if(ki === KONAMI.length){
+      ki = 0;
+      document.documentElement.style.setProperty('--butter','#ff7d6b');
+      $('#ticker-text').textContent = "Godmodus actief. Er verandert niets, maar het is nu oranje.";
+      const x = rij('ai','Q');
+      typ(x, "Je hebt de Konami-code ingetypt op een nepwebsite. Ik weet niet of ik onder de indruk ben of bezorgd.");
+      naarBeneden();
+    }
+  });
+})();
+</script>
+</body>
+</html>
