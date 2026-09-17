@@ -128,7 +128,7 @@
   .chip:hover{color:var(--paper);border-color:var(--line)}
   .compose{display:flex;gap:10px;padding:14px;border-top:1px solid var(--line-soft);background:rgba(0,0,0,.25)}
   .compose input{
-    flex:1;font:inherit;font-size:15px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+    flex:1;min-width:0;font:inherit;font-size:15px;background:rgba(255,255,255,.05);border:1px solid var(--line);
     border-radius:13px;padding:13px 16px;color:var(--paper);
   }
   .compose input::placeholder{color:#55626f}
@@ -190,13 +190,60 @@
   .foot-real{margin-top:26px;padding-top:22px;border-top:1px solid var(--line-soft);color:#7b8a99;max-width:64ch}
 
   @media (max-width:760px){
+    .wrap{padding-left:16px;padding-right:16px}
+    .ticker{padding:8px 16px;font-size:11.5px;line-height:1.35}
+    .nav-in{padding:10px 16px;gap:10px}
+    .brand{font-size:17px;gap:8px}
     .nav-links{display:none}
-    header{padding:60px 0 30px}
-    section{padding:70px 0}
-    .bubble{max-width:84%}
+    .nav-in > .btn{margin-left:auto;padding:9px 12px;font-size:13px;white-space:nowrap}
+    header{padding:52px 0 28px}
+    .pill{max-width:100%;margin-bottom:20px;padding:6px 11px;font-size:11.5px}
+    h1{font-size:clamp(38px,12vw,58px)}
+    .lede{font-size:16px;margin-top:18px}
+    .hero-cta{margin-top:22px}
+    .hero-cta .btn{flex:1;min-width:140px}
+    .trust{margin-top:40px;gap:18px;font-size:12px}
+    section{padding:64px 0}
+    .sec-head{margin-bottom:30px}
+    .sec-head p{font-size:16px}
+    .chat-shell{margin-top:28px;border-radius:20px}
+    .chat-top{padding:12px 13px;gap:9px}
+    .chat-top .label{font-size:11.5px}
+    select.model{max-width:calc(100% - 82px);font-size:12px;padding:7px 8px}
+    .chat-top .right{width:100%;margin-left:0;padding-top:9px;border-top:1px solid var(--line-soft)}
+    .slider-wrap{width:100%;font-size:12px}
+    input[type=range]{flex:1;width:auto;min-width:0}
+    .log{height:min(58vh,480px);min-height:330px;padding:18px 13px;gap:16px}
+    .row{gap:9px}
+    .av{width:30px;height:30px;border-radius:9px}
+    .bubble{max-width:calc(100% - 39px);padding:11px 13px;font-size:14px;overflow-wrap:anywhere}
+    .chips{padding:0 13px 12px;gap:7px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+    .chips::-webkit-scrollbar{display:none}
+    .chip{flex:none;min-height:38px;padding:7px 11px}
+    .compose{padding:10px;gap:8px}
+    .compose input{min-height:46px;padding:11px 12px;font-size:16px}
+    .send{min-width:70px;min-height:46px;padding:0 14px}
+    .disclaimer{padding:0 10px 12px;font-size:11px}
     .bar-row{grid-template-columns:1fr;gap:6px}
     .bar-val{text-align:left}
-    .log{height:60vh}
+    .stats{grid-template-columns:1fr 1fr;margin-top:40px}
+    .stat{padding:20px 16px}
+    .stat .n{font-size:31px}
+    .stat .k{font-size:12.5px}
+    .tiers{grid-template-columns:1fr}
+    .tier{padding:24px 20px}
+    .qa button{font-size:16px;padding:19px 34px 19px 0}
+  }
+  @media (max-width:390px){
+    .nav-in > .btn{font-size:12px;padding:8px 9px}
+    .mark{width:24px;height:24px}
+    .brand{font-size:16px}
+    .hero-cta{flex-direction:column}
+    .hero-cta .btn{width:100%}
+    .stats{grid-template-columns:1fr}
+    .chat-top .label{display:none}
+    select.model{max-width:calc(100% - 35px)}
+    .bubble{max-width:calc(100% - 37px)}
   }
   @media (prefers-reduced-motion:reduce){
     *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
