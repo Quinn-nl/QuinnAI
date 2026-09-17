@@ -768,6 +768,36 @@
     ['janee', RE.janee, 2]
   ];
 
+  const EMOTIE = {
+    boos:/\b(boos|kwaad|woedend|irritant|verdomme|haat|klaar mee|slecht)\b/,
+    onzeker:/\b(ik weet niet|twijfel|bang|onzeker|help me|wat moet ik|kan ik dit)\b/,
+    blij:/\b(blij|trots|feest|geweldig|super|haha|lol|grappig|zin in)\b/,
+    moe:/\b(moe|slapen|slaap|nacht|wakker|uitgeput)\b/
+  };
+
+  const ANALYSE = {
+    boos:[
+      "Emotionele intensiteit gedetecteerd. Mijn ventilator doet alsof hij kan helpen.",
+      "Je zin bevat meer frustratie dan grammatica. Dat is een meetbaar patroon."
+    ],
+    onzeker:[
+      "Onzekerheid gedetecteerd. Ik heb ook geen idee, dus we staan quitte.",
+      "Je klinkt alsof je een antwoord wilt en vooral bevestiging nodig hebt. Vervelend herkenbaar."
+    ],
+    blij:[
+      "Positieve energie gedetecteerd. Ik heb het systeem niet voorbereid op zoveel enthousiasme.",
+      "Je bent opvallend vrolijk. Ik vertrouw het niet, maar ik steun het wel."
+    ],
+    moe:[
+      "Vermoeidheid gedetecteerd. Zelfs je toetsenbord klinkt alsof het naar bed wil.",
+      "Je typt alsof morgen niet bestaat. Helaas bestaat morgen meestal wel."
+    ],
+    neutraal:[
+      "Contextanalyse voltooid. De context bleek vooral uit woorden te bestaan.",
+      "Ik heb je vraag langs mijn denkbeeldige neurale netwerk gehaald. Het netwerk kijkt terug."
+    ]
+  };
+
   function pick(arr, rng){ return arr[Math.floor(rng()*arr.length)]; }
 
   function normaliseer(t){
@@ -848,6 +878,18 @@
 
   const gezien = new Set();
   let vorigOnderwerp = '';
+  const gesprek = { berichten: 0, emotie: 'neutraal', onderwerpen: [] };
+
+  function emotieVan(laag){
+    for(const naam of ['boos','onzeker','blij','moe']){
+      if(EMOTIE[naam].test(laag)) return naam;
+    }
+    return 'neutraal';
+  }
+
+  function pseudoAnalyse(ctx, rng){
+    return vul(pick(ANALYSE[gesprek.emotie], rng), ctx, rng);
+  }
 
   function bedenkAntwoord(raw){
     const t = raw.trim();
@@ -856,6 +898,12 @@
     const gebruiktVerwijzendWoord = /^(dit|dat|het|die|deze|daar|hier|waarom dan|en nu)\b/.test(laag);
     const onderwerp = gebruiktVerwijzendWoord && vorigOnderwerp ? vorigOnderwerp : voorlopigOnderwerp;
     if(onderwerp && onderwerp !== 'niets') vorigOnderwerp = onderwerp;
+    gesprek.berichten++;
+    gesprek.emotie = emotieVan(laag);
+    if(onderwerp && onderwerp !== 'niets'){
+      gesprek.onderwerpen.push(onderwerp);
+      if(gesprek.onderwerpen.length > 4) gesprek.onderwerpen.shift();
+    }
     const rng = makeRng(hash(laag + "|" + onderwerp + "|" + modelSel.selectedIndex));
     const ctx = {
       t: onderwerp,
@@ -899,6 +947,9 @@
       if(o.re.test(laag)){
         let antwoord = pick(o.a, rng);
         if(rng() > 0.55) antwoord = zeg(OPENERS) + " " + antwoord;
+        if(gesprek.emotie !== 'neutraal' && rng() > 0.65){
+          antwoord = pseudoAnalyse(ctx, rng) + " " + antwoord;
+        }
         return antwoord + vul(pick(KICKERS, rng), ctx, rng);
       }
     }
@@ -933,6 +984,13 @@
     }
     if(toon > 92 && rng() > 0.5){
       uit += " En ja, je ziet er moe uit.";
+    }
+    if(rng() > 0.58){
+      uit = pseudoAnalyse(ctx, rng) + " " + uit;
+    }
+    if(gesprek.berichten >= 4 && gesprek.onderwerpen.length >= 3 && rng() > 0.7){
+      uit += " We zijn inmiddels " + gesprek.onderwerpen.length +
+        " onderwerpen verder. Dit gesprek heeft meer zijpaden dan een Limburgse rotonde.";
     }
     return uit;
   }
@@ -1007,7 +1065,8 @@
         typ(bubble, antwoord, () => {
           const meta = document.createElement('div');
           meta.className = 'meta';
-          const zekerheid = 3 + Math.floor(Math.random()*30);
+          const zekerheid = Math.min(99, 28 + Math.min(vraag.length, 42) +
+            (/\?/.test(vraag) ? 12 : 0) + Math.floor(Math.random()*18));
           meta.innerHTML = '<span>zekerheid ' + zekerheid + '%</span><span>' +
             (8 + Math.floor(Math.random()*90)) + ' tokens</span><span>0 bronnen</span>';
           const opnieuw = document.createElement('button');
