@@ -655,6 +655,15 @@
       "Er staat file. Dat hoef ik niet te controleren, dat is gewoon zo.",
       "Het OV werkt uitstekend, zolang je nergens heen hoeft."
     ]},
+    { re:/\b(limburg|limburger|limburgs|vlaai|vlaaien|maastricht|venlo|roermond|sittard|heerlen|geleen|weert|heuvelland|carnaval|vastelaovend|vastelaovond|alaaf|dialect)\b/, a:[
+      "Limburg: waar zelfs een taart een eigen provincie-identiteit heeft. Geef mij maar een stuk vlaai.",
+      "Ik vertrouw iedereen uit Limburg automatisch iets meer zodra er vlaai op tafel staat.",
+      "Limburgers zeggen dat ze rustig zijn en organiseren daarna drie dagen carnaval. Sterke strategie.",
+      "Vlaai is geen gebak, het is cultureel erfgoed met een korst. Discussie gesloten.",
+      "Maastricht heeft sfeer, heuvels en mensen die je verbeteren als je 'vlaai' verkeerd uitspreekt.",
+      "Alaaf. Ik weet niet precies wat het betekent, maar ik zeg het met overtuiging en een volle maag.",
+      "Het Limburgse dialect klinkt alsof Nederlands een gezellige omweg heeft genomen."
+    ]},
     { re:/\b(nederland|eindhoven|brabant|amsterdam|helmond|tilburg|dorp|stad)\b/, a:[
       "Prima plek. Vlakke grond, veel wind, matige koffie.",
       "Daar ben ik ooit geweest in de zin dat ik het woord ken.",
@@ -748,7 +757,36 @@
     naam:/\b(mijn naam|hoe heet ik|wie ben ik)\b/
   };
 
+  const INTENTEN = [
+    ['waarom', RE.waarom, 5],
+    ['wanneer', RE.wanneer, 5],
+    ['wie', RE.wie, 5],
+    ['waar', RE.waar, 5],
+    ['hoe', RE.hoe, 4],
+    ['wat', RE.wat, 4],
+    ['opdracht', RE.opdracht, 3],
+    ['janee', RE.janee, 2]
+  ];
+
   function pick(arr, rng){ return arr[Math.floor(rng()*arr.length)]; }
+
+  function normaliseer(t){
+    return t
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase().replace(/\s+/g,' ').trim();
+  }
+
+  function intentVan(laag, tekst){
+    let beste = null;
+    let hoogste = /\?/.test(tekst) ? 1 : 0;
+    for(const [naam, patroon, gewicht] of INTENTEN){
+      if(patroon.test(laag) && gewicht > hoogste){
+        beste = naam;
+        hoogste = gewicht;
+      }
+    }
+    return beste;
+  }
 
   function vul(tekst, ctx, rng){
     return tekst
@@ -761,23 +799,64 @@
   }
 
   function rekenSom(raw){
-    const s = raw.replace(/,/g,'.').replace(/x/gi,'*').replace(/:/g,'/').replace(/[^0-9+\-*/(). ]/g,'').trim();
-    if(!s || !/[0-9]/.test(s) || !/[+\-*/]/.test(s)) return null;
-    if(!/^[0-9+\-*/(). ]+$/.test(s)) return null;
+    const s = raw.replace(/,/g,'.').replace(/x/gi,'*').replace(/:/g,'/').trim();
+    if(!s || !/[0-9]/.test(s) || !/[+\-*/]/.test(s) || !/^[0-9+\-*/().\s]+$/.test(s)) return null;
+
+    const tokens = s.match(/(?:\d+(?:\.\d*)?|\.\d+|[()+\-*/])/g);
+    if(!tokens || tokens.join('') !== s.replace(/\s/g,'')) return null;
+    let i = 0;
+    const peek = () => tokens[i];
+    const eat = token => peek() === token && (i++, true);
+    const primary = () => {
+      if(eat('(')){
+        const value = expression();
+        if(!eat(')')) throw new Error('haakjes');
+        return value;
+      }
+      if(eat('+')) return primary();
+      if(eat('-')) return -primary();
+      const value = Number(tokens[i++]);
+      if(!Number.isFinite(value)) throw new Error('getal');
+      return value;
+    };
+    const product = () => {
+      let value = primary();
+      while(peek() === '*' || peek() === '/'){
+        const operator = tokens[i++];
+        const right = primary();
+        if(operator === '/' && right === 0) throw new Error('delen door nul');
+        value = operator === '*' ? value * right : value / right;
+      }
+      return value;
+    };
+    const expression = () => {
+      let value = product();
+      while(peek() === '+' || peek() === '-'){
+        const operator = tokens[i++];
+        const right = product();
+        value = operator === '+' ? value + right : value - right;
+      }
+      return value;
+    };
+
     try{
-      const uitkomst = Function('"use strict";return (' + s + ')')();
-      if(typeof uitkomst === 'number' && isFinite(uitkomst)) return Math.round(uitkomst*1000)/1000;
-    }catch(e){}
+      const uitkomst = expression();
+      if(i === tokens.length && Number.isFinite(uitkomst)) return Math.round(uitkomst*1000)/1000;
+    }catch(e){ /* Ongeldige sommen vallen terug op een gewone reactie. */ }
     return null;
   }
 
   const gezien = new Set();
+  let vorigOnderwerp = '';
 
   function bedenkAntwoord(raw){
     const t = raw.trim();
-    const laag = t.toLowerCase();
-    const rng = makeRng(hash(laag + "|" + modelSel.selectedIndex));
-    const onderwerp = topicOf(t);
+    const laag = normaliseer(t);
+    const voorlopigOnderwerp = topicOf(t);
+    const gebruiktVerwijzendWoord = /^(dit|dat|het|die|deze|daar|hier|waarom dan|en nu)\b/.test(laag);
+    const onderwerp = gebruiktVerwijzendWoord && vorigOnderwerp ? vorigOnderwerp : voorlopigOnderwerp;
+    if(onderwerp && onderwerp !== 'niets') vorigOnderwerp = onderwerp;
+    const rng = makeRng(hash(laag + "|" + onderwerp + "|" + modelSel.selectedIndex));
     const ctx = {
       t: onderwerp,
       t2: topic2Of(t, onderwerp),
@@ -828,16 +907,18 @@
 
     // -- de generieke motor: kies een vorm op basis van de zin --
     let kern;
-    if(RE.opdracht.test(laag)) kern = zeg(OPDRACHT);
-    else if(RE.waarom.test(laag)) kern = zeg(VRAAG_WAAROM);
-    else if(RE.wanneer.test(laag)) kern = zeg(VRAAG_WANNEER);
-    else if(RE.waar.test(laag)) kern = zeg(VRAAG_WAAR);
-    else if(RE.wie.test(laag)) kern = zeg(VRAAG_WIE);
-    else if(RE.hoe.test(laag)) kern = zeg(VRAAG_HOE);
-    else if(RE.wat.test(laag)) kern = zeg(VRAAG_WAT);
-    else if(RE.janee.test(laag) || /\?$/.test(t)) kern = zeg(JA_NEE);
-    else if(/\?/.test(t)) kern = zeg(ALGEMEEN);
-    else kern = rng() > 0.45 ? zeg(REACTIE_STELLING) : zeg(ALGEMEEN);
+    switch(intentVan(laag, t)){
+      case 'opdracht': kern = zeg(OPDRACHT); break;
+      case 'waarom': kern = zeg(VRAAG_WAAROM); break;
+      case 'wanneer': kern = zeg(VRAAG_WANNEER); break;
+      case 'waar': kern = zeg(VRAAG_WAAR); break;
+      case 'wie': kern = zeg(VRAAG_WIE); break;
+      case 'hoe': kern = zeg(VRAAG_HOE); break;
+      case 'wat': kern = zeg(VRAAG_WAT); break;
+      case 'janee': kern = zeg(JA_NEE); break;
+      default: kern = /\?/.test(t) ? zeg(ALGEMEEN) :
+        (rng() > 0.45 ? zeg(REACTIE_STELLING) : zeg(ALGEMEEN));
+    }
 
     let uit = "";
     if(rng() > 0.62) uit += zeg(OPENERS) + " ";
@@ -961,7 +1042,7 @@
 
     setTimeout(() => {
       aiBericht(t);
-      gezien.add(t.toLowerCase());
+      gezien.add(normaliseer(t));
       if(teller === 6){
         setTimeout(() => {
           const x = rij('ai','Q');
