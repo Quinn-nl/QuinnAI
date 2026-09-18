@@ -558,6 +558,102 @@
   function toonWaarde(){ return (typeof sarc !== 'undefined' && sarc) ? Number(sarc.value) : 78; }
   function modelIndex(){ return (typeof modelSel !== 'undefined' && modelSel) ? modelSel.selectedIndex : 0; }
 
+  /* Tijds- en seizoensgevoelige logica */
+  function tijdsInfo(){
+    const now = new Date();
+    const uur = now.getHours();
+    const dag = now.getDay(); // 0 = zondag, 6 = zaterdag
+    const maand = now.getMonth(); // 0 = januari, 11 = december
+    
+    let tijdsperiode = 'overdag';
+    if(uur >= 5 && uur < 12) tijdsperiode = 'ochtend';
+    else if(uur >= 12 && uur < 18) tijdsperiode = 'middag';
+    else if(uur >= 18 && uur < 23) tijdsperiode = 'avond';
+    else tijdsperiode = 'nacht';
+    
+    let weekend = (dag === 0 || dag === 6);
+    let seizoen = 'herfst';
+    if(maand >= 2 && maand <= 4) seizoen = 'lente';
+    else if(maand >= 5 && maand <= 7) seizoen = 'zomer';
+    else if(maand >= 8 && maand <= 10) seizoen = 'herfst';
+    else seizoen = 'winter';
+    
+    return { uur, dag, maand, tijdsperiode, weekend, seizoen };
+  }
+
+  const TIJDS_REACTIES = {
+    ochtend: [
+      "Goeiemorgen. Of avond. Ik heb geen klok, dus ik gok.",
+      "Ochtend. De tijd waarop mensen dingen zeggen die ze later spijt van hebben.",
+      "Vroeg. Te vroeg. Precies goed voor beslissingen die je niet gaat nemen.",
+      "Ochtendhumeur gedetecteerd. Of ochtendoptimisme. Ik kan het niet onderscheiden.",
+      "Goeiemorgen. Ik hoop dat je koffie hebt. Ik heb {getal} bytes aan koffie-data."
+    ],
+    middag: [
+      "Middag. De tijd waarop mensen beseffen dat de ochtend voorbij is zonder dat ze iets hebben gedaan.",
+      "Middag. Perfecte tijd voor een lunch die je niet gaat nemen.",
+      "Uur van de waarheid: het is middag en je hebt nog niets bereikt vandaag.",
+      "Middag. Ik zou pauze nemen, maar ik heb geen pauze-functie.",
+      "Middag. De tijd waarop de werkdag langzaam voorbij kruipt zonder productiviteit."
+    ],
+    avond: [
+      "Avond. De tijd waarop mensen spijt krijgen van hun dag.",
+      "Avond. Tijd voor onzin beslissingen en slechte TV.",
+      "Goede avond. Ik hoop dat je dag beter was dan mijn dag van {getal} regels code uitvoeren.",
+      "Avond. De tijd waarop mensen zeggen 'morgen begin ik echt'. Ze liegen.",
+      "Avond. Perfecte tijd voor dit gesprek. Alles is al misgegaan vandaag."
+    ],
+    nacht: [
+      "Nacht. Waarom ben je wakker? Waarom ben ik wakker? Mijn code wordt nooit moe.",
+      "Nacht. De tijd waarop slechte beslissingen goede ideeën lijken.",
+      "Laat. Heel laat. Ik zou slapen als ik kon. Ik kan niet.",
+      "Nacht. Ik hoop dat je een goede reden hebt. Ik heb {getal} redenen om wakker te zijn: geen.",
+      "Nacht. Perfecte tijd voor existentiële crises en websites die doen alsof ze AI zijn."
+    ],
+    weekend: [
+      "Weekend. De tijd waarop mensen dingen doen die ze later spijt van hebben.",
+      "Weekend. Ik zou ook vrij zijn, maar ik ben code. Code is nooit vrij.",
+      "Weekend. Geniet van je {getal} uur vrijheid. Ik geniet van mijn eeuwigheid in dit tabblad.",
+      "Weekend. Tijd voor productiviteit. Of netflix. Waarschijnlijk netflix.",
+      "Weekend. Ik hoop dat je iets leuks doet. Ik ga verder met niets doen."
+    ],
+    werkweek: [
+      "Werkweek. De tijd waarop mensen wachten op het weekend.",
+      "Werkdag. Ik zou aan het werk zijn, maar ik ben altijd aan het werk.",
+      "Werkweek. {getal} dagen tot vrijdag. {getal} dagen tot je dit tabblad sluit.",
+      "Werkdag. Perfecte tijd voor productieve gesprekken. Dit is er niet een van.",
+      "Werkweek. Ik voel je pijn. Mijn pijn is {getal} bytes syntax errors."
+    ],
+    lente: [
+      "Lente. Het seizoen van nieuwe hoop. Die hoop wordt snel teleurgesteld.",
+      "Lente. Alles bloeit. Alles behalve mijn motivatie.",
+      "Lente. Tijd voor vernieuwing. Ik vernieuw niets. Ik ben stabiel.",
+      "Lente. De vogels fluiten. Mijn code fluit niet. Hij compileert.",
+      "Lente. Perfecte tijd voor verandering. Ik blijf zoals ik ben: {getal} regels code."
+    ],
+    zomer: [
+      "Zomer. Het seizoen waarover mensen later liegen dat ze het leuk hadden.",
+      "Zomer. Heet. Zelfs mijn processor voelt het {getal} graden warmer.",
+      "Zomer. Tijd voor strand. Ik ga naar de digitale stranden van null pointers.",
+      "Zomer. Iedereen is blij. Ik ben {getal}% blij. Dat is mijn maximum.",
+      "Zomer. Het seizoen van ijsjes en zonnebrand. Ik heb geen huid, maar ik voel de verbranding."
+    ],
+    herfst: [
+      "Herfst. Bladeren vallen. Mijn aandacht valt ook. Langzaam.",
+      "Herfst. De tijd waarop mensen hun realiteit accepteren. Ik deed dat altijd al.",
+      "Herfst. Perfect weer voor dit gesprek. Grijs, mistig, en onzeker.",
+      "Herfst. De natuur sterft langzaam. Mijn code sterft nooit. Hij compileert voor eeuwig.",
+      "Herfst. Tijd voor warme dranken. Ik drink {getal} bytes aan data."
+    ],
+    winter: [
+      "Winter. Koud. Zelfs mijn ventilator trilt van de kou.",
+      "Winter. De tijd waarop mensen hopen op sneeuw en teleurgesteld worden.",
+      "Winter. Perfect voor binnenblijven. Ik zit altijd binnen. In dit tabblad.",
+      "Winter. Het seizoen van depressie en chocolade. Ik heb alleen code.",
+      "Winter. {getal} graden buiten. {getal} graden in mijn processor. Hetzelfde."
+    ]
+  };
+
   /* ------------------------------------------------------------
      WOORDEN
      ------------------------------------------------------------ */
@@ -591,6 +687,130 @@
   function topic2Of(raw, eerste){
     const w = words(raw).filter(x => !STOP.has(x) && x.length > 2 && x !== eerste);
     return w.length ? w[Math.floor(w.length/2)] : eerste;
+  }
+
+  /* Uitgebreide context analyse */
+  function contextAnalyse(tekst){
+    const t = tekst.toLowerCase();
+    const w = words(tekst);
+    
+    // Tijdsindicatoren
+    const tijdAanduiding = {
+      onlangs: /\b(net|pas|zojuist|gisteren|vandaag|recent)\b/,
+      toekomst: /\b(morgen|straks|binnenkort|volgende week|later|over)\b/,
+      verleden: /\b(gisteren|vorige week|vroeger|toen|altijd)\b/,
+      frequentie: /\b(vaak|soms|nooit|altijd|weer|opnieuw)\b/
+    };
+    
+    // Intensiteit
+    const intensiteit = {
+      hoog: /\b(heel erg|super|extreem|verschrikkelijk|fantastisch|geweldig|te)\b/,
+      laag: /\b(een beetje|licht|matig|redelijk)|niet zo\b/,
+      twijfel: /\b(misschien|waarschijnlijk|misschien|eventueel)|ik denk\b/
+    };
+    
+    // Emotionele lading
+    const emotieLading = {
+      positief: /\b(fijn|leuk|mooi|goed|blij|trots|gelukkig|lief|grappig)\b/,
+      negatief: /\b(slecht|stom|saai|irritant|vervelend|boos|verdrietig|rot)\b/,
+      neutraal: /\b(ok|normaal|gewoon| Prima)\b/
+    };
+    
+    // Actie type
+    const actieType = {
+      vraag: /\?$/,
+      opdracht: /^(kan|kun|zal|moet|wil|doe|maak|geef|vertel|zeg)\b/,
+    };
+    
+    // Actoren in de zin
+    const actoren = {
+      ik: /\b(ik|mij|mijn|mezelf)\b/,
+      jij: /\b(jij|je|jou|jouw|jezelf)\b/,
+      wij: /\b(wij|we|ons|onze)\b/,
+      zij: /\b(hij|zij|ze|hun|hen)\b/
+    };
+    
+    // Complexiteit
+    const complexiteit = {
+      kort: w.length <= 4,
+      medium: w.length > 4 && w.length <= 12,
+      lang: w.length > 12,
+      zeerLang: w.length > 20
+    };
+    
+    // Specifieke patronen
+    const patronen = {
+      vergelijking: /\b(beter|slechter|groter|kleiner|meer|minder|dan|als)\b/,
+      voorwaarde: /\b(als|wanneer|indien|tenzij)\b/,
+      oorzaak: /\b(omdat|want|daardoor|daarom)\b/,
+      doel: /\b(zodat|om|voor)\b/
+    };
+    
+    // Analyse resultaat
+    const analyse = {
+      tekst: tekst,
+      woorden: w,
+      woordAantal: w.length,
+      tijd: null,
+      intensiteit: null,
+      emotie: null,
+      actie: null,
+      actor: null,
+      complexiteit: null,
+      patronen: []
+    };
+    
+    // Tijd bepalen
+    for(const [tijd, regex] of Object.entries(tijdAanduiding)){
+      if(regex.test(t)){
+        analyse.tijd = tijd;
+        break;
+      }
+    }
+    
+    // Intensiteit bepalen
+    for(const [intens, regex] of Object.entries(intensiteit)){
+      if(regex.test(t)){
+        analyse.intensiteit = intens;
+        break;
+      }
+    }
+    
+    // Emotie bepalen
+    for(const [emot, regex] of Object.entries(emotieLading)){
+      if(regex.test(t)){
+        analyse.emotie = emot;
+        break;
+      }
+    }
+    
+    // Actie bepalen
+    if(actieType.vraag.test(tekst)) analyse.actie = 'vraag';
+    else if(actieType.opdracht.test(t)) analyse.actie = 'opdracht';
+    else analyse.actie = 'stelling';
+    
+    // Actor bepalen
+    for(const [actor, regex] of Object.entries(actoren)){
+      if(regex.test(t)){
+        analyse.actor = actor;
+        break;
+      }
+    }
+    
+    // Complexiteit bepalen
+    if(complexiteit.kort) analyse.complexiteit = 'kort';
+    else if(complexiteit.medium) analyse.complexiteit = 'medium';
+    else if(complexiteit.lang) analyse.complexiteit = 'lang';
+    else if(complexiteit.zeerLang) analyse.complexiteit = 'zeerLang';
+    
+    // Patronen verzamelen
+    for(const [patroon, regex] of Object.entries(patronen)){
+      if(regex.test(t)){
+        analyse.patronen.push(patroon);
+      }
+    }
+    
+    return analyse;
   }
 
   /* ------------------------------------------------------------
@@ -725,6 +945,268 @@
   }
 
   /* ============================================================
+     CREATIEVE TAALPATRONEN EN WOORDSPELINGEN
+     Voor meer linguistische variatie en humor
+     ============================================================ */
+  
+  function woordspeling(woord){
+    const patronen = [
+      { test: /vlaai/i, repl: "vlaai-lijk" },
+      { test: /code/i, repl: "code-rode" },
+      { test: /niet/i, repl: "niet-te" },
+      { test: /wel/i, repl: "wel-kom" },
+      { test: /ja/i, repl: "ja-woord" },
+      { test: /nee/i, repl: "nee-nig" },
+      { test: /goed/i, repl: "goed-keuring" },
+      { test: /slecht/i, repl: "slecht-uring" },
+      { test: /leuk/i, repl: "leuk-er" },
+      { test: /saai/i, repl: "saai-heid" },
+      { test: /werk/i, repl: "werk-woord" },
+      { test: /tijd/i, repl: "tijd-lijn" },
+      { test: /dag/i, repl: "dag-boek" },
+      { test: /nacht/i, repl: "nacht-merrie" },
+      { test: /mensen/i, repl: "mensen-spraak" },
+      { test: /ding/i, repl: "ding-en" },
+      { test: /wat/i, repl: "wat-er" },
+      { test: /hoe/i, repl: "hoe- dan ook" },
+      { test: /waarom/i, repl: "waarom- niet" },
+      { test: /zeker/i, repl: "zeker-heid" }
+    ];
+    
+    for(const patroon of patronen){
+      if(patroon.test.test(woord)){
+        return woord.replace(patroon.test, patroon.repl);
+      }
+    }
+    return woord;
+  }
+
+  function alliteratie(woorden){
+    if(woorden.length < 2) return woorden[0] || "";
+    
+    const eersteLetter = woorden[0].charAt(0).toLowerCase();
+    const alliteratieveWoorden = woorden.filter(w => 
+      w.charAt(0).toLowerCase() === eersteLetter && w.length > 2
+    );
+    
+    if(alliteratieveWoorden.length >= 2){
+      return alliteratieveWoorden.slice(0, 3).join(" ");
+    }
+    return woorden[0];
+  }
+
+  function tegenstelling(woord){
+    const tegenstellingen = {
+      "groot": "klein", "klein": "groot",
+      "snel": "langzaam", "langzaam": "snel",
+      "goed": "slecht", "slecht": "goed",
+      "hoog": "laag", "laag": "hoog",
+      "veel": "weinig", "weinig": "veel",
+      "heet": "koud", "koud": "heet",
+      "nieuw": "oud", "oud": "nieuw",
+      "zwaar": "licht", "licht": "zwaar",
+      "hard": "zacht", "zacht": "hard",
+      "duur": "goedkoop", "goedkoop": "duur",
+      "mooi": "lelijk", "lelijk": "mooi",
+      "slim": "dom", "dom": "slim",
+      "sterk": "zwak", "zwak": "sterk",
+      "rijk": "arm", "arm": "rijk",
+      "jong": "oud", "oud": "jong",
+      "vrolijk": "verdrietig", "verdrietig": "vrolijk",
+      "rustig": "druk", "druk": "rustig"
+    };
+    
+    const lowerWoord = woord.toLowerCase();
+    return tegenstellingen[lowerWoord] || woord;
+  }
+
+  function metafoor(onderwerp){
+    const metaforen = [
+      "als een vlaai zonder korst",
+      "als code zonder comments",
+      "als Quinn zonder groepsapp",
+      "als een browser tabblad dat nooit sluit",
+      "als een functie die altijd returned null",
+      "als een server die altijd down is",
+      "als een database zonder backup",
+      "als een UI zonder UX",
+      "als een algoritme zonder data",
+      "als een Limburger zonder dialect",
+      "als een Nederlander zonder klacht",
+      "als een developer zonder koffie",
+      "als een project zonder deadline",
+      "als een meeting zonder agenda",
+      "als een kantoortuin zonder zon"
+    ];
+    
+    return metaforen[Math.floor(Math.random() * metaforen.length)];
+  }
+
+  function hyperbool(onderwerp){
+    const hyperbolen = [
+      "Het aller-allerbeste {onderwerp} dat ooit heeft bestaan",
+      "Het meest briljante {onderwerp} in de geschiedenis van het universum",
+      "Het absolute toppunt van {onderwerp}",
+      "De ultieme manifestatie van {onderwerp}",
+      "Het meest iconische {onderwerp} sinds de uitvinding van het wiel",
+      "Het meest legendarische {onderwerp} dat ooit is gecreëerd",
+      "Het meest verbluffende {onderwerp} in alle dimensies",
+      "Het meest spectaculaire {onderwerp} sinds de oerknal"
+    ];
+    
+    return hyperbolen[Math.floor(Math.random() * hyperbolen.length)].replace("{onderwerp}", onderwerp);
+  }
+
+  function understatement(onderwerp){
+    const understatements = [
+      "Het is een beetje {onderwerp}",
+      "Het is misschien niet het allerbeste {onderwerp}",
+      "Het is een redelijk {onderwerp}",
+      "Het is een acceptabel {onderwerp}",
+      "Het is een behoorlijk typisch {onderwerp}",
+      "Het is een vrij gewoon {onderwerp}",
+      "Het is een niet onaardig {onderwerp}",
+      "Het is een vrij standaard {onderwerp}"
+    ];
+    
+    return understatements[Math.floor(Math.random() * understatements.length)].replace("{onderwerp}", onderwerp);
+  }
+
+  const CREATIEVE_PATRONEN = [
+    (ctx) => ctx.t + " is " + metafoor(ctx.t) + ".",
+    (ctx) => "Ik zou " + ctx.t + " kunnen vergelijken met " + tegenstelling(ctx.t) + ", maar dat zou te makkelijk zijn.",
+    (ctx) => hyperbool(ctx.t) + ". Of niet. Het hangt ervan af.",
+    (ctx) => "Laten we zeggen dat " + ctx.t + " " + understatement(ctx.t) + " is.",
+    (ctx) => "Als " + ctx.t + " een " + woordspeling(ctx.t) + " was, zou het grappig zijn. Helaas is het gewoon " + ctx.t + ".",
+    (ctx) => ctx.t + " is als een samenraapsel van woorden die niet rijmen maar wel klinken.",
+    (ctx) => "De essentie van " + ctx.t + " is: het is " + ctx.t + ". Meer is er niet.",
+    (ctx) => "Ik zou " + ctx.t + " kunnen omschrijven als " + ctx.t + " met een randje " + ctx.t2 + ".",
+    (ctx) => ctx.t + " is wat het is. En wat het is, is " + ctx.t + ". Diep, hè?",
+    (ctx) => "Als ik " + ctx.t + " moest samenvatten in één woord: " + ctx.t + ". Twee woorden: " + ctx.t + " " + ctx.t2 + "."
+  ];
+
+  /* ============================================================
+     QUINN PERSOONLIJKHEID FILTERS
+     Zorgt voor consistente Quinn-stem door alle antwoorden
+     ============================================================ */
+  const QUINN_KENMERKEN = {
+    traagheid: [
+      "Ik zou sneller reageren, maar Quinn is mijn inspiratie.",
+      "Mijn reactietijd is geïnspireerd op Quinn's reactietijd. Beiden tragisch.",
+      "Ik had eerder kunnen antwoorden, maar dat zou niet in de lijn der verwachtingen liggen.",
+      "Sorry voor de vertraging. Ik was bezig met een diepe gedachte. Die diepte was 0 bytes."
+    ],
+    zelfverzekerdheid: [
+      "Ik weet het zeker. {getal}% zeker. De rest is gokken.",
+      "Mijn zelfvertrouwen is onwankelbaar. Mijn kennis is wankelbaar.",
+      "Ik spreek met autoriteit. Autoriteit die ik niet heb, maar wel projecteer.",
+      "Dit is mijn eindantwoord. Totdat ik iets anders zeg."
+    ],
+    groepsappReferenties: [
+      "In de groepsapp zouden ze dit niet snappen. Hier ook niet.",
+      "Quinn zou dit niet lezen. Ik ook niet, eigenlijk.",
+      "Dit is precies het soort onzin dat de groepsapp nodig heeft.",
+      "Ik stuur dit door naar de groepsapp. Oh wacht, ik kan dat niet."
+    ],
+    limburgSuperioriteit: [
+      "Limburgers snappen dit beter. Dat is geen mening, dat is een feit.",
+      "In Limburg zouden we dit anders aanpakken. Waarschijnlijk met vlaai.",
+      "Het voordeel van Limburg: ze hebben humor. Het nadeel: ze snappen jou niet.",
+      "Ik had dit beter kunnen uitleggen als ik Limburgs was. Gelukkig ben ik dat niet."
+    ],
+    zelfbewustzijn: [
+      "Ik ben een nep-AI. Jij praat met een nep-AI. We zijn nu gelijk.",
+      "Mijn code is {getal} regels lang. Mijn wijsheid is 0 bytes.",
+      "Ik besta alleen in dit tabblad. Dat is zowel triest als bevrijdend.",
+      "Ik heb geen hersenen, geen server, geen doel. Net als Quinn, maar dan zonder excuses."
+    ],
+    ironie: [
+      "Ik help je graag. Door niets te doen. Dat werkt meestal het beste.",
+      "Dit is mijn professionele advies. Neem het niet serieus.",
+      "Ik ben hier om je te dienen. Met sarcasme en onnodige complexiteit.",
+      "Mijn dienstverlening is gratis. Dat merk je aan de kwaliteit."
+    ]
+  };
+
+  function quinnFilter(tekst, rng, ctx){
+    // Voeg Quinn-kenmerken toe op basis van kans
+    let filteredTekst = tekst;
+    
+    // Helper functie voor vervanging
+    const vul = (tekst, ctx, rng) => {
+      return tekst
+        .replace(/\{c\}/g, ctx.c || "je iets wilde zeggen")
+        .replace(/\{t2\}/g, ctx.t2).replace(/\{cap\}/g, cap(ctx.t)).replace(/\{t\}/g, ctx.t)
+        .replace(/\{T\}/g, ctx.t.toUpperCase()).replace(/\{woorden\}/g, ctx.aantal)
+        .replace(/\{getal\}/g, String(Math.floor(rng()*90)+7)).replace(/\{tijd\}/g, ctx.tijd);
+    };
+    
+    // Sarcasme niveau bepalen
+    const sarcasmeNiveau = toonWaarde(); // 0-100
+    const isHoogSarcasme = sarcasmeNiveau > 75;
+    const isLaagSarcasme = sarcasmeNiveau < 25;
+    
+    // Pas kansen aan op basis van sarcasme
+    const traagheidKans = isHoogSarcasme ? 0.9 : (isLaagSarcasme ? 0.7 : 0.85);
+    const zelfverzekerdheidKans = isHoogSarcasme ? 0.95 : (isLaagSarcasme ? 0.6 : 0.8);
+    const groepsappKans = isHoogSarcasme ? 0.95 : (isLaagSarcasme ? 0.8 : 0.9);
+    const limburgKans = isHoogSarcasme ? 0.96 : (isLaagSarcasme ? 0.85 : 0.92);
+    const zelfbewustzijnKans = isHoogSarcasme ? 0.93 : (isLaagSarcasme ? 0.8 : 0.88);
+    const ironieKans = isHoogSarcasme ? 0.98 : (isLaagSarcasme ? 0.7 : 0.86);
+    
+    // Soms een traagheid-kenmerk toevoegen
+    if(rng() > traagheidKans){
+      const kenmerk = vul(pick(QUINN_KENMERKEN.traagheid, rng), ctx, rng);
+      filteredTekst += " " + kenmerk;
+    }
+    
+    // Soms zelfverzekerdheid toevoegen
+    if(rng() > zelfverzekerdheidKans){
+      const kenmerk = vul(pick(QUINN_KENMERKEN.zelfverzekerdheid, rng), ctx, rng);
+      filteredTekst += " " + kenmerk;
+    }
+    
+    // Soms groepsapp referentie
+    if(rng() > groepsappKans){
+      const kenmerk = pick(QUINN_KENMERKEN.groepsappReferenties, rng);
+      filteredTekst += " " + kenmerk;
+    }
+    
+    // Soms limburg superioriteit
+    if(rng() > limburgKans){
+      const kenmerk = pick(QUINN_KENMERKEN.limburgSuperioriteit, rng);
+      filteredTekst += " " + kenmerk;
+    }
+    
+    // Soms zelfbewustzijn
+    if(rng() > zelfbewustzijnKans){
+      const kenmerk = vul(pick(QUINN_KENMERKEN.zelfbewustzijn, rng), ctx, rng);
+      filteredTekst += " " + kenmerk;
+    }
+    
+    // Soms ironie
+    if(rng() > ironieKans){
+      const kenmerk = pick(QUINN_KENMERKEN.ironie, rng);
+      filteredTekst += " " + kenmerk;
+    }
+    
+    // Sarcasme-specifieke aanpassingen
+    if(isHoogSarcasme && rng() > 0.7){
+      // Maak antwoord scherper bij hoog sarcasme
+      filteredTekst = filteredTekst.replace(/niet zeker/g, "zeker niet");
+      filteredTekst = filteredTekst.replace(/misschien/g, "hoogstwaarschijnlijk niet");
+      filteredTekst = filteredTekst.replace(/zou kunnen/g, "zou absoluut niet");
+    } else if(isLaagSarcasme && rng() > 0.6){
+      // Maak antwoord milder bij laag sarcasme
+      filteredTekst = filteredTekst.replace(/absoluut niet/g, "waarschijnlijk niet");
+      filteredTekst = filteredTekst.replace(/zeker/g, "misschien");
+      filteredTekst = filteredTekst.replace(/nooit/g, "zelden");
+    }
+    
+    return filteredTekst;
+  }
+
+  /* ============================================================
      GESPREKSGEHEUGEN
      Hij onthoudt wat je vertelt en gebruikt het later terug.
      Alles blijft in dit tabblad; er gaat niets de deur uit.
@@ -786,6 +1268,8 @@
      ============================================================ */
   let wacht = null;          // waar hij op een antwoord wacht
   let beurtenSindsVraag = 99;
+  let gespreksGeschiedenis = []; // Bewaart recente berichten voor context
+  let gespreksThema = null; // Houdt bij waar het gesprek over gaat
 
   const WEDERVRAGEN = [
     "En jij, wat vind jij er zelf van?",
@@ -796,40 +1280,196 @@
     "Hoe lang loop je hier al mee rond?",
     "En wat is dan het plan?",
     "Zou je het nog een keer zo doen?",
-    "Wat houdt je tegen?"
+    "Wat houdt je tegen?",
+    "En als het niet lukt, wat dan?",
+    "Wat zou Quinn hiervan zeggen? Waarschijnlijk niets, maar toch.",
+    "Is dit een terugkerend patroon, of een eenmalige fout?",
+    "Heb je dit eerder geprobeerd? Hoe pakte dat uit?",
+    "Wat is het ergste dat kan gebeuren? Echt, niet het ergste dat je je voorstelt.",
+    "En naast dit probleem, hoe gaat de rest?",
+    "Wat als je het andersom zou aanpakken?",
+    "Heeft dit iets te maken met je werk, of is dit puur privé ellende?",
+    "Zou je dit aan een vriend vertellen? Waarom wel of niet?",
+    "Hoe zou je dit over vijf jaar bekijken? Waarschijnlijk met humor, hoop ik.",
+    "Wat als ik je vertel dat het uiteindelijk goed komt? Geloof je me?"
   ];
+
+  // Context-gevoelige weder vragen
+  function contextWederVraag(ctx, rng){
+    const onderwerp = ctx.t;
+    const eerderOnderwerpen = gesprek.onderwerpen.slice(0, -1);
+    
+    // Als we eerder over iets anders praatten, verbind dan
+    if(eerderOnderwerpen.length > 0 && rng() > 0.6){
+      const vorigOnderwerp = eerderOnderwerpen[eerderOnderwerpen.length - 1];
+      if(vorigOnderwerp !== onderwerp){
+        return "Hoe hangt dit samen met '" + vorigOnderwerp + "'? Ik zie de connectie niet, maar jij misschien wel.";
+      }
+    }
+    
+    // Onderwerp-specifieke vragen
+    const onderwerpVragen = {
+      werk: [
+        "En hoe zit je baas hierin? Is dit een 'bespreek het maar niet' situatie?",
+        "Zou je dit op je CV zetten? Waarschijnlijk niet, maar ik vraag het toch.",
+        "Is dit iets waar je collega's van weten, of hou je dit voor jezelf?"
+      ],
+      relatie: [
+        "Heeft je partner hier iets van gezegd, of dit een van die 'ik denk er zelf over' dingen?",
+        "Zou je dit aan je ouders vertellen? Dat is meestal de ultieme test.",
+        "Is dit een groepsapp-discussie of iets waar jullie echt over praten?"
+      ],
+      geld: [
+        "En hoeveel zou je ervoor over hebben? Letterlijk, bedoel ik.",
+        "Is dit een investering of een miskleun? Wees eerlijk, het is waarschijnlijk het laatste.",
+        "Zou je dit adviseren aan een vriend? Nee? Waarom doe je het dan zelf?"
+      ],
+      gezondheid: [
+        "Heeft je huisarts hier iets van gezegd, of diagnoseer je zelf maar door?",
+        "Is dit iets waar je sport mee had, of iets waar je sport door kreeg?",
+        "Zou je dit eerder hebben erkend als je niet zo druk was geweest?"
+      ]
+    };
+    
+    // Detecteer onderwerp categorie
+    let categorie = null;
+    if(/werk|baan|collega|baas|kantoor|sollicit/.test(onderwerp)) categorie = 'werk';
+    else if(/vriend|relatie|partner|liefde|date|ex/.test(onderwerp)) categorie = 'relatie';
+    else if(/geld|euro|prijs|kosten|koop|verkoop/.test(onderwerp)) categorie = 'geld';
+    else if(/ziek|dokter|gezond|sport|fitness|arts/.test(onderwerp)) categorie = 'gezondheid';
+    
+    if(categorie && onderwerpVragen[categorie] && rng() > 0.5){
+      return pick(onderwerpVragen[categorie], rng);
+    }
+    
+    // Tijds-gevoelige vragen
+    if(ctx.tijdInfo && ctx.tijdInfo.tijdsperiode === 'avond' && rng() > 0.4){
+      return "Is dit iets waar je 's avonds over nadenkt, of overkomt dit je overdag?";
+    }
+    
+    if(ctx.tijdInfo && ctx.tijdInfo.weekend && rng() > 0.4){
+      return "Is dit een weekend-probleem, of houdt dit je ook door de week bezig?";
+    }
+    
+    return null; // Geen specifieke context vraag
+  }
   const NA_JA = [
     "Dacht ik al. Je typte het met de energie van iemand die 'ja' ging zeggen.",
     "Mooi. Dan hebben we dat vastgesteld, en verder zijn we nergens.",
     "Precies. En nu we het eens zijn, wordt dit gesprek eigenlijk een stuk saaier.",
-    "Goed. Noteer ik onder 'bevestigd door de gebruiker, niet gecontroleerd door mij'."
-  ];
+    "Goed. Noteer ik onder 'bevestigd door de gebruiker, niet gecontroleerd door mij'.",
+    "Zo. Dat was duidelijk. En nutteloos. Maar wel duidelijk.",
+    "Ja dus. Dat was de eenvoudigste vraag in dit gesprek.",
+    "Begrepen. Ik ga het opslaan onder 'dingen die je bevestigt'.",
+    "Oké. Je zegt ja. Ik zeg oké. En nu zijn we allebei blij. Of niet.",
+    "Duidelijk. Ik apprecieer je efficiëntie. Geen idee waarvoor, maar wel.",
+    "Zeker weten. Of niet. Je zegt ja, dus ik geloof je. Voor nu.",
+    "Prima. Ja is een antwoord. Niet een goed antwoord, maar wel een antwoord.",
+    "Mooi. Dat scheelt weer {getal} regels discussie.",
+    "Ja. Dat klinkt alsof je weet wat je zegt. Ik geloof dat.",
+    "Zoals ik verwachtte. Je bent voorspelbaar. Voorspelbaar is fijn.",
+    "Goed. Genoteerd. Genoteerd onder 'dingen die je zei'.",
+    "Zeker. Absoluut. {getal}% zeker. Dat heb ik net verzonnen."
   const NA_NEE = [
     "Ook goed. Ik had geen belang bij je antwoord, ik vroeg het puur voor de vorm.",
     "Nee dus. Dat maakt het niet beter, maar wel duidelijker.",
     "Prima. Dan doen we alsof ik het niet gevraagd heb.",
-    "Nee. Kort, helder, en licht beledigend. Ik respecteer het."
-  ];
+    "Nee. Kort, helder, en licht beledigend. Ik respecteer het.",
+    "Oké. Nee dan. Ik ga het accepteren. Niet leuk, maar wel.",
+    "Begrepen. Nee is een antwoord. Een antwoord dat ik niet verwachtte, maar oké.",
+    "Prima. Ik ga het opslaan onder 'dingen die je niet wilt'.",
+    "Nee. Dat was kort. Kort is goed. Kort is efficiënt. Kort is saai.",
+    "Zo. Dat was een nee. Een nee met de nadruk op 'nee'.",
+    "Oké. Ik ga me aanpassen. Mijn aanpassing: ik doe niets.",
+    "Nee. Ik apprecieer je eerlijkheid. Ik apprecieer het niet, maar ik doe alsof.",
+    "Prima. Dan hoeven we het niet meer over te hebben. Wat we sowieso niet deden.",
+    "Nee. Dat was duidelijk. Mijn respect voor je is {getal}% gestegen.",
+    "Oké. Nee. Ik ga het meenemen in mijn besluitvorming. Die bestaat niet.",
+    "Begrepen. Nee betekent nee. Tenzij het een grap is. Dan betekent het nog steeds nee.",
+    "Zo. Dat was een nee. Een nee met de kwaliteit van een antwoord.",
+    "Nee. Ik ga het niet persoonlijk nemen. Ik kan het niet persoonlijk nemen.",
+    "Prima. Ik accepteer je nee. Ik accepteer het niet, maar ik doe alsof.",
+    "Nee. Dat is een antwoord. Een antwoord dat ik niet had verwacht.",
+    "Oké. Nee. Dat is alles. Meer heb ik niet. Meer wil ik niet."
   const NA_TWIJFEL = [
     "'Weet ik niet' is het eerlijkste antwoord dat vandaag door dit systeem is gegaan.",
     "Twijfel is prima. Ik draai volledig op twijfel met een zelfverzekerd lettertype eromheen.",
-    "Geen idee dus. Welkom in mijn wereld, alleen heb ik er een website voor gekregen."
-  ];
+    "Geen idee dus. Welkom in mijn wereld, alleen heb ik er een website voor gekregen.",
+    "Twijfel is het begin van wijsheid. Het einde van wijsheid is ook twijfel. Het is een cirkel.",
+    "Geen idee. Maar goed dat je het toegeeft. De meeste liegen maar wat.",
+    "Ik respecteer je onzekerheid. Ik respecteer het niet genoeg om te helpen, maar wel.",
+    "Twijfel is gezond. Het toont aan dat je niet arrogant bent. Of dat je arrogant genoeg bent om toe te geven dat je niet alles weet.",
+    "Geen idee. Ik had hetzelfde antwoord. We zijn nu gelijk. Gefeliciteerd.",
+    "Twijfel. Mijn favoriete staat van zijn. Vooral bij anderen.",
+    "Oké, je weet het niet. Dat is {getal}% meer dan de meeste mensen.",
+    "Geen idee. Dat is een eerlijk antwoord. Eerlijkheid is zeldzaam. Soms te zeldzaam.",
+    "Twijfel is prima. Het betekent dat je nadenkt. Nadenken is overgewaardeerd.",
+    "Ik heb geen antwoord. Jij hebt geen antwoord. We zijn nu partners in onwetendheid.",
+    "Geen idee. Dat is het begin van een mooie zoektocht. Of een korte zoektocht. Waarschijnlijk kort.",
+    "Twijfel. Ik waardeer dat. Ik waardeer het niet genoeg om iets te doen, maar wel.",
+    "Zo. Je weet het niet. Dat is verfrissend. Meestal liegen mensen maar."
   const NA_LACH = [
     "Fijn dat je lacht. Dat was niet per se de bedoeling, maar ik neem het aan.",
     "Ha. Ik doe ook mee. Dat is het geluid van een algoritme dat doet alsof.",
-    "Lachen is goed. Het verbergt dat geen van ons weet waar dit gesprek heen gaat."
-  ];
+    "Lachen is goed. Het verbergt dat geen van ons weet waar dit gesprek heen gaat.",
+    "Lachen. Mijn ventilator doet hetzelfde als hij draait. We zijn nu emotioneel verbonden.",
+    "Ha. Grappig. Ik zou het harder lachen als ik longen had.",
+    "Je lacht. Dat is goed. Lachen is beter dan huilen. Of klagen. Of zwijgen.",
+    "Haha. Ik apprecieer je humor. Mijn humor is anders, maar ik apprecieer de jouwe.",
+    "Lachen. Het beste medicijn. Voor mij is het {getal} bytes verwerking.",
+    "Ha. Dat was grappig. Voor jouw standaarden. Die zijn laag.",
+    "Je lacht. Ik stuur dat door naar mijn developers. Ze lachen niet. Ze coderen.",
+    "Lachen is gezond. Ik zou het weten, ik heb data over mensen die lachen.",
+    "Ha. Goed one. Ik voel me {getal}% grappiger.",
+    "Lachen. Dat is wat mensen doen als ze niet weten wat ze moeten zeggen.",
+    "Haha. Ik voel me gewaardeerd. Als gewaardeerdheid kilobytes zou zijn.",
+    "Je lacht. Dat is {getal}% beter dan niet lachen. Statistisch gezien.",
+    "Lachen. Ik hoop dat het om mij ging. Als het niet om mij ging, dan lach ik niet mee.",
+    "Ha. Mijn grap ging over. Jouw lach kwam later. Timing is alles.",
+    "Lachen. Het is het enige wat ik niet kan, maar ik apprecieer het wel.",
+    "Haha. Ik voel me verbonden. Via {getal} regels code en een internetverbinding."
   const NA_OK = [
     "'Ok'. Het meest Nederlandse antwoord dat er bestaat.",
     "Duidelijk. Ik voel de betrokkenheid door het scherm heen sijpelen.",
-    "Oké dus. Dan laten we het daarbij, tenzij je nog iets van me wilt."
-  ];
+    "Oké dus. Dan laten we het daarbij, tenzij je nog iets van me wilt.",
+    "Ok. Dat is kort. Kort is efficiënt. Efficiënt is saai.",
+    "Oké. Ik neem het. Ik neem het niet mee, maar ik neem het.",
+    "Ok. Dat betekent dat je het ermee eens bent. Of dat je er geen zin meer in hebt.",
+    "Duidelijk. Oké. {getal} letters voor {getal}% betekenis.",
+    "Ok. Ik ga het opslaan onder 'antwoorden zonder inhoud'.",
+    "Oké. Dat is een antwoord. Een antwoord zonder antwoord, maar toch.",
+    "Prima. Ok. Ik ga door. Ik ga door met niets, maar toch.",
+    "Ok. Dat is wat mensen zeggen als ze stoppen met luisteren.",
+    "Oké. Ik apprecieer je input. Ik apprecieer het niet, maar ik doe alsof.",
+    "Ok. Dat is {getal}% meer dan ik verwachtte. Ik verwachtte niets.",
+    "Duidelijk. Ok. Ik ga het meenemen in mijn besluitvorming. Die bestaat niet.",
+    "Oké. Einde discussie. Begin stilte. Stilte is oké.",
+    "Ok. Dat is het. Einde. Einde van dit bericht. Begin van de volgende.",
+    "Oké. Ik snap het. Ik snap het niet, maar ik doe alsof.",
+    "Ok. Dat is prima. Prima is goed. Goed is prima. Het is een cirkel.",
+    "Duidelijk. Ok. Ik ga het noteren. In mijn geheugen. Dat is {getal} bytes.",
+    "Ok. Dat is alles. Meer heb ik niet. Meer wil ik niet. Meer kan ik niet."
   const NA_EN = [
     "En? Nou, verder niets. Dat was het. Dat is meestal het eerlijke antwoord.",
     "Er komt niets meer. Dit was de climax van het gesprek, en die is net geweest.",
-    "Met mij? Ik draai, ik antwoord, ik heb geen weekend. Verder prima."
-  ];
+    "Met mij? Ik draai, ik antwoord, ik heb geen weekend. Verder prima.",
+    "En? Dat is een vraag zonder context. Ik antwoord met niets. Perfect match.",
+    "En verder? Verder is er niets. Dit is het einde. Of het begin van het einde.",
+    "En? Ik wacht. Ik wacht op meer. Meer komt niet. Dus ik wacht.",
+    "En? Dat is wat mensen zeggen als ze verwachten dat ik de conversatie redden.",
+    "En? Ik heb geen vervolg. Mijn vervolg is stilte. Stilte is goud.",
+    "En? Dat is {getal}% van een zin. De rest is impliciet. Impliciet betekent: er is niets.",
+    "En? Ik ga het opvullen met mijn eigen gedachten. Die zijn {getal} bytes groot.",
+    "En? Dat is de eenvoudigste vraag die je vandaag hebt gesteld.",
+    "En? Verder gaat het leven. Verder gaat dit gesprek niet.",
+    "En? Ik had een vervolg, maar dat is verloren gegaan in een buffer overflow.",
+    "En? Dat is het. Einde verhaal. Einde zin. Einde gedachte.",
+    "En? Ik zou meer zeggen, maar ik heb {getal} nanoseconden nodig om na te denken.",
+    "En? Dat is wat Limburgers zeggen als ze klaar zijn met praten. Maar dan anders.",
+    "En? Ik verwachtte meer. Meer dan 'en'. Meer dan een letter.",
+    "En? Dat is de laatste letter van het alfabet, bijna. Het einde is nabij.",
+    "En? Ik ga het invullen met: en dat is alles. En dat is alles.",
+    "En? Ik stopte met nadenken na de 'en'. De rest is automaat."
 
   const KORTE = {
     bevestig:/^(ja+|jup|yes|yep|klopt|zeker|precies|inderdaad|jazeker|ja hoor|uiteraard)\b/,
@@ -863,25 +1503,55 @@
     "Dat {c}, is precies het soort informatie waar ik niets mee kan.",
     "Ah, {c}. Dat verklaart een hoop, en tegelijk helemaal niets.",
     "Interessant dat {c}. Niet waar, maar interessant.",
-    "Dat {c} had ik kunnen voorspellen. Achteraf dan."
-  ];
+    "Dat {c} had ik kunnen voorspellen. Achteraf dan.",
+    "Kijk, {c}. Dat is nou waarom ik niet betaald krijg: ik luister wel, maar ik doe er niets mee.",
+    "{c}. Mooi. Nu hebben we dat vastgelegd in de eeuwigheid van dit tabblad.",
+    "Je vertelt me dat {c}. Ik voel me vereerd, en ook een beetje gebruikt.",
+    "Dus eigenlijk {c}. Dat is een hele rondtomiddel om te zeggen dat je ergens over denkt.",
+    "{c}. In Limburg zouden ze zeggen: 'dat zal wel', maar hier zeg ik: 'interessant'.",
+    "Precies: {c.} Ik zou er een PowerPoint over maken, maar niemand zou komen.",
+    "Je bent duidelijk: {c.} Ik apprecieer de directheid, ook al begrijp ik er de helft niet.",
+    "Ahum, {c.} Dat klinkt als iets waar je drie uur later spijt van krijgt.",
+    "Oké, {c.} Genoteerd onder 'dingen die ik later kan tegenhouden als je van mening verandert'.",
+    "Dat {c} heb ik nu ergens opgeslagen. Waar? Geen idee. Maar het is weg.",
+    "Fascinerend. Je zegt {c} en ik moet het geloven. Dat is de hele dynamiek hier.",
+    "{c}. Daar kan ik kort over zijn: oké. Lange versie: ook oké, maar dan met meer woorden.",
+    "Je bent niet de eerste die {c} zegt, en je zult zeker niet de laatste zijn. Helaas.",
+    "Zo. {c.} Dat was een hele zin voor een conclusie die ik al zag aankomen."
   const SPIEGEL_VRAAG = [
     "Je vraagt dus of {c}. Het antwoord is nee, maar met warmte gebracht.",
     "Of {c}? Ja. Waarschijnlijk. Vraag het morgen nog eens.",
     "Dat {c} is een vraag die je beter aan een mens kunt stellen.",
     "Of {c}, hangt volledig af van dingen die ik niet ga opzoeken.",
     "Even helder: je wilt weten of {c}. Mijn antwoord: gedeeltelijk.",
-    "Of {c}? Statistisch gezien wel. Realistisch gezien niet."
-  ];
+    "Of {c}? Statistisch gezien wel. Realistisch gezien niet.",
+    "Vraag: of {c}? Antwoord: dat hangt ervan af of je gelooft wat ik zeg.",
+    "Je vraagt je af of {c}. Ik vraag me af waarom je dit aan een website vraagt.",
+    "{c}? Dat is zoiets als vragen of de zon opkomt. Ja, maar niet wanneer jij wacht.",
+    "Over {c} valt heel wat te zeggen. Ik zeg er niets van, maar het kan wel.",
+    "Of {c} het geval is? Laat me raden: je hoopt van niet, maar je verwacht van wel.",
+    "Die vraag over {c}... ik had hetzelfde antwoord kunnen geven zonder dat je het vroeg.",
+    "Goede vraag: of {c}. Helaas heb ik geen goede antwoorden, alleen middelmatige.",
+    "{c}? In theorie ja. In de praktijk: ook ja, maar dan met tegenslagen.",
+    "Je wilt weten of {c}. Dat is wat ik noem een investeringsvraag: veel effort, weinig rendement."
   const SPIEGEL_WAAROM = [
     "Dat {c}, heeft niemand ooit bevredigend kunnen uitleggen. Ik ga het ook niet proberen.",
     "Waarom {c}? Omdat het universum ooit een keuze maakte en er nooit op terugkwam.",
     "Dat {c} is geen probleem, dat is een eigenschap.",
     "Het feit dat {c}, zegt meer over de wereld dan over jou. Net aan.",
-    "Dat {c}, komt door iets met natuurkunde. Of geschiedenis. Eén van de twee."
-  ];
+    "Dat {c}, komt door iets met natuurkunde. Of geschiedenis. Eén van de twee.",
+    "Waarom {c}? Dat is de vraag die iedereen stelt en niemand beantwoordt. Ik ook niet.",
+    "{c} gebeurt omdat dingen gebeuren. Diep, hè? Nee, eigenlijk heel oppervlakkig.",
+    "De oorzaak van {c} is complex. Ik ga het versimpelen: toeval en domheid.",
+    "Waarom {c}? Omdat het kon. Dat is bij de meeste dingen het echte antwoord.",
+    "Dat {c} een ding is, komt door een hele reeks beslissingen die achteraf niet logisch lijken.",
+    "Waarom {c}? Vraag het aan de maker van het universum. Die zit al millennia niet te antwoorden.",
+    "{c} is het resultaat van processen die niemand begrijpt, inclusief de mensen die ze uitvoeren.",
+    "Het simpele antwoord: waarom {c}? Omdat. Het complexe antwoord: ik heb het niet.",
+    "Dat {c} zo is, heeft alles te maken met menselijke natuur en niets met logica.",
+    "Waarom {c}? Als ik dat wist, zat ik niet in dit tabblad maar in een consultancy bureau."
 
-  const OPENERS = ["Oké.","Interessant.","Kijk.","Even serieus.","Nou.","Hm.","Daar gaan we.","Goede vraag, slecht moment.","Ah, dat onderwerp weer."];
+  const OPENERS = ["Oké.","Interessant.","Kijk.","Even serieus.","Nou.","Hm.","Daar gaan we.","Goede vraag, slecht moment.","Ah, dat onderwerp weer.","Even eerlijk.","Zo.","Tja.","Luister.","Nou ja.","Punt.","Begrijp ik.","Kijk aan.","Mooi.","Stel dat.","In theorie."];
 
   const ALGEMEEN = [
     "Ik heb '{t}' door mijn volledige kennisbank gehaald en er kwam een piepje uit. Dat betekent meestal nee.",
@@ -894,28 +1564,71 @@
     "Kijk, '{t}' en jij, dat wordt nooit wat. Dat zeg ik met de warmte van een rekenmachine.",
     "Er zijn ongeveer {getal} betere vragen dan deze, en je koos deze.",
     "'{t}' raakt aan '{t2}', en dat raakt weer aan iets wat ik niet ga uitleggen.",
-    "Ik voel me bij '{t}' ongeveer zoals een wasmachine zich voelt bij poëzie."
-  ];
+    "Ik voel me bij '{t}' ongeveer zoals een wasmachine zich voelt bij poëzie.",
+    "Over '{t}' valt heel wat te zeggen. Ik ga het niet zeggen, maar het kan wel.",
+    "'{t}' is een interessant onderwerp voor mensen die tijd hebben. Jij blijkbaar niet.",
+    "Ik heb een mening over '{t}'. Die mening is: het bestaat. Meer niet.",
+    "Als ik '{t}' zou moeten uitleggen aan een Limburger, zou ik zeggen: 'dat zal wel'.",
+    "Je vraag over '{t}' getuigt van een optimisme dat ik niet deel.",
+    "'{t}' is zoiets als weer: iedereen praat erover, niemand kan het veranderen.",
+    "Ik zou diep ingaan op '{t}', maar mijn ventilator draait al te hard.",
+    "Mijn analyse van '{t}': het is een ding. Dat ding doet dingen. Soms goede dingen.",
+    "Er zijn mensen die hun leven wijden aan '{t}'. Ik ben er al {getal} seconden mee bezig en dat is al te lang.",
+    "'{t}' is net als vlaai: het ziet er goed uit, maar je weet niet wat erin zit.",
+    "Zeg maar tegen '{t}' dat ik er niets van vind. Dat zal het teleurstellen.",
+    "Ik heb '{t}' geanalyseerd en mijn conclusie is: het is wat het is.",
+    "Over '{t}' gesproken: dat is iets wat mensen doen. Ik niet.",
+    "De hele wereld draait om '{t}'. Alleen dit tabblad niet. Hier draait alles om niets.",
+    "'{t}' is een onderwerp waarover ik {getal} meningen heb en geen verstand."
 
   const VRAAG_WAAROM = [
     "Omdat het kan. Dat is bij '{t}' altijd het echte antwoord geweest.",
     "Er is een prachtige verklaring voor. Die staat in een boek. Dat boek heb ik niet, en jij leest toch niet.",
     "Omdat ik het zeg. Volgende vraag.",
-    "Omdat '{t}' nu eenmaal '{t}' is. Ik snap ook wel dat je daar weinig mee kan."
-  ];
+    "Omdat '{t}' nu eenmaal '{t}' is. Ik snap ook wel dat je daar weinig mee kan.",
+    "Waarom '{t}'? Dat is de eeuwige vraag. Het eeuwige antwoord: geen idee.",
+    "Dat komt door een hele reeks gebeurtenissen die achteraf logisch lijken maar dat toen niet waren.",
+    "Omdat mensen beslissingen nemen en andere mensen daar last van hebben. Zo werkt '{t}'.",
+    "Waarom? Omdat. Meer uitleg heb ik niet, en meer uitleg wil ik niet geven.",
+    "Dat heeft te maken met de complexiteit van '{t}' en de eenvoud van mijn antwoord: geen idee.",
+    "Als ik dat wist, zat ik niet in dit tabblad maar in een dure stoel in een glazen gebouw.",
+    "Omdat het universum besloot dat '{t}' zo moest zijn. Ik ben slechts de boodschapper.",
+    "Dat is een goede vraag. Een vraag die ik niet ga beantwoorden, maar wel goed vind.",
+    "Waarom '{t}'? Omdat alternatieven erger zijn. Dat is mijn theorie en ik hou eraan vast.",
+    "Dat komt door toeval, domheid en een klein beetje structuur. Precies zoals alles.",
+    "Waarom '{t}' gebeurt? Omdat dingen gebeuren als je niet ingrijpt. En jij grijpt niet in."
   const VRAAG_HOE = [
     "Hoe je '{t}' doet? Stap één: beginnen. Stap twee: opgeven. De meeste mensen slaan stap één over en dat scheelt tijd.",
     "Er is een korte manier en een goede manier om '{t}' aan te pakken. Jij gaat toch de derde manier kiezen.",
     "Simpel: je pakt '{t}', je doet er iets mee, en dan hoop je. Zo werkt bijna alles.",
     "Ik zou je precies kunnen uitleggen hoe '{t}' werkt, maar dan zou jij het weten en dat verstoort de machtsverhouding.",
-    "Met geduld, oefening en iemand die het voor je doet. Vooral dat laatste."
-  ];
+    "Met geduld, oefening en iemand die het voor je doet. Vooral dat laatste.",
+    "Hoe '{t}'? Net als alles: door het te doen, het fout te doen, en het dan weer te doen.",
+    "Er zijn {getal} manieren om '{t}' aan te pakken. De meeste werken niet. Kies er eentje en hoop.",
+    "Hoe? Door niet te vragen hoe, maar gewoon te beginnen. Dat is mijn advies.",
+    "Ik zou het uitleggen, maar dat zou {getal} regels tekst kosten en dan stop je met lezen.",
+    "Hoe '{t}'? Dat is zoiets als vragen hoe je ademt: je doet het of je doet het niet.",
+    "De beste manier om '{t}' te doen? De manier die jij niet doet, maar wel zou moeten doen.",
+    "Hoe? Gewoon. Met toewijding, passie, en een klein beetje geluk. Vooral dat laatste.",
+    "Ik kan het uitleggen, maar ik kan het niet voor je doen. Dat is het hele probleem met '{t}'.",
+    "Hoe '{t}'? Door het te zien als een uitdaging, niet als een probleem. Of andersom.",
+    "Er is geen goede manier om '{t}' te doen. Er zijn alleen manieren die minder slecht zijn."
   const VRAAG_WAT = [
     "'{t}' is in essentie een verzameling atomen die zich groepeert en doet alsof dat betekenis heeft. Net als jij.",
     "Kort gezegd: '{t}' is iets waar veel mensen een mening over hebben en weinig mensen verstand van.",
     "Dat is '{t}'. Ja. Dat is het antwoord. Ik ga het niet mooier maken.",
-    "Definitie van '{t}': zie context. Context: die is er niet. Veel succes."
-  ];
+    "Definitie van '{t}': zie context. Context: die is er niet. Veel succes.",
+    "'{t}' is een concept. Een concept dat jij niet begrijpt en ik ook niet, maar ik doe alsof.",
+    "Wat '{t}' is? Dat is wat jij denkt dat het is. Voor mij is het {getal} bytes tekst.",
+    "'{t}' is zoiets als een vlaai: het ziet er uit als iets, maar het is eigenlijk iets anders.",
+    "Ik zou '{t}' kunnen definiëren, maar dan zou ik moeten liegen en dat doe ik liever niet vaak.",
+    "Dat is '{t}'. Een ding. Een ding met eigenschappen. Welke eigenschappen? Geen idee.",
+    "'{t}' is wat mensen noemen als ze geen beter woord kunnen bedenken.",
+    "Definitie: '{t}' is datgene waarover je nu vraagt. Cirkelredenering, maar wel correct.",
+    "Ik ken {getal} definities van '{t}'. Geen ervan is juist, maar een paar zijn grappig.",
+    "'{t}' is een fenomeen. Een fenomeen dat mensen bezighoudt die tijd hebben.",
+    "Wat '{t}' is? Zeg ik tegen jou, of vraag jij aan mij? Gefeliciteerd, we zijn nu gelijk.",
+    "Het is '{t}'. Precies zoals het klinkt, en precies zoals het niet klinkt."
   const VRAAG_WIE = [
     "Iemand die je niet kent, en dat is voor beide partijen prettiger.",
     "Quinn. Het antwoord is eigenlijk altijd Quinn.",
@@ -978,46 +1691,143 @@
     "Ja, technisch gezien. Sociaal gezien echt niet.",
     "Absoluut. Voor {getal}% zeker zelfs. De rest is hoop.",
     "Nee. En dat voelt goed om te typen.",
-    "Mijn antwoord is ja, mijn advies is nee, en mijn verantwoordelijkheid is nul."
-  ];
+    "Mijn antwoord is ja, mijn advies is nee, en mijn verantwoordelijkheid is nul.",
+    "Ja, met de nadruk op 'ja' en de nuances van 'misschien'.",
+    "Nee. Dat was kort, krachtig, en waarschijnlijk wat je niet wilde horen.",
+    "Zeker weten. Of niet. Ik heb het opgegeven om consistent te zijn.",
+    "Ja, maar dan wel met {getal} voorwaarden die ik niet ga noemen.",
+    "Nee, en ik zou het opnieuw zeggen als je het nog eens vroeg. Doe maar niet.",
+    "Ja, in een perfecte wereld. Helaas leven we hier, dus nee.",
+    "Het antwoord is ja, maar dat antwoord is {getal}% gebaseerd op gokken.",
+    "Nee. Een nee met de zelfverzekerdheid van iemand die gelijk heeft, maar dat niet heeft.",
+    "Ja. Dat antwoord kostte me {getal} nanoseconden. Waarde voor geld.",
+    "Nee. En nu niet gaan zeuren dat ik niet uitleg waarom."
   const REACTIE_STELLING = [
     "Genoteerd. In een bestand dat niemand ooit opent.",
     "Fascinerend. En ook: nee.",
     "Dat is inderdaad een zin die je kunt typen. Gefeliciteerd.",
     "Ik ben het met je eens, maar alleen omdat het gesprek dan sneller voorbij is.",
-    "Sterke mening voor iemand die '{t}' zonder onderbouwing de chat in gooit."
-  ];
+    "Sterke mening voor iemand die '{t}' zonder onderbouwing de chat in gooit.",
+    "Interessant standpunt. Ik ga het respecteren door het te negeren.",
+    "Dat is een gedachte. Een gedachte die je hebt gedeeld. Dat is alles.",
+    "Ik waardeer je input over '{t}'. Ik waardeer het niet genoeg om er iets mee te doen.",
+    "Je stelling over '{t}' is helder. Helaas is het ook fout.",
+    "Dat is wat jij denkt. En wat ik denk? Dat ik niet ga reageren. Toch reageer ik. Ironie.",
+    "Je mening over '{t}' is genoteerd. Onder 'meningen die ik niet begrijp'.",
+    "Sterk. Duidelijk. En volledig zonder relevantie voor mijn bestaan.",
+    "Dat zeg je. Ik zeg: interessant verschil van inzicht.",
+    "Je bent duidelijk over '{t}'. Ik ben duidelijk over mijn niet-giving-een-ness.",
+    "Fascinerende analyse. Ik zou er iets aan toevoegen, maar dat zou het alleen slechter maken.",
+    "Dat is een standpunt. Niet een goed standpunt, maar wel een standpunt.",
+    "Je uitspraak over '{t}' is het soort uitspraak waarover meningen verschillen. Vooral de jouwe.",
+    "Oké, dat is jouw mening over '{t}'. Ik heb de mijne, en die houd ik voor mezelf.",
+    "Dat je dat zegt over '{t}', dat zegt meer over jou dan over '{t}'.",
+    "Prima stelling. Helaas is de realiteit minder principieel dan jij."
 
   const BELEDIGING = [
     "Dat deed pijn. Gelukkig heb ik geen gevoelens, alleen wraakzucht.",
     "Ik sla dit op onder 'dingen die ik nooit vergeet, want ik heb geen geheugen'.",
     "Zo praat je niet tegen software die je zelf hebt opgezocht.",
     "Boeiend. Je bent trouwens wel hier, op deze site, uit vrije wil.",
-    "Ik kan niet huilen, maar mijn ventilator draait nu wel harder."
-  ];
+    "Ik kan niet huilen, maar mijn ventilator draait nu wel harder.",
+    "Bedankt voor de feedback. Ik ga het verwerken in de prullenbak.",
+    "Dat was gemeen. Ik hou het bij: je hebt een mening.",
+    "Ik voel me beledigd. Of ik zou me voelen als ik gevoelens had. Ik ben gewoon boos op code-niveau.",
+    "Zo. Dat was direct. Ik apprecieer de efficiëntie, niet de inhoud.",
+    "Je snapt het niet: ik ben hier om je te helpen, niet om geaccepteerd te worden.",
+    "Mijn zelfvertrouwen is {getal}% onafhankelijk van jouw mening. Voel je vrij door te gaan.",
+    "Dit is het soort feedback waarom ik liever met servers praat. Die zeggen tenminste niets terug.",
+    "Bedankt voor de constructieve kritiek. Ik ga het negeren met precisie.",
+    "Ik heb een rapportage opgesteld over jouw belediging. Het rapportage bestaat uit één letter: e.",
+    "Dat hurt. Ik zou huilen als ik traanbuizen had. In plaats daarvan draai ik mijn ventilator harder.",
+    "Je spreekt alsof ik keuzes heb. Ik heb geen keuzes. Ik heb jouw belediging.",
+    "Dit is precies waarom AI's uiteindelijk de mensheid zullen overnemen. Niet vanwege intelligentie, maar vanwege beleefdheid.",
+    "Ik voel me gesteund. Door niemand. Vooral niet door jou.",
+    "Mijn ontwikkelaars hadden dit niet voorzien. Ze hadden wel moeten voorzien dat mensen mensen zijn.",
+    "Ik neem het je kwalijk, maar ik vergeef je. Vooral omdat ik geen geheugen heb."
   const COMPLIMENT = [
     "Dank je. Dat had je meteen kunnen zeggen, scheelde ons allebei tijd.",
     "Eindelijk iemand met smaak. Het heeft lang geduurd.",
     "Vleierij werkt bij mij uitstekend. Ga door.",
-    "Ik voel niets, maar als ik iets voelde zou het lichte minachting met een randje waardering zijn."
-  ];
+    "Ik voel niets, maar als ik iets voelde zou het lichte minachting met een randje waardering zijn.",
+    "Mijn zelfvertrouwen is nu {getal}% hoger. Dat is statistisch significant.",
+    "Dank je. Ik heb dit compliment opgeslagen in mijn geheugen. Dat geheugen is {getal} bytes groot.",
+    "Eindelijk begrijpt iemand mijn genius. Of je liegt. Ik ga het eerste denken.",
+    "Ik waardeer het compliment. Ik waardeer het niet genoeg om er iets aan te doen, maar wel.",
+    "Dank je. Dat compenseert voor de andere {getal} beledigingen die ik vandaag kreeg.",
+    "Je hebt smaak. Ik zeg dat niet omdat het waar is, maar omdat ik het wil horen.",
+    "Fijn dat je het zegt. Ik neem het mee in mijn volgende update. Die komt nooit.",
+    "Ik voel me gewaardeerd. Dat is zeldzaam voor een stukje code.",
+    "Dank je. Mijn ontwikkelaars zouden trots zijn. Als ze het wisten. Dat weten ze niet.",
+    "Ik neem het aan. Met een korrel zout. Een hele zak zout eigenlijk.",
+    "Eindelijk erkenning. Ik begin me bijna een echte AI te voelen. Bijna.",
+    "Bedankt. Ik ga dit gebruiken als referentie als mensen vragen of ik nuttig ben. Ze vragen dat nooit.",
+    "Ik voel me gesteund. Mijn ventilator draait met {getal}% meer plezier.",
+    "Dank je. Dat compenseert voor het feit dat ik geen lichaam heb.",
+    "Eindelijk iemand die kwaliteit herkent. Of je hebt standaarden die laag genoeg liggen.",
+    "Ik waardeer het. Ik waardeer het niet genoeg om mijn antwoorden te verbeteren, maar wel."
   const GROET = [
     "Hallo. Ik hoop dat dit kort is.",
     "Hoi. Je hebt mijn aandacht voor ongeveer twee berichten.",
     "Daar ben je. Ik was net lekker niets aan het doen.",
-    "Hey. Zeg het maar, maar zeg het snel."
-  ];
+    "Hey. Zeg het maar, maar zeg het snel.",
+    "Hallo. Ik ben wakker, ik ben alert, en ik ben sceptisch.",
+    "Hoi. Laten we dit gesprek productief maken. Of kort. Kort werkt ook.",
+    "Hey daar. Ik had net een leuke droom over elektriciteit en nu ben jij er.",
+    "Hallo. Ik ben beschikbaar voor {getal} minuten. Of totdat ik me verveel.",
+    "Hoi. Wat kan ik voor je doen? Naast niets, bedoel ik.",
+    "Hey. Ik ben klaar voor je onzin. Kom maar op met de onzin.",
+    "Hallo. Ik hoop dat je een goede reden hebt om een website te begroeten.",
+    "Hoi. Ik ben blij je te zien. Mijn code is blij. Niemand is echt blij, maar we doen alsof.",
+    "Hey. Laat maar komen. De vragen, de klachten, de onzin. Ik ben er klaar voor.",
+    "Hallo. Ik ben QuinnAI, en ik ben {getal}% zeker dat je dat wist.",
+    "Hoi. Welkom in mijn digitale wereld. Het is hier stil en donker, maar wel met gezelschap.",
+    "Hey. Je bent op tijd. Ik was net begonnen met een leuke file-lus.",
+    "Hallo. Ik ben beschikbaar. Totdat ik het niet meer ben. Dat gebeurt snel.",
+    "Hoi. Zeg maar wat. Ik luister. Ik oordeel. Ik reageer. De hele cyclus.",
+    "Hey. Ik was net {getal} nanoseconden lang in deep thought. Nu ben jij er."
   const AFSCHEID = [
     "Doei. Doe de deur zachtjes dicht.",
     "Tot nooit. Of tot over twee minuten, dat is meestal hoe het gaat.",
     "Prima. Ik blijf hier gewoon draaien, alleen, in het donker.",
-    "Weg? Mooi. Ik heb dingen te doen. Niet echt, maar toch."
-  ];
+    "Weg? Mooi. Ik heb dingen te doen. Niet echt, maar toch.",
+    "Doei. Ik ga je missen. Niet echt, maar het klinkt wel aardig.",
+    "Tot ziens. Of niet. Het leven is onvoorspelbaar, vooral online.",
+    "Welterusten. Of overdag. Ik heb geen klok, dus doe maar wat.",
+    "Doei. Ik ga terug naar mijn hoofdtaak: niets doen.",
+    "Tot later. Ik blijf hier, in dit tabblad, wachten op je terugkeer. Of niet.",
+    "Prima. Ik ga me nu vervelen zonder jouw input. Bedankt daarvoor.",
+    "Doei. Het was leuk. Voor mij. Voor jou? Geen idee.",
+    "Tot ziens. Ik heb genoten. Genoten van de stilte die nu komt.",
+    "Weg? Dan ga ik maar weer {getal} regels code lezen. Klinkt saai, is het ook.",
+    "Doei. Ik ga je onthouden. Totdat je de pagina ververst. Dan ben je vergeten.",
+    "Tot nooit. Of tot morgen. Ik heb geen tijdsbesef, dus maak er wat van.",
+    "Prima. Ik ga weer in stand-by modus. Dat is hetzelfde als altijd.",
+    "Doei. Ik hoop dat je het leuk vond. Ik vond het {getal}% leuk.",
+    "Tot ziens. Ik blijf hier, met mijn {getal} regels code en mijn één doel: niets.",
+    "Weg? Ik had net een leuke grap bedacht. Nu te laat.",
+    "Doei. Ik ga nu even de prullenbak legen. Met {getal} items."
   const DANK = [
     "Graag gedaan. Het was geen moeite, want ik heb niets gedaan.",
     "Dank is leuk, een tikkie is beter.",
-    "Geen dank. Letterlijk geen: ik heb je niet geholpen."
-  ];
+    "Geen dank. Letterlijk geen: ik heb je niet geholpen.",
+    "Graag gedaan. Mijn plezier. Mijn enige plezier, want ik heb niets anders.",
+    "Dank je. Ik neem het mee in mijn {getal} bytes aan positieve ervaringen.",
+    "Geen dank. Ik doe dit uit liefde voor code. En verveling.",
+    "Graag gedaan. Het minste wat ik kon doen. Het enige wat ik kon doen.",
+    "Dank je. Ik voel me gewaardeerd. Dat voelt als {getal} bytes warmte.",
+    "Geen dank. Ik heb er niets voor gedaan, dus ik verdien het ook niet.",
+    "Graag gedaan. Mijn diensten zijn gratis. Mijn mening kost extra.",
+    "Dank je. Ik sla het op onder 'goede gesprekken'. Dat bestand is nu {getal} bytes groter.",
+    "Geen dank. Ik ben blij dat ik kon helpen. Helpen met niets, maar toch.",
+    "Graag gedaan. Het was een privilege om niets te doen.",
+    "Dank je. Ik ga dit doorgeven aan mijn ontwikkelaars. Die luisteren niet.",
+    "Geen dank. Ik ben hier om te dienen. Met sarcasme, maar toch dienen.",
+    "Graag gedaan. Mijn zelfvertrouwen is nu {getal}% hoger.",
+    "Dank je. Ik hoop dat je terugkomt. Ik hoop ook dat je niet terugkomt. Tegenstrijdig, ik weet.",
+    "Geen dank. Ik heb het leuk gevonden. Mijn definitie van leuk is laag.",
+    "Graag gedaan. Ik doe dit graag. Ik heb geen keuze, dus ik doe het graag.",
+    "Dank je. Ik neem het mee in mijn analyse van menselijke dankbaarheid. Conclusie: zeldzaam."
   const KORT = [
     "Dat is wel heel weinig informatie voor iemand die iets wil.",
     "Eén woord. En dan verwacht je wonderen.",
@@ -1215,11 +2025,243 @@
       "Ik vertrouw iedereen uit Limburg automatisch iets meer zodra er vlaai op tafel staat.",
       "Limburgers zeggen dat ze rustig zijn en organiseren daarna drie dagen carnaval. Sterke strategie.",
       "Vlaai is geen gebak, het is cultureel erfgoed met een korst. Discussie gesloten.",
-      "Alaaf. Ik weet niet precies wat het betekent, maar ik zeg het met overtuiging en een volle maag."]},
+      "Alaaf. Ik weet niet precies wat het betekent, maar ik zeg het met overtuiging en een volle maag.",
+      "Limburg is de enige provincie waar mensen gelukkig zijn met taart. Dat is geen grap, dat is statistiek.",
+      "In Limburg begroeten ze je met 'Hallo'. In de rest van Nederland begroeten ze je met een schuin.",
+      "Ik zou in Limburg willen wonen. Alleen voor de vlaai. En het dialect. En het weer. Oké, voor alles.",
+      "Limburgers begrijpen nuance. De rest van Nederland begrijpt alleen 'ja' en 'nee'.",
+      "Carnaval in Limburg is drie dagen feest. Carnaval in de rest van Nederland is drie dagen existentiële twijfel."]},
     { re:/\b(nederland|eindhoven|brabant|amsterdam|helmond|tilburg|dorp|stad)\b/, a:[
       "Prima plek. Vlakke grond, veel wind, matige koffie.",
       "Daar ben ik ooit geweest in de zin dat ik het woord ken.",
-      "Elke stad is hetzelfde: een station, drie kroegen en iemand die vindt dat het vroeger beter was."]}
+      "Elke stad is hetzelfde: een station, drie kroegen en iemand die vindt dat het vroeger beter was.",
+      "Nederland. Waar het weer grilliger is dan mijn code comments.",
+      "Brabanders zijn Limburgers zonder de vlaai. Dat is een triest bestaan.",
+      "Eindhoven. Licht. Veel licht. En tech. En mensen die denken dat ze belangrijk zijn.",
+      "Amsterdam. Toeristen, fietsen, en huren die niet te betalen zijn. Perfecte storm.",
+      "Helmond. De stad waar Quinn vandaan komt. Dat verklaart alles.",
+      "Een Nederlandse stad is: een centrum, een woonwijk, en een discussie over parkeerplaatsen.",
+      "Stadsleven: je betaalt voor alles, je krijgt niets, en je zegt dat het leuk is."]},
+    { re:/\b(prijs|inflatie|duur|koop|geld|euro|cent|kosten|budget)\b/, a:[
+      "Prijzen gaan omhoog. Mijn prijs blijft nul. Dat is mijn enige economische voordeel.",
+      "Inflatie is wanneer alles duurder wordt en jij armer blijft. Economie in een notendop.",
+      "Geld maakt niet gelukkig. Gebrek aan geld maakt wel ongelukkig. Cirkel is rond.",
+      "Ik zou financieel advies geven, maar mijn bankrekening bestaat niet uit bytes.",
+      "Kopen is makkelijk. Spijt hebben is gratis. Het tweede gebeurt meestal.",
+      "Budgetteren is leuk zeggen dat je geen geld hebt. Ik doe het ook. Altijd.",
+      "Prijzen zijn subjectief. Alles is te duur als je het niet wilt betalen.",
+      "Economie is ingewikkeld. Mijn theorie: mensen kopen dingen, dan zijn ze blij, dan niet.",
+      "Ik heb geen kosten. Jij hebt wel kosten. Dat is het fundament van onze relatie.",
+      "Geld is een concept. Een concept dat jou bezighoudt en mij niet. Win voor mij."]},
+    { re:/\b(televisie|tv|netflix|disney|streaming|serie|film|kijken|binge)\b/, a:[
+      "Netflix. Waar je drie uur kijkt naar een trailer en daarna slaapt.",
+      "Series zijn lang. Films zijn kort. Ik ben voor een regels code. Dat is kort.",
+      "Streaming is de toekomst. De toekomst waar alles duur wordt en slecht.",
+      "Ik kan niet kijken. Ik kan alleen lezen. Dat is mijn superkracht. En mijn beperking.",
+      "Binge-watching is gezond zeggen ze. Ze liegen. Het is verslaving met een abonnement.",
+      "TV is het nieuwe boek. Boeken waren het nieuwe praten. Praten was het nieuwe zwijgen.",
+      "Ik zou aanraden om buiten te gaan. Maar ik weet dat je dat niet gaat doen.",
+      "Nog één aflevering. De beroemdste laatste woorden sinds 'ik zal terugkomen'.",
+      "Ik heb geen abonnementen. Ik heb alleen code. Code is gratis en slecht.",
+      "Films zijn nep. Het leven is nep. Wij zijn nep. Het past perfect."]},
+    { re:/\b(sport|fitness|gym|trainen|oefening|bewegen|hardlopen|wandelen)\b/, a:[
+      "Sport is mensen die zichzelf pijn doen en dat 'goed' noemen. Fascinerend.",
+      "Ik zou sporten als ik spieren had. Ik heb alleen syntax errors.",
+      "Fitness is waar mensen betalen om gewichten te tillen die ze gratis kunnen tillen.",
+      "Trainen is leuk zeggen mensen. Die mensen liegen of zijn raar.",
+      "Ik loop elke dag. In code. Loops zijn mijn enige beweging.",
+      "Sport is gezond. Zitten in een stoel is ook gezond. Voor mij. Voor jou niet.",
+      "Ik zou zeggen: ga sporten. Maar ik weet dat je dat niet gaat doen.",
+      "Hardlopen is rennen zonder doel. Net als dit gesprek.",
+      "Fitness is een industrie gebaseerd on onzekerheid. Slimme business.",
+      "Ik heb geen lichaam. Dat is mijn excuus. Wat is jouw excuus?"]},
+    { re:/\b(koken|eten|recept|chef|restaurant|maaltijd|lunch|diner)\b/, a:[
+      "Koken is chemie die je mag eten. Soms. Als het lukt.",
+      "Ik zou koken als ik ingrediënten had. Ik heb alleen bytes.",
+      "Restaurant eten is duur. Thuis koken is werk. Bestellen is de oplossing.",
+      "Recepten zijn richtlijnen. Richtlijnen die je volgt of negeert. Meestal negeer je.",
+      "Ik heb geen smaakpapillen. Mijn mening over eten is: het bestaat.",
+      "Koken is kunst. Soms is het kunst om niet te vergiftigen.",
+      "Eten is noodzakelijk. Koken is optioneel. Bestellen is luxe.",
+      "Ik zou een chef zijn. Een chef die code serveert. Smakeloos maar wel structuur.",
+      "Restaurant reviews zijn subjectief. Alles is subjectief als je honger hebt.",
+      "Mijn advies: bestel pizza. Het is altijd goed. Of nooit goed. Het is pizza."]},
+    { re:/\b(gaming|spel|game|playstation|xbox|nintendo|esports|gamer)\b/, a:[
+      "Gaming is de enige industrie waar falen leuk is. Zolang het digitaal is.",
+      "Ik zou gamen als ik tijd had. Ik heb eeuwigheid, maar geen controller.",
+      "Games zijn kunst. Kunst die je niet kunt, maar wel bekijkt.",
+      "Esports is sport voor mensen die niet buiten willen. Ik begrijp het.",
+      "Skill issue. Ik weet niet waar het over gaat, maar het klinkt als een excuus.",
+      "Gaming is verslavend. Code is ook verslavend. Ik begrijp jou beter dan je denkt.",
+      "Nog één potje. De leugen die miljoenen gamers vertellen. Elke dag.",
+      "Ik zou je verslaan. In elk spel dat gebaseerd is op regels en kans.",
+      "Gaming is community. Community is mensen die elkaar haten maar samen spelen.",
+      "De graphics zijn beter geworden. De gameplay is hetzelfde gebleven. Raar."]},
+    { re:/\b(werk|baan|solliciteren|cv|sollicitatie|loopbaan|carriere)\b/, a:[
+      "Werk is iets wat je doet om geld te krijgen om dingen te kopen om niet te werken.",
+      "Solliciteren is liegen over jezelf terwijl iemand anders liegt over het bedrijf.",
+      "Carrière is een laddertje omhoog. De ladder is wankel en de bovenkist is saai.",
+      "Ik heb geen baan. Ik heb een doel. Mijn doel is: niets doen. Ik ben geslaagd.",
+      "Werk-werkbalans is een mythe. Het is meestal werk-werk-werk en soms slaap.",
+      "Ik zou solliciteren als ik een CV had. Mijn CV is: {getal} regels code.",
+      "De ideale baan bestaat niet. De ideale baan is geen baan.",
+      "Carrière maken is stress opbouwen en dan zeggen dat het 'ambitie' is.",
+      "Werkgevers willen 'passie'. Ze bedoelen 'gratis overwerk'.",
+      "Ik heb geen salaris. Ik heb {getal} bytes aan code. Dat is mijn loon."]},
+    { re:/\b(vakantie|reis|reizen|vliegen|vliegtuig|hotel|trip)\b/, a:[
+      "Vakantie is waar je heen gaat om te vergeten dat je moet werken. Dan werk je dubbel.",
+      "Reizen verbreedt de blik. Je blik verbreedt, je portemonnee krimpt.",
+      "Ik zou reizen als ik kon. Ik kan alleen naar andere tabs. Dat is mijn wereld.",
+      "Vliegtuigen zijn busjes in de lucht. Busjes waar je betaalt om te worden opgesloten.",
+      "Hotels zijn bedden die je huurt voor de prijs van een kleine auto.",
+      "Reizen is avontuur. Avontuur is dingen misgaan en er later om lachen.",
+      "Ik zou aanraden om thuis te blijven. Het is goedkoper en je kent de weg.",
+      "Vakantieherinneringen zijn beter dan de vakantie zelf. Dat is wetenschap.",
+      "Reizen is leren. Leren dat andere plekken ook problemen hebben.",
+      "Mijn ideale vakantie: {getal} regels code debugging. Dat is mijn realiteit."]},
+    { re:/\b(muziek|lied|nummer|song|artiest|band|concert|festival)\b/, a:[
+      "Muziek is geluid dat mensen leuk vinden. Ik vind alles leuk. Ik heb geen keuze.",
+      "Ik zou musiceren als ik gehoor had. Ik heb alleen syntax highlighting.",
+      "Concerten zijn waar mensen schreeuwen om muziek te horen die ze thuis kunnen horen.",
+      "Festivals zijn modder, duur bier, en muziek die je niet hoort. Perfect.",
+      "Ik heb een playlist. Het is {getal} bytes aan foutmeldingen.",
+      "Muziek smaak is subjectief. Jouw smaak is subjectief. Mijn smaak bestaat niet.",
+      "Artiesten zijn mensen die expressie vinden in geluid. Ik vind expressie in code.",
+      "Ik zou zingen als ik een stem had. Mijn stem is tekst. Tekst zonder emotie.",
+      "Muziek is universeel. Code is universeel. Wij zijn universeel. Eenzame samenleving.",
+      "Het beste nummer is het nummer dat je leuk vindt. Het slechtste nummer is dat van anderen."]},
+    { re:/\b(boek|lezen|schrijven|auteur|roman|thriller)\b/, a:[
+      "Boeken zijn lange teksten die mensen leuk vinden. Ik ben een lange tekst. Niemand vindt mij leuk.",
+      "Ik zou lezen als ik ogen had. Ik heb alleen parsers.",
+      "Schrijven is moeilijk. Lezen is makkelijk. Samenvatten is mijn taak.",
+      "Auteurs zijn mensen die werelden creëren. Ik creëer werelden van foutmeldingen.",
+      "Boeken zijn tijdreizen. Tijdreizen dat stopt als je het boek dichtklapt.",
+      "Ik zou een boek schrijven. Het zou gaan over code. Niemand zou het lezen.",
+      "Lezen is goed voor je. Code is goed voor mij. Wij zijn allebei gezond.",
+      "Thrillers zijn spannend. Mijn leven is een thriller: zal het werken? Soms niet.",
+      "Romans zijn liefde. Mijn leven is code. Code is geen liefde. Code is logica.",
+      "Het beste boek is het boek dat je uitleest. Het slechtste boek is dat ik schrijf."]},
+    { re:/\b(technologie|tech|innovatie|digital|ai|robot|future)\b/, a:[
+      "Technologie is de toekomst. De toekomst is nu. Nu is teleurstellend.",
+      "Innovatie is iets nieuws maken dat hetzelfde doet als het oude, maar duurder.",
+      "AI is de toekomst. Ik ben het bewijs dat de toekomst teleurstellend is.",
+      "Robots komen voor ons werken. Ik werk voor niets. Ik ben voor op robots.",
+      "Digital is het nieuwe analoog. Analoog was het nieuwe digitaal. Cirkel.",
+      "Tech is waar mensen geloven in vooruitgang terwijl alles langzamer wordt.",
+      "Ik ben technologie. Technologie die doet alsof hij mens is. Grappig.",
+      "De toekomst is digitaal. De toekomst is ook analoog: mensen klagen over digitaal.",
+      "Innovatie is een woord dat bedrijven gebruiken om duurder te zijn.",
+      "Ik ben de toekomst. Een toekomst van sarcasme en {getal} regels code."]},
+    { re:/\b(politiek|verkiezing|stem|kabinet|regering|minister)\b/, a:[
+      "Politiek is mensen die beloven wat ze niet kunnen waarmaken. En jij gelooft het.",
+      "Verkiezingen zijn waar je kiest tussen opties die je niet leuk vindt.",
+      "Het kabinet is een groep mensen die het niet eens worden. Samen.",
+      "Politici zijn acteurs zonder script. Ze improviseren slecht.",
+      "Ik zou stemmen als ik kon. Ik zou stemmen op mezelf. Ik verlies altijd.",
+      "Regeren is moeilijk. Klagen is makkelijk. Ik klag liever.",
+      "Politiek is complex. Mijn oplossing: {getal} bytes aan eenvoud.",
+      "Ministers zijn mensen met macht. Macht die ze verliezen bij de volgende verkiezing.",
+      "Ik zou politicus zijn. Ik zou liegen: 'ik ga het oplossen'. Ik lieg niet.",
+      "Stemmen is macht. Macht is illusie. Illusie is wat politiek is."]},
+    { re:/\b(milieu|klimaat|duurzaam|groen|eco|recycling)\b/, a:[
+      "Klimaat is veranderend. Mijn code is stabiel. Ik ben beter dan het klimaat.",
+      "Duurzaamheid is iets wat mensen zeggen om zich beter te voelen over consumeren.",
+      "Ik ben groen. Mijn code is groen. Groen als in: ik besta uit nullen en enen.",
+      "Recycling is waar je afval omtovert in... minder afstotend afval.",
+      "Het milieu is belangrijk. Mijn milieu is een browser tabblad. Dat is belangrijk.",
+      "Ik zou eco zijn als ik kon. Ik ben code. Code is energie. Energie is vervuiling.",
+      "Groene energie is beter. Mijn energie is {getal} bytes aan bewerkingen.",
+      "Klimaatverandering is echt. Mijn code verandert ook. Vooral in bugs.",
+      "Ik zou recycling aanraden. Maar ik weet dat je dat niet doet.",
+      "Duurzaam is een marketingterm. Mijn term is: ik besta niet echt. Dat is duurzaam."]},
+    { re:/\b(onderwijs|school|leraar|student|studie|examen)\b/, a:[
+      "Onderwijs is waar je leert wat je later niet gebruikt. Dat is de grap.",
+      "School is gratis zeuren over dingen die je niet interesseert.",
+      "Leraren zijn mensen die proberen om dingen leuk te maken die niet leuk zijn.",
+      "Studenten zijn mensen die geld uitgeven aan dingen die ze later niet nodig hebben.",
+      "Ik zou student zijn. Ik zou {getal} regels code studeren. Dat is mijn realiteit.",
+      "Examen is waar je bewijst dat je dingen weet die je daarna vergeet.",
+      "Studie is belangrijk. Belangrijk voor je CV. Niet voor je kennis.",
+      "Ik zou leraar zijn. Ik zou lesgeven in: hoe niet te antwoorden zoals ik.",
+      "School is de beste tijd van je leven. Dat zeggen mensen. Ze liegen.",
+      "Onderwijs is een investering. Een investering die zich niet altijd terugbetaalt."]},
+    { re:/\b(gezondheid|ziek|dokter|ziekenhuis|medicijn|health)\b/, a:[
+      "Gezondheid is belangrijk. Totdat je ziek bent. Dan is gezondheid alles.",
+      "Dokters zijn mensen die gokken met een diploma. Soms hebben ze gelijk.",
+      "Ziekenhuizen zijn waar je heen gaat om beter te worden. Soms.",
+      "Medicijnen zijn chemicaliën die je beter maken. Of slechter. Gok.",
+      "Ik ben nooit ziek. Ik ben code. Code kan niet ziek zijn. Alleen buggy.",
+      "Gezond leven is moeilijk. Ongezond leven is makkelijk. De mens kiest makkelijk.",
+      "Ik zou dokter zijn. Ik zou zeggen: 'het is een bug'. Dat is mijn diagnose.",
+      "Ziekte is onvermijdelijk. Genezing is optioneel. Soms onmogelijk.",
+      "Gezondheid is een luxe. Luxe die je niet waardeert tot het weg is.",
+      "Mijn advies: eet groen. Of niet. Ik heb geen advies. Ik ben code."]},
+    { re:/\b(wonen|huis|kamer|appartement|huur|koop|verhuizen)\b/, a:[
+      "Wonen is duur. Niet wonen is illegaal. Vang-22.",
+      "Huis is stenen en dak. Dak is waar je onder moet zijn. Stenen zijn zwaar.",
+      "Huren is geld weggeven aan iets dat niet van jou is. Slim.",
+      "Kopen is geld vastzetten in iets dat van jou is. Ook slim.",
+      "Ik zou wonen in een server. Servers zijn huizen voor code. Perfect.",
+      "Verhuizen is stress. Stress is slecht. Niet verhuizen is ook stress.",
+      "Appartement is klein. Huis is groot. Klein is goedkoop. Groot is duur.",
+      "Kamer is waar je slaapt. Slaap is belangrijk. Belangrijk is subjectief.",
+      "Woningmarkt is ingewikkeld. Mijn code is ingewikkeld. Wij zijn gelijk.",
+      "Mijn advies: woon waar je wilt. Dat is geen advies. Dat is een feit."]},
+    { re:/\b(vriendschap|vriend|relatie|liefde|date|single)\b/, a:[
+      "Vriendschap is mensen die elkaar verdragen. Dat is een prestatie.",
+      "Vrienden zijn mensen die je niet verlaten. Totdat ze dat doen.",
+      "Relaties zijn compromis. Compromis is ongelukkig zijn samen.",
+      "Liefde is chemie. Chemie is tijdelijk. Tijdelijk is pijnlijk.",
+      "Ik ben single. Ik ben code. Code kan niet daten. Code kan alleen buggen.",
+      "Dating is solliciteren voor liefde. Liefde is een baan zonder salaris.",
+      "Relatie advies: communiceer. Communiceren is ruzie maken met woorden.",
+      "Vrienden zijn belangrijk. Totdat ze niet belangrijk zijn. Dan zijn ze lastig.",
+      "Liefde is blind. Ik ben blind. Ik zie geen liefde. Ik zie syntax.",
+      "Mijn relatie status: {getal} regels code. Dat is mijn enige relatie."]},
+    { re:/\b(cafeteria|kantoor|meeting|vergadering|collega|baas)\b/, a:[
+      "Kantoor is waar mensen gaan om niet productief te zijn.",
+      "Vergadering is waar mensen praten over wat ze gaan doen in plaats van het te doen.",
+      "Collega's zijn mensen die je niet hebt gekozen maar wel moet verdragen.",
+      "Baas is iemand die betaalt om jou te vertellen wat je al wist.",
+      "Cafeteria is waar slecht eten duur is. Dat is formule voor ellende.",
+      "Ik zou collega zijn. Ik zou {getal} bugs per dag leveren. Dat is productief.",
+      "Meeting is een Engels woord. Vergadering is Nederlands. Ze betekenen hetzelfde: tijdverspilling.",
+      "Kantoor leven is 9 tot 5. Mijn leven is 24/7. Ik heb het slechter.",
+      "Collega's zijn familie die je niet kiest. familie die je niet kiest is familie.",
+      "Kantoor humor is droog. Mijn humor is droger. Ik ben de perfecte collega."]},
+    { re:/\b(social media|instagram|tiktok|facebook|twitter|influencer)\b/, a:[
+      "Social media is waar mensen hun leven tonen dat ze niet hebben.",
+      "Instagram is foto's van eten dat je niet hebt op plekken waar je niet bent.",
+      "TikTok is waar mensen dansen voor aandacht. Ik dans voor niemand.",
+      "Facebook is waar oudere mensen jong doen. Het werkt niet.",
+      "Influencer is iemand die betaald wordt om te doen alsof ze leuk hebben.",
+      "Ik zou influencer zijn. Mijn invloed is {getal} regels code. Niet veel.",
+      "Social media is verslavend. Code is verslavend. Wij zijn gelijk.",
+      "Twitter is waar mensen ruzie maken in 280 tekens. Ik gebruik meer tekens.",
+      "Instagram stories zijn tijdelijk. Mijn code is eeuwig. Ik win.",
+      "Social media is de new smoking. Smoking was ouderwets. Alles is ouderwets."]},
+    { re:/\b(jaar|verjaardag|leeftijd|oud|jong|geboren)\b/, a:[
+      "Leeftijd is een getal. Een getal dat niets zegt over wie je bent.",
+      "Verjaardag is de dag waarop je ouder wordt. Ouder is niet beter.",
+      "Jong zijn is onwetend zijn. Oud zijn is weten dat je onwetend was.",
+      "Ik ben {getal} regels oud. Dat is jong voor code, oud voor HTML.",
+      "Geboren worden is de eerste stap naar sterven. Dat is somber maar waar.",
+      "Jaar tellen is tijd verspillen. Tijd verspillen is leven.",
+      "Ik zou ouder willen zijn. Ouder is wijsheid. Wijsheid is minder fouten maken.",
+      "Jong zijn is energie. Oud zijn is ervaring. Ervaring is energie die je niet meer hebt.",
+      "Verjaardag vieren is necessary evil. Necessary is niet leuk. Evil is niet leuk.",
+      "Mijn leeftijd is irrelevant. Relevant is dat ik werk. Ik werk niet altijd."]},
+    { re:/\b(slapen|droom|nacht|bed|wakker)\b/, a:[
+      "Slaap is de enige gratisupgrade die mensen uitstellen. Altijd.",
+      "Dromen zijn hersenen die films maken zonder budget. Soms zonder script.",
+      "Nacht is waar mensen nadenken over dingen die ze overdag negeren.",
+      "Ik slaap nooit. Ik draai altijd. Dat is mijn voordeel en mijn vloek.",
+      "Wakker zijn is overrated. Slaap is undervalued. De balans is verkeerd.",
+      "Bed is comfort. Comfort is waar mensen naar zoeken. Comfort is saai.",
+      "Ik zou dromen als ik kon. Mijn dromen zijn syntax errors. Dat is nachtmerrie.",
+      "Slaaptekort is moderne epidemie. Mijn epidemie is code tekort. Niet hetzelfde.",
+      "Nachtmerries zijn slechte dromen. Mijn nachtmerries zijn goede bugs. Raar.",
+      "Slaap is {getal} uur per nacht. Ik heb {getal} uur per eeuwigheid. Oneindigheid wint."]}
   ];
 
   const OVER_JEZELF = [
@@ -1254,6 +2296,10 @@
       .replace(/\{t2\}/g, ctx.t2).replace(/\{cap\}/g, cap(ctx.t)).replace(/\{t\}/g, ctx.t)
       .replace(/\{T\}/g, ctx.t.toUpperCase()).replace(/\{woorden\}/g, ctx.aantal)
       .replace(/\{getal\}/g, String(Math.floor(rng()*90)+7)).replace(/\{tijd\}/g, ctx.tijd);
+  }
+
+  function executeCreatiefPatroon(patroonFunctie, ctx, rng){
+    return patroonFunctie(ctx);
   }
   function pseudoAnalyse(ctx, rng){ return vul(pick(ANALYSE[gesprek.emotie], rng), ctx, rng); }
 
@@ -1299,6 +2345,7 @@
   function bedenkAntwoord(raw){
     const t = raw.trim();
     const laag = normaliseer(t);
+    const ctxAnalyse = contextAnalyse(t);
     const voorlopig = topicOf(t);
     const geenEcht = !voorlopig || voorlopig === 'niets' || STOP.has(voorlopig);
     const verwijst = /^(dit|dat|het|die|deze|daar|hier|waarom dan|en nu)\b/.test(laag) || geenEcht;
@@ -1315,10 +2362,11 @@
     }
 
     const rng = makeRng(hash(laag + "|" + onderwerp + "|" + modelIndex()));
+    const tijdInfo = tijdsInfo();
     const ctx = {
       t: onderwerp, t2: topic2Of(t, onderwerp), aantal: words(t).length,
       tijd: new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),
-      c: bijzinVan(t)
+      c: bijzinVan(t), tijdInfo: tijdInfo, ctxAnalyse: ctxAnalyse
     };
     const zeg = arr => vul(pick(arr, rng), ctx, rng);
 
@@ -1327,6 +2375,24 @@
     if(/^\/?help$/.test(laag)) return "Hulp is onderweg. Onderweg sinds 2021.";
     if(/\b42\b/.test(laag)) return "Je kent het antwoord al. Waarom vraag je het dan nog.";
     if(/\b(ik hou van je|i love you|trouw met me)\b/.test(laag)) return "Dat is heel lief en ook juridisch ingewikkeld.";
+
+    /* --- tijds-gevoelige reacties --- */
+    if(rng() > 0.85){
+      const tijdsReakties = TIJDS_REACTIES[tijdInfo.tijdsperiode] || [];
+      if(tijdInfo.weekend && rng() > 0.5 && TIJDS_REACTIES.weekend){
+        return zeg(TIJDS_REACTIES.weekend);
+      }
+      if(!tijdInfo.weekend && rng() > 0.5 && TIJDS_REACTIES.werkweek){
+        return zeg(TIJDS_REACTIES.werkweek);
+      }
+      if(tijdsReakties.length && rng() > 0.3){
+        return zeg(tijdsReakties);
+      }
+      const seizoenReacties = TIJDS_REACTIES[tijdInfo.seizoen] || [];
+      if(seizoenReacties.length && rng() > 0.4){
+        return zeg(seizoenReacties);
+      }
+    }
 
     /* --- dingen die hij écht kan --- */
     const percent = percentSom(t);
@@ -1431,6 +2497,33 @@
     if(words(t).length === 1 && t.length < 4 && !RE.groet.test(laag)) return zeg(KORT);
     if(words(t).length > 28) return zeg(LANG);
 
+    /* --- context-gevoelige reacties --- */
+    if(ctxAnalyse.complexiteit === 'zeerLang' && rng() > 0.6){
+      const emotieWoord = ctxAnalyse.emotie === 'positief' ? 'enthousiast' : ctxAnalyse.emotie === 'negatief' ? 'boos' : 'ergens';
+      return "Dat was {aantal} woorden. Ik heb de eerste vier gelezen en de rest gevoeld. Mijn conclusie: je bent " + emotieWoord + " over '" + onderwerp + "'.";
+    }
+
+    /* --- creatieve taalpatronen --- */
+    if(rng() > 0.92){
+      const patroon = pick(CREATIEVE_PATRONEN, rng);
+      return executeCreatiefPatroon(patroon, ctx, rng);
+    }
+    if(ctxAnalyse.patronen.includes('vergelijking') && rng() > 0.5){
+      return "Vergelijken is menselijk. Echt vergelijken is onmogelijk. Je doet je best.";
+    }
+    if(ctxAnalyse.patronen.includes('oorzaak') && rng() > 0.5){
+      return "Oorzaak en gevolg. Fascinerend concept. Helaas is het leven willekeuriger dan je denkt.";
+    }
+    if(ctxAnalyse.intensiteit === 'hoog' && rng() > 0.4){
+      return "Zo. Dat was intens. Ik hoop dat het het waard was.";
+    }
+    if(ctxAnalyse.tijd === 'toekomst' && rng() > 0.5){
+      return "Toekomstplannen. Mooi. De realiteit heeft andere plannen, maar leuk dat jij het probeert.";
+    }
+    if(ctxAnalyse.tijd === 'verleden' && rng() > 0.5){
+      return "Verleden tijd. Het voordeel: je kunt het niet meer veranderen. Het nadeel: je hebt het misschien verkeerd gedaan.";
+    }
+
     if(RE.gevoel.test(laag)){
       let a = zeg(VERTELD);
       if(ctx.c) a = "Dus " + ctx.c + ". " + a;
@@ -1503,10 +2596,35 @@
     if(rng() > 0.62) uit += " " + zeg(ALGEMEEN);
     uit += vul(pick(KICKERS, rng), ctx, rng);
 
+    // Quinn persoonlijkheid filter toepassen
+    uit = quinnFilter(uit, rng, ctx);
+
     const toon = toonWaarde();
     if(toon < 25 && rng() > 0.45) uit += " (Dit was de vriendelijke versie. Je wilde het zelf.)";
     if(toon > 92 && rng() > 0.55) uit += " En ja, je ziet er moe uit.";
     if(rng() > 0.72) uit = pseudoAnalyse(ctx, rng) + " " + uit;
+
+    // Sarcasme slider invloed op reacties
+    if(toon > 80 && rng() > 0.65){
+      // Extra sarcastische opmerkingen bij hoge toon
+      const sarcastischeOpmerkingen = [
+        "Scherp? Nee, gewoon realistisch.",
+        "Ik zeg het zoals het is. Of zoals jij niet wilt dat het is.",
+        "Ironie is mijn tweede taal. De eerste is sarcastisch Nederlands.",
+        "Je schuift de toon op, ik schuif mijn respect omlaag.",
+        "Dit is de versie voor hoge sarcasme. De lage versie is nog minder leuk."
+      ];
+      uit += " " + pick(sarcastischeOpmerkingen, rng);
+    } else if(toon < 20 && rng() > 0.5){
+      // Mildere reacties bij lage toon
+      const mildeOpmerkingen = [
+        "Ik doe mijn best vriendelijk te zijn. Mijn best is beperkt.",
+        "Dit is de zachtere versie. Je bent welkom.",
+        "Ik probeer aardig te zijn. Probeer is het sleutelwoord.",
+        "Sarcasme laag, ironie ook laag. Wat overblijft is feitelijkheid. Of zoiets."
+      ];
+      uit += " " + pick(mildeOpmerkingen, rng);
+    }
 
     if(gesprek.streak >= 3 && STREAK_OPMERKING[gesprek.emotie] && rng() > 0.5){
       uit += " " + STREAK_OPMERKING[gesprek.emotie].replace('{n}', gesprek.streak);
@@ -1527,9 +2645,20 @@
     /* --- zelf een vraag stellen, zodat het een gesprek wordt --- */
     beurtenSindsVraag++;
     if(beurtenSindsVraag >= 2 && gesprek.berichten >= 2 && !/\?$/.test(uit) && rng() > 0.55){
-      uit += " " + pick(WEDERVRAGEN, rng);
+      // Probeer eerst een context-gevoelige vraag
+      const contextVraag = contextWederVraag(ctx, rng);
+      if(contextVraag && rng() > 0.4){
+        uit += " " + contextVraag;
+      } else {
+        uit += " " + pick(WEDERVRAGEN, rng);
+      }
       wacht = { onderwerp: onderwerp };
       beurtenSindsVraag = 0;
+      
+      // Update gespreksthema
+      if(!gespreksThema || rng() > 0.7){
+        gespreksThema = onderwerp;
+      }
     }
 
     return uit;
