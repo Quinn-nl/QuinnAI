@@ -21,6 +21,7 @@
     --line-soft:rgba(255,255,255,.06);
     --paper:#e9eef2;
     --muted:#8595a4;
+    --muted-3:#707e8b;
     --butter:#f5c451;
     --mint:#77d8ae;
     --rose:#ff7d6b;
@@ -36,10 +37,15 @@
     overflow-x:hidden;
   }
   body::before{
-    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    content:"";position:fixed;inset:-10%;pointer-events:none;z-index:0;
     background:
       radial-gradient(900px 520px at 78% -8%, rgba(245,196,81,.10), transparent 62%),
       radial-gradient(760px 480px at 6% 4%, rgba(119,216,174,.07), transparent 60%);
+    animation:drift 22s ease-in-out infinite alternate;
+  }
+  @keyframes drift{
+    from{transform:translate(0,0)}
+    to{transform:translate(-1.5%, 1.5%)}
   }
   body::after{
     content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.22;
@@ -71,8 +77,10 @@
   .brand{display:flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',serif;font-weight:800;font-size:19px;letter-spacing:-.03em;text-decoration:none}
   .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,var(--butter),#e08a3c);display:grid;place-items:center;color:#2a1a04;font-size:14px;font-weight:800;flex:none;box-shadow:0 5px 18px rgba(245,196,81,.18)}
   .nav-links{display:flex;gap:4px;margin-left:auto}
-  .nav-links a{padding:7px 12px;border-radius:9px;font-size:14px;color:var(--muted);text-decoration:none}
+  .nav-links a{padding:7px 12px;border-radius:9px;font-size:14px;color:var(--muted);text-decoration:none;position:relative;transition:color .18s}
   .nav-links a:hover{color:var(--paper);background:rgba(255,255,255,.05)}
+  .nav-links a.actief{color:var(--paper)}
+  .nav-links a.actief::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2px;border-radius:2px;background:var(--butter)}
   .btn{
     font:inherit;font-size:14px;font-weight:500;padding:9px 16px;border-radius:11px;border:1px solid var(--line);
     background:rgba(255,255,255,.05);color:var(--paper);cursor:pointer;text-decoration:none;display:inline-block;
@@ -83,6 +91,22 @@
   .btn-primary{background:var(--butter);color:#20160380;color:#241802;border-color:transparent;font-weight:700}
   .btn-primary:hover{background:#ffd062}
   :focus-visible{outline:2px solid var(--butter);outline-offset:3px;border-radius:6px}
+
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .skip-link{
+    position:absolute;left:12px;top:-60px;z-index:100;background:var(--butter);color:#241802;
+    font-weight:700;font-size:14px;padding:10px 16px;border-radius:10px;text-decoration:none;
+    transition:top .18s;
+  }
+  .skip-link:focus{top:12px}
+
+  .ticker-pauze{
+    background:none;border:1px solid var(--line-soft);border-radius:6px;color:var(--muted);
+    width:22px;height:22px;flex:none;display:grid;place-items:center;cursor:pointer;margin-left:4px;
+  }
+  .ticker-pauze:hover{color:var(--paper);border-color:var(--line)}
+  .ticker-pauze[aria-pressed="true"] svg{display:none}
+  .ticker-pauze[aria-pressed="true"]::after{content:"▶";font-size:9px;line-height:1}
 
   /* ---------- hero ---------- */
   header{padding:86px 0 40px;text-align:center;position:relative}
@@ -95,7 +119,7 @@
   h1 s{text-decoration-thickness:3px;text-decoration-color:var(--rose);opacity:.42}
   .lede{max-width:57ch;margin:22px auto 0;color:var(--muted);font-size:17.5px}
   .hero-cta{display:flex;gap:10px;justify-content:center;margin-top:28px;flex-wrap:wrap}
-  .trust{margin-top:56px;display:flex;gap:28px;justify-content:center;flex-wrap:wrap;font-size:13px;color:#5c6b7a}
+  .trust{margin-top:56px;display:flex;gap:28px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--muted-3)}
   .trust span{border-top:1px solid var(--line-soft);padding-top:10px}
 
   /* ---------- chat ---------- */
@@ -115,7 +139,7 @@
   .chat-top .right{margin-left:auto;display:flex;align-items:center;gap:14px}
   .slider-wrap{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
   input[type=range]{width:88px;accent-color:var(--butter);cursor:pointer}
-  .log{padding:22px 20px;height:430px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;background:radial-gradient(500px 220px at 50% 0,rgba(245,196,81,.035),transparent 70%)}
+  .log{padding:22px 20px;height:430px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;background:radial-gradient(500px 220px at 50% 0,rgba(245,196,81,.035),transparent 70%);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
   .log::-webkit-scrollbar{width:9px}
   .log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:9px}
   .row{display:flex;gap:13px;align-items:flex-start;max-width:100%;animation:message-in .28s ease both}
@@ -127,8 +151,8 @@
   .bubble{padding:13px 16px;border-radius:15px;max-width:76%;font-size:15px;white-space:pre-wrap}
   .row.ai .bubble{background:rgba(255,255,255,.045);border:1px solid var(--line-soft);border-top-left-radius:5px;box-shadow:0 8px 22px -18px #000}
   .row.me .bubble{background:var(--paper);color:#0d151d;border-top-right-radius:5px;font-weight:500;box-shadow:0 8px 22px -18px #000}
-  .meta{margin-top:9px;font-size:11px;color:#5c6b7a;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  .meta button{background:none;border:0;color:#5c6b7a;font:inherit;font-size:11px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+  .meta{margin-top:9px;font-size:11px;color:var(--muted-3);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .meta button{background:none;border:0;color:var(--muted-3);font:inherit;font-size:11px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
   .meta button:hover{color:var(--butter)}
   .think{color:var(--butter);font-size:12.5px;font-family:'IBM Plex Mono',monospace}
   .session-badge{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--muted);white-space:nowrap}
@@ -143,10 +167,13 @@
   .chips{display:flex;gap:8px;padding:0 20px 14px;flex-wrap:wrap}
   .chip{font:inherit;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line-soft);border-radius:999px;padding:7px 12px;cursor:pointer;transition:color .18s,border-color .18s,background .18s,transform .18s}
   .chip:hover{color:var(--paper);border-color:var(--line);background:rgba(255,255,255,.08);transform:translateY(-1px)}
+  .chips.locked .chip{opacity:.35;pointer-events:none}
+  .compose.locked .fake-attachment{opacity:.3;pointer-events:none}
   .compose{display:flex;gap:10px;padding:14px;border-top:1px solid var(--line-soft);background:rgba(0,0,0,.25)}
   .fake-attachment{
     background:transparent;border:0;color:var(--muted);cursor:pointer;padding:0 4px;
     display:grid;place-items:center;flex:none;align-self:center;
+    min-width:32px;min-height:32px;border-radius:8px;
   }
   .fake-attachment:hover{color:var(--paper);transform:scale(1.1)}
   .fake-attachment svg{display:block;width:20px;height:20px}
@@ -154,12 +181,12 @@
     flex:1;min-width:0;font:inherit;font-size:15px;background:rgba(255,255,255,.05);border:1px solid var(--line);
     border-radius:13px;padding:13px 16px;color:var(--paper);
   }
-  .compose input::placeholder{color:#55626f}
+  .compose input::placeholder{color:#7d8b9a}
   .compose input:focus{outline:none;border-color:var(--butter);background:rgba(255,255,255,.07)}
   .send{font:inherit;font-weight:700;border:0;border-radius:13px;padding:0 20px;background:var(--butter);color:#241802;cursor:pointer;box-shadow:0 8px 20px -12px rgba(245,196,81,.9);transition:background .18s,transform .12s,box-shadow .18s}
   .send:hover{background:#ffd062;box-shadow:0 10px 24px -10px rgba(245,196,81,.9)}
   .send:active{transform:scale(.97)}
-  .disclaimer{text-align:center;font-size:11.5px;color:#4d5a67;padding:0 0 14px}
+  .disclaimer{text-align:center;font-size:11.5px;color:var(--muted-3);padding:0 0 14px}
 
   /* ---------- profiel ---------- */
   .profiel{
@@ -168,12 +195,12 @@
   }
   .profiel-top{display:flex;align-items:center;gap:9px;margin-bottom:12px}
   .profiel-titel{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--mint);letter-spacing:.03em}
-  .vergeet{margin-left:auto;background:none;border:0;color:#5c6b7a;font:inherit;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .vergeet{margin-left:auto;background:none;border:0;color:var(--muted-3);font:inherit;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
   .vergeet:hover{color:var(--rose)}
   #profiel-lijst{margin:0;display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13.5px}
-  #profiel-lijst dt{color:#5c6b7a;font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding-top:2px}
+  #profiel-lijst dt{color:var(--muted-3);font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding-top:2px}
   #profiel-lijst dd{margin:0;color:#cfd8e0}
-  .profiel-voet{margin-top:13px;padding-top:11px;border-top:1px solid var(--line-soft);font-size:11px;color:#4d5a67}
+  .profiel-voet{margin-top:13px;padding-top:11px;border-top:1px solid var(--line-soft);font-size:11px;color:var(--muted-3)}
 
   /* ---------- sections ---------- */
   section{padding:96px 0;border-top:1px solid var(--line-soft);position:relative;z-index:1}
@@ -190,9 +217,10 @@
   .bar-row.hero .fill{background:linear-gradient(90deg,var(--butter),#e08a3c)}
   .bar-row.hero{font-weight:700}
   .bar-val{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);min-width:52px;text-align:right}
-  .bench-note{margin-top:22px;font-size:13px;color:#5c6b7a;max-width:62ch}
+  .bench-note{margin-top:22px;font-size:13px;color:var(--muted-3);max-width:62ch}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;margin-top:54px;box-shadow:0 24px 50px -42px #000}
-  .stat{background:var(--ink);padding:26px 22px}
+  .stat{background:var(--ink);padding:26px 22px;transition:transform .2s,background .2s}
+  .stat:hover{transform:translateY(-3px);background:rgba(255,255,255,.02)}
   .stat .n{font-family:'Bricolage Grotesque',serif;font-weight:800;font-size:38px;letter-spacing:-.03em;line-height:1}
   .stat .k{color:var(--muted);font-size:13.5px;margin-top:8px}
 
@@ -200,14 +228,15 @@
   .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:18px;align-items:start}
   .tier{border:1px solid var(--line-soft);border-radius:var(--radius);padding:28px 24px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:16px;min-height:100%;box-shadow:0 22px 48px -42px #000;transition:transform .2s,border-color .2s,background .2s}
   .tier:hover{transform:translateY(-3px);border-color:var(--line);background:rgba(255,255,255,.035)}
-  .tier.best{border-color:rgba(245,196,81,.45);background:linear-gradient(180deg,rgba(245,196,81,.08),rgba(255,255,255,.02))}
+  .tier.best{border-color:rgba(245,196,81,.45);background:linear-gradient(180deg,rgba(245,196,81,.08),rgba(255,255,255,.02));position:relative;padding-top:34px}
+  .tier .ribbon{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:linear-gradient(120deg,var(--butter),#e08a3c);color:#241802;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase;padding:5px 14px;border-radius:0 0 9px 9px;box-shadow:0 6px 16px -6px rgba(245,196,81,.6)}
   .tier h3{font-size:19px}
   .price{font-family:'Bricolage Grotesque',serif;font-weight:800;font-size:40px;letter-spacing:-.03em}
   .price small{font-family:'Schibsted Grotesk',sans-serif;font-size:14px;font-weight:400;color:var(--muted)}
   .tier ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;font-size:14.5px;flex:1}
   .tier li{display:flex;gap:10px;color:#cfd8e0}
   .tier li i{font-style:normal;color:var(--mint);flex:none}
-  .tier li.no{color:#5c6b7a}
+  .tier li.no{color:var(--muted-3)}
   .tier li.no i{color:#4a5764}
 
   /* faq */
@@ -215,16 +244,18 @@
   .qa{border-bottom:1px solid var(--line-soft)}
   .qa button{
     width:100%;text-align:left;background:none;border:0;color:var(--paper);font:inherit;font-size:17px;font-weight:500;
+    font-family:'Schibsted Grotesk',system-ui,sans-serif;letter-spacing:normal;line-height:1.5;
     padding:22px 40px 22px 0;cursor:pointer;position:relative;
   }
   .qa button::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--butter);font-size:22px}
   .qa[open] button::after{content:"–"}
-  .qa .a{overflow:hidden;max-height:0;transition:max-height .32s ease;color:var(--muted);font-size:15.5px}
-  .qa[open] .a{max-height:320px}
+  .qa .a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s ease;color:var(--muted);font-size:15.5px}
+  .qa[open] .a{grid-template-rows:1fr}
+  .qa .a > p{overflow:hidden;min-height:0}
   .qa .a p{padding:0 40px 24px 0;max-width:68ch}
 
   /* footer */
-  footer{border-top:1px solid var(--line-soft);padding:54px 0 70px;font-size:13.5px;color:#5c6b7a}
+  footer{border-top:1px solid var(--line-soft);padding:54px 0 70px;font-size:13.5px;color:var(--muted-3)}
   .badges{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0}
   .badge{border:1px solid var(--line-soft);border-radius:8px;padding:5px 10px;font-size:11.5px}
   .foot-real{margin-top:26px;padding-top:22px;border-top:1px solid var(--line-soft);color:#7b8a99;max-width:64ch}
@@ -250,7 +281,8 @@
     .chat-top{padding:12px 13px;gap:9px}
     .chat-top .label{font-size:11.5px}
     select.model{max-width:calc(100% - 82px);font-size:12px;padding:7px 8px}
-    .session-badge{display:none}
+    .session-badge{font-size:10px}
+    .session-badge .sb-label{display:none}
     .chat-top .right{width:100%;margin-left:0;padding-top:9px;border-top:1px solid var(--line-soft)}
     .slider-wrap{width:100%;font-size:12px}
     input[type=range]{flex:1;width:auto;min-width:0}
@@ -272,6 +304,7 @@
     .stat .n{font-size:31px}
     .stat .k{font-size:12.5px}
     .tiers{grid-template-columns:1fr}
+    .tier.best{order:-1}
     .tier{padding:24px 20px}
     .qa button{font-size:16px;padding:19px 34px 19px 0}
   }
@@ -289,13 +322,21 @@
   @media (prefers-reduced-motion:reduce){
     *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   }
+
+  /* ---------- reveal-on-scroll ---------- */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+  .reveal-stagger.in{transition-delay:calc(var(--i,0) * 70ms)}
 </style>
 </head>
 <body>
 
+<a href="#hoofdinhoud" class="skip-link">Direct naar inhoud</a>
+
 <div class="ticker">
   <span class="dot"></span>
   <span id="ticker-text">QuinnAI 5.2 is live. Quinn zelf is dat niet.</span>
+  <button id="ticker-pauze" class="ticker-pauze" aria-pressed="false" aria-label="Berichtenbalk pauzeren"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
 </div>
 
 <nav>
@@ -329,13 +370,14 @@
   </div>
 </header>
 
+<main id="hoofdinhoud">
 <div class="wrap" id="chat">
   <div class="chat-shell">
     <div class="chat-top">
       <span class="dot"></span>
       <span class="label">Online</span>
       <span class="local-badge">100% lokaal</span>
-      <span class="session-badge mono" id="session-badge"><b id="sess-msgs">0</b> berichten · <b id="sess-uptime">0:00</b> actief</span>
+      <span class="session-badge mono" id="session-badge"><b id="sess-msgs">0</b><span class="sb-label"> berichten</span> · <b id="sess-uptime">0:00</b><span class="sb-label"> actief</span></span>
       <select class="model" id="model" aria-label="Model kiezen">
         <option>QuinnAI 5.2 Turbo</option>
         <option>QuinnAI 5.2 Nano (heeft honger)</option>
@@ -351,7 +393,8 @@
       </div>
     </div>
 
-    <div class="log" id="log" aria-live="polite"></div>
+    <div class="log" id="log" role="log" aria-live="polite" aria-label="Gesprek met QuinnAI"></div>
+    <div id="live-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
     <div class="chips" id="chips">
       <button class="chip">Ik heet Sam en ik hou van vlaai</button>
@@ -373,6 +416,7 @@
           <path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>
         </svg>
       </button>
+      <label for="input" class="sr-only">Bericht aan QuinnAI</label>
       <input id="input" type="text" autocomplete="off" placeholder="Typ iets. Wat dan ook. Hij vindt er toch wel iets van.">
       <button class="send" id="send">Stuur</button>
     </div>
@@ -435,6 +479,7 @@
         <button class="btn" data-say="Je gebruikt dit abonnement al. Al twintig minuten. Zonder iets terug te doen.">Kies Gratis</button>
       </div>
       <div class="tier best">
+        <span class="ribbon">Meest gekozen</span>
         <h3>Vriendenprijs</h3>
         <div class="price">€7,50<small> /tikkie</small></div>
         <p class="muted" style="font-size:14.5px">Voor wie echt antwoord wil en bereid is daarvoor te betalen.</p>
@@ -470,32 +515,33 @@
     </div>
     <div class="faq" id="faq">
       <div class="qa">
-        <button>Is dit een echte AI?</button>
-        <div class="a"><p>Nee. Er zit geen model achter, geen server en geen internetverbinding. Alles gebeurt in je eigen browser met ongeveer driehonderd regels code die je woorden terugkaatst met de zelfverzekerdheid van iemand die net één podcast heeft geluisterd.</p></div>
+        <h3><button aria-expanded="false" aria-controls="faq-1">Is dit een echte AI?</button></h3>
+        <div class="a" id="faq-1"><p>Nee. Er zit geen model achter, geen server en geen internetverbinding. Alles gebeurt in je eigen browser met ongeveer driehonderd regels code die je woorden terugkaatst met de zelfverzekerdheid van iemand die net één podcast heeft geluisterd.</p></div>
       </div>
       <div class="qa">
-        <button>Onthoudt hij echt wat ik zeg?</button>
-        <div class="a"><p>Binnen één gesprek wel. Vertel je "ik heet Sam" of "ik hou van vlaai", dan pikt hij dat op, zet het in het profiel onder de chat en komt er later op terug. Het staat puur in het werkgeheugen van je browser: geen server, geen opslag, geen cookie. Ververs de pagina en hij kent je niet meer.</p></div>
+        <h3><button aria-expanded="false" aria-controls="faq-2">Onthoudt hij echt wat ik zeg?</button></h3>
+        <div class="a" id="faq-2"><p>Binnen één gesprek wel. Vertel je "ik heet Sam" of "ik hou van vlaai", dan pikt hij dat op, zet het in het profiel onder de chat en komt er later op terug. Het staat puur in het werkgeheugen van je browser: geen server, geen opslag, geen cookie. Ververs de pagina en hij kent je niet meer.</p></div>
       </div>
       <div class="qa">
-        <button>Slaan jullie mijn gesprekken op?</button>
-        <div class="a"><p>We kunnen het niet eens als we zouden willen. Zodra je de pagina ververst is alles weg, inclusief de dingen waar je nu spijt van hebt.</p></div>
+        <h3><button aria-expanded="false" aria-controls="faq-3">Slaan jullie mijn gesprekken op?</button></h3>
+        <div class="a" id="faq-3"><p>We kunnen het niet eens als we zouden willen. Zodra je de pagina ververst is alles weg, inclusief de dingen waar je nu spijt van hebt.</p></div>
       </div>
       <div class="qa">
-        <button>Waarom antwoordt hij zo bot?</button>
-        <div class="a"><p>Dat is geen fout, dat is de hele productstrategie. Schuif de toon-slider naar links als je het zachter wilt. Hij houdt zich er niet aan, maar hij waardeert de moeite.</p></div>
+        <h3><button aria-expanded="false" aria-controls="faq-4">Waarom antwoordt hij zo bot?</button></h3>
+        <div class="a" id="faq-4"><p>Dat is geen fout, dat is de hele productstrategie. Schuif de toon-slider naar links als je het zachter wilt. Hij houdt zich er niet aan, maar hij waardeert de moeite.</p></div>
       </div>
       <div class="qa">
-        <button>Kan ik dit op mijn werk gebruiken?</button>
-        <div class="a"><p>Zeker. Zet het in een presentatie, noem het "een verkennend AI-initiatief" en niemand durft door te vragen. Zo werkt de hele sector.</p></div>
+        <h3><button aria-expanded="false" aria-controls="faq-5">Kan ik dit op mijn werk gebruiken?</button></h3>
+        <div class="a" id="faq-5"><p>Zeker. Zet het in een presentatie, noem het "een verkennend AI-initiatief" en niemand durft door te vragen. Zo werkt de hele sector.</p></div>
       </div>
       <div class="qa">
-        <button>Wie is Quinn?</button>
-        <div class="a"><p>Een vriend die zo vaak "ja ik reageer zo" zei dat zijn vrienden hem Quinn.ai zijn gaan noemen. Deze site is de logische en licht overdreven volgende stap.</p></div>
+        <h3><button aria-expanded="false" aria-controls="faq-6">Wie is Quinn?</button></h3>
+        <div class="a" id="faq-6"><p>Een vriend die zo vaak "ja ik reageer zo" zei dat zijn vrienden hem Quinn.ai zijn gaan noemen. Deze site is de logische en licht overdreven volgende stap.</p></div>
       </div>
     </div>
   </div>
 </section>
+</main>
 
 <footer>
   <div class="wrap">
@@ -1555,13 +1601,21 @@
     const av = document.createElement('div');
     av.className = 'av ' + (klasse === 'me' ? 'me' : 'ai');
     av.textContent = avatarTekst;
+    av.setAttribute('aria-hidden', 'true');
     const b = document.createElement('div');
     b.className = 'bubble';
+    // AI-bubbels beginnen verborgen voor screenreaders: het typmachine-effect
+    // muteert de tekst tientallen keren per seconde, en dat zou anders per
+    // letter worden aangekondigd. Zodra het bericht klaar is, halen we dit weg
+    // en kondigen we het complete bericht in één keer aan (zie announce()).
+    if(klasse !== 'me') b.setAttribute('aria-hidden', 'true');
     r.appendChild(av); r.appendChild(b);
     log.appendChild(r);
     return b;
   }
   const naarBeneden = () => log.scrollTo({top: log.scrollHeight, behavior:'smooth'});
+  const announcer = $('#live-announcer');
+  function announce(tekst){ announcer.textContent = ''; setTimeout(() => { announcer.textContent = tekst; }, 40); }
 
   let bezig = false;
   let teller = 0;
@@ -1569,11 +1623,18 @@
   function typ(el, tekst, klaar){
     let i = 0;
     el.textContent = '';
+    el.setAttribute('aria-hidden', 'true'); // ook bij hergebruik (bv. "Probeer opnieuw") opnieuw verbergen
     const caret = document.createElement('span');
     caret.className = 'caret';
     el.appendChild(caret);
     const stap = () => {
-      if(i >= tekst.length){ caret.remove(); klaar && klaar(); return; }
+      if(i >= tekst.length){
+        caret.remove();
+        el.removeAttribute('aria-hidden');
+        announce(tekst);
+        klaar && klaar();
+        return;
+      }
       const brok = tekst.slice(i, i + (Math.random() > 0.8 ? 2 : 1));
       caret.insertAdjacentText('beforebegin', brok);
       i += brok.length;
@@ -1695,6 +1756,8 @@
         setTimeout(() => {
           const x = rij('ai','Q');
           x.innerHTML = '<span class="think">notitie</span><br>Dit is je zesde bericht aan een website. Alles goed thuis?';
+          x.removeAttribute('aria-hidden');
+          announce('Notitie: dit is je zesde bericht aan een website. Alles goed thuis?');
           naarBeneden();
         }, 2600);
       }
@@ -1704,19 +1767,23 @@
   sendBtn.addEventListener('click', () => stuur());
   input.addEventListener('keydown', e => { if(e.key === 'Enter') stuur(); });
   $('#fake-clip').addEventListener('click', () => {
-    if(bezig) return;
+    if(bezig || input.disabled) return;
     const b = rij('ai','Q');
     typ(b, "Bestand geweigerd. Het was waarschijnlijk te saai, te groot of te ongepast. Ik neem de gok niet.");
     naarBeneden();
   });
   $('#fake-mic').addEventListener('click', () => {
-    if(bezig) return;
+    if(bezig || input.disabled) return;
     const b = rij('ai','Q');
     typ(b, "Quinn luistert in 2026 niet meer naar stemberichten van langer dan 0 seconden. Typ het uit of hou het voor je.");
     naarBeneden();
   });
   document.querySelectorAll('.chip').forEach(c => {
-    c.addEventListener('click', () => { stuur(c.textContent); document.getElementById('chat').scrollIntoView({block:'center'}); });
+    c.addEventListener('click', () => {
+      if(input.disabled) return;
+      stuur(c.textContent);
+      document.getElementById('chat').scrollIntoView({block:'center'});
+    });
   });
   sarc.addEventListener('input', () => { sarcVal.textContent = sarc.value; });
 modelSel.addEventListener('change', () => {
@@ -1726,20 +1793,26 @@ modelSel.addEventListener('change', () => {
     
     if (isOffline) {
         b.textContent = "Quinn is niet beschikbaar. Het systeem is vergrendeld ter bescherming van zijn rust.";
+        b.removeAttribute('aria-hidden'); announce(b.textContent);
         input.disabled = true;
         sendBtn.disabled = true;
         input.placeholder = "Quinn ligt nog te slapen...";
         input.style.opacity = "0.4";
         sendBtn.style.opacity = "0.4";
         sendBtn.style.cursor = "not-allowed";
+        $('#chips').classList.add('locked');
+        $('.compose').classList.add('locked');
     } else {
         b.textContent = "Overgeschakeld naar " + naam + ". Je merkt er niets van, maar het klinkt duur.";
+        b.removeAttribute('aria-hidden'); announce(b.textContent);
         input.disabled = false;
         sendBtn.disabled = false;
         input.placeholder = "Typ iets. Wat dan ook. Hij vindt er toch wel iets van.";
         input.style.opacity = "1";
         sendBtn.style.opacity = "1";
         sendBtn.style.cursor = "pointer";
+        $('#chips').classList.remove('locked');
+        $('.compose').classList.remove('locked');
     }
     naarBeneden();
   });
@@ -1769,13 +1842,35 @@ modelSel.addEventListener('change', () => {
     "Serverkosten deze maand: €0,00. Dank voor jullie vertrouwen."
   ];
   let ti = 0;
-  setInterval(() => {
-    ti = (ti + 1) % TICKER.length;
-    const el = $('#ticker-text');
-    el.style.opacity = 0;
-    setTimeout(() => { el.textContent = TICKER[ti]; el.style.opacity = .85; }, 260);
-  }, 5200);
+  const reduceerBeweging = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let tickerTimer = null;
+  function tickerStart(){
+    if(tickerTimer || reduceerBeweging) return;
+    tickerTimer = setInterval(() => {
+      ti = (ti + 1) % TICKER.length;
+      const el = $('#ticker-text');
+      el.style.opacity = 0;
+      setTimeout(() => { el.textContent = TICKER[ti]; el.style.opacity = .85; }, 260);
+    }, 5200);
+  }
+  function tickerStop(){ clearInterval(tickerTimer); tickerTimer = null; }
+  tickerStart();
   $('#ticker-text').style.transition = 'opacity .26s';
+
+  // WCAG 2.2.2: automatisch bewegende content moet te pauzeren zijn.
+  // Werkt met muis (hover) én toetsenbord (de knop zelf, altijd bereikbaar).
+  const tickerPauzeBtn = $('#ticker-pauze');
+  if(reduceerBeweging){ tickerPauzeBtn.setAttribute('aria-pressed','true'); }
+  tickerPauzeBtn.addEventListener('click', () => {
+    const gepauzeerd = tickerPauzeBtn.getAttribute('aria-pressed') === 'true';
+    tickerPauzeBtn.setAttribute('aria-pressed', String(!gepauzeerd));
+    tickerPauzeBtn.setAttribute('aria-label', gepauzeerd ? 'Berichtenbalk pauzeren' : 'Berichtenbalk hervatten');
+    if(gepauzeerd) tickerStart(); else tickerStop();
+  });
+  document.querySelector('.ticker').addEventListener('mouseenter', tickerStop);
+  document.querySelector('.ticker').addEventListener('mouseleave', () => {
+    if(tickerPauzeBtn.getAttribute('aria-pressed') !== 'true') tickerStart();
+  });
 
   // benchmarks + tellers animeren zodra ze in beeld komen
   const io = new IntersectionObserver(entries => {
@@ -1806,10 +1901,13 @@ modelSel.addEventListener('change', () => {
   // faq open/dicht
   document.querySelectorAll('.qa button').forEach(b => {
     b.addEventListener('click', () => {
-      const qa = b.parentElement;
+      const qa = b.parentElement.parentElement;
       const open = qa.hasAttribute('open');
-      document.querySelectorAll('.qa').forEach(o => o.removeAttribute('open'));
-      if(!open) qa.setAttribute('open','');
+      document.querySelectorAll('.qa').forEach(o => {
+        o.removeAttribute('open');
+        o.querySelector('button').setAttribute('aria-expanded', 'false');
+      });
+      if(!open){ qa.setAttribute('open',''); b.setAttribute('aria-expanded','true'); }
     });
   });
 
@@ -1824,6 +1922,40 @@ modelSel.addEventListener('change', () => {
       }, 500);
     });
   });
+
+  // reveal-on-scroll: zachte fade-up voor kopjes en kaarten, zodra ze in beeld komen
+  const revealGroepen = [
+    { sel: '.sec-head', stagger: false },
+    { sel: '.tier', stagger: true },
+    { sel: '.stat', stagger: true },
+    { sel: '.qa', stagger: true }
+  ];
+  const revealIO = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('in'); revealIO.unobserve(e.target); }
+    });
+  }, { threshold: .15, rootMargin: '0px 0px -40px 0px' });
+  revealGroepen.forEach(({sel, stagger}) => {
+    document.querySelectorAll(sel).forEach((el, i) => {
+      el.classList.add('reveal');
+      if(stagger){ el.classList.add('reveal-stagger'); el.style.setProperty('--i', i % 6); }
+      revealIO.observe(el);
+    });
+  });
+
+  // scroll-spy: markeert het actieve kopje in de nav
+  const navLinks = Array.from(document.querySelectorAll('.nav-links a'));
+  const spySecties = navLinks
+    .map(a => document.querySelector(a.getAttribute('href')))
+    .filter(Boolean);
+  const spyIO = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(!e.isIntersecting) return;
+      const href = '#' + e.target.id;
+      navLinks.forEach(a => a.classList.toggle('actief', a.getAttribute('href') === href));
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  spySecties.forEach(sec => spyIO.observe(sec));
 
   // kleine easter egg: konami
   const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
