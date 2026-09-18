@@ -144,6 +144,12 @@
   .chip{font:inherit;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line-soft);border-radius:999px;padding:7px 12px;cursor:pointer;transition:color .18s,border-color .18s,background .18s,transform .18s}
   .chip:hover{color:var(--paper);border-color:var(--line);background:rgba(255,255,255,.08);transform:translateY(-1px)}
   .compose{display:flex;gap:10px;padding:14px;border-top:1px solid var(--line-soft);background:rgba(0,0,0,.25)}
+  .fake-attachment{
+    background:transparent;border:0;color:var(--muted);cursor:pointer;padding:0 4px;
+    display:grid;place-items:center;flex:none;align-self:center;
+  }
+  .fake-attachment:hover{color:var(--paper);transform:scale(1.1)}
+  .fake-attachment svg{display:block;width:20px;height:20px}
   .compose input{
     flex:1;min-width:0;font:inherit;font-size:15px;background:rgba(255,255,255,.05);border:1px solid var(--line);
     border-radius:13px;padding:13px 16px;color:var(--paper);
@@ -356,6 +362,17 @@
     </div>
 
     <div class="compose">
+      <button type="button" class="fake-attachment" id="fake-clip" aria-label="Bijlage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21.4 11.6 12 21a6 6 0 0 1-8.5-8.5l11.3-11.3a4 4 0 0 1 5.7 5.7L9.2 18.2a2 2 0 1 1-2.8-2.8l9.2-9.2"/>
+        </svg>
+      </button>
+      <button type="button" class="fake-attachment" id="fake-mic" aria-label="Microfoon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="3" width="6" height="11" rx="3"/>
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>
+        </svg>
+      </button>
       <input id="input" type="text" autocomplete="off" placeholder="Typ iets. Wat dan ook. Hij vindt er toch wel iets van.">
       <button class="send" id="send">Stuur</button>
     </div>
@@ -1353,6 +1370,10 @@
       return "Hier zijn er " + n + " over '" + onderwerp + "':\n" + regels.join('\n') + "\nGeen van deze is gecontroleerd.";
     }
 
+    if(/\b(klopt niet|hallucinatie|onzin in mijn profiel|lieg|verzonnen)\b/.test(laag)){
+      return "Dat is een AI-hallucinatie. Je profiel is aangevuld met data die statistisch aannemelijk is voor iemand zoals jij. Wen er maar aan.";
+    }
+
     /* --- leren uit wat je vertelt --- */
     const ietsGeleerd = leerUit(laag);
 
@@ -1619,8 +1640,21 @@
     setTimeout(denk, 260);
   }
 
+  const HALLUCINATIES = [
+    ["hobby", "postzegels likken in het donker"],
+    ["dieet", "lauwe melk en spijt"],
+    ["angst", "deurbellen die twee keer rinkelen"],
+    ["bijnaam", "de natte handdoek van de groepsapp"],
+    ["zwakte", "uitgebreide meningen over dingen die niemand heeft gevraagd"]
+  ];
+  let gehallucineerd = null;
+
   function ververProfiel(){
     const regels = profielRegels();
+    if(!gehallucineerd && teller > 3 && Math.random() > 0.8){
+      gehallucineerd = HALLUCINATIES[Math.floor(Math.random() * HALLUCINATIES.length)];
+    }
+    if(gehallucineerd) regels.push(gehallucineerd);
     const kaart = $('#profiel'), lijst = $('#profiel-lijst');
     if(!regels.length){ kaart.hidden = true; return; }
     kaart.hidden = false;
@@ -1635,6 +1669,7 @@
     Object.assign(geheugen, { naam:null, leeftijd:null, woont:null, werk:null });
     geheugen.houdtVan.length = 0; geheugen.haat.length = 0;
     geheugen.heeft.length = 0; geheugen.doet.length = 0;
+    gehallucineerd = null;
     ververProfiel();
     const x = rij('ai','Q');
     typ(x, "Alles vergeten. Dat kostte me nul moeite, want ik hing er toch al niet aan.");
@@ -1668,6 +1703,18 @@
 
   sendBtn.addEventListener('click', () => stuur());
   input.addEventListener('keydown', e => { if(e.key === 'Enter') stuur(); });
+  $('#fake-clip').addEventListener('click', () => {
+    if(bezig) return;
+    const b = rij('ai','Q');
+    typ(b, "Bestand geweigerd. Het was waarschijnlijk te saai, te groot of te ongepast. Ik neem de gok niet.");
+    naarBeneden();
+  });
+  $('#fake-mic').addEventListener('click', () => {
+    if(bezig) return;
+    const b = rij('ai','Q');
+    typ(b, "Quinn luistert in 2026 niet meer naar stemberichten van langer dan 0 seconden. Typ het uit of hou het voor je.");
+    naarBeneden();
+  });
   document.querySelectorAll('.chip').forEach(c => {
     c.addEventListener('click', () => { stuur(c.textContent); document.getElementById('chat').scrollIntoView({block:'center'}); });
   });
