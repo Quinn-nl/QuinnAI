@@ -1672,12 +1672,28 @@
     c.addEventListener('click', () => { stuur(c.textContent); document.getElementById('chat').scrollIntoView({block:'center'}); });
   });
   sarc.addEventListener('input', () => { sarcVal.textContent = sarc.value; });
-  modelSel.addEventListener('change', () => {
+modelSel.addEventListener('change', () => {
     const b = rij('ai','Q');
     const naam = modelSel.value;
-    b.textContent = naam.indexOf('offline') > -1
-      ? "Quinn is niet beschikbaar. Quinn is nooit beschikbaar. Daarom ben ik er."
-      : "Overgeschakeld naar " + naam + ". Je merkt er niets van, maar het klinkt duur.";
+    const isOffline = naam.indexOf('offline') > -1;
+    
+    if (isOffline) {
+        b.textContent = "Quinn is niet beschikbaar. Het systeem is vergrendeld ter bescherming van zijn rust.";
+        input.disabled = true;
+        sendBtn.disabled = true;
+        input.placeholder = "Quinn ligt nog te slapen...";
+        input.style.opacity = "0.4";
+        sendBtn.style.opacity = "0.4";
+        sendBtn.style.cursor = "not-allowed";
+    } else {
+        b.textContent = "Overgeschakeld naar " + naam + ". Je merkt er niets van, maar het klinkt duur.";
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.placeholder = "Typ iets. Wat dan ook. Hij vindt er toch wel iets van.";
+        input.style.opacity = "1";
+        sendBtn.style.opacity = "1";
+        sendBtn.style.cursor = "pointer";
+    }
     naarBeneden();
   });
 
