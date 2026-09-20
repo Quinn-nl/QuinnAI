@@ -40,7 +40,7 @@
     --wrap:1080px;
   }
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth;scroll-padding-top:72px;scroll-padding-bottom:74px}
+  html{scroll-behavior:smooth;scroll-padding:209px;}
   body{
     margin:0;background:var(--ink);color:var(--paper);
     font-family:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -287,7 +287,7 @@
   .qa[open] button::after{content:"–"}
   .qa .a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s ease;color:var(--muted);font-size:15.5px}
   .qa[open] .a{grid-template-rows:1fr}
-  .qa .a > p{overflow:hidden;min-height:0}
+  .qa .a > p{overflow:visible;min-height:0;height:auto;}
   .qa .a p{padding:0 40px 24px 0;max-width:68ch}
 
   /* footer */
@@ -355,9 +355,10 @@
     select.model{max-width:calc(100% - 35px)}
     .bubble{max-width:calc(100% - 37px)}
   }
-  @media (prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
-  .ticker .dot, .chat-top .dot { animation: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+  .ticker .dot, .chat-top .dot {
+    animation: none;
+  }
 }
 
   /* ---------- reveal-on-scroll ---------- */
