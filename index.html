@@ -24,15 +24,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{
+:root{
     --ink:#0a1017;
     --ink-2:#0f1822;
     --ink-3:#152130;
-    --line:rgba(255,255,255,.10);
-    --line-soft:rgba(255,255,255,.06);
-    --paper:#e9eef2;
-    --muted:#8595a4;
-    --muted-3:#7d8b9a;
+    --line:rgba(255,255,255,.35); /* Aangepast naar 35% voor 3:1 non-text contrast */
+    --line-soft:rgba(255,255,255,.15); /* Iets duidelijker gemaakt */
+    --paper:#ffffff; /* Helemaal wit voor maximaal contrast */
+    --muted:#b0becd; /* Lichter gemaakt om WCAG AA te halen (was #8595a4) */
+    --muted-3:#9ba8b6; /* Lichter gemaakt voor 'nee' opties en disclaimers */
     --butter:#f5c451;
     --mint:#77d8ae;
     --rose:#ff7d6b;
@@ -366,7 +366,7 @@
 </head>
 <body>
 
-<nav aria-label="Skip link"><a href="#hoofdinhoud" class="skip-link" tabindex="-1"> Direct naar inhoud </a></nav>
+<nav aria-label="Skip link"><a href="#hoofdinhoud" class="skip-link" tabindex="0"> Direct naar inhoud </a></nav>
 
 <div class="ticker" role="region" aria-label="Systeemmeldingen">
   <span class="dot"></span>
@@ -2138,7 +2138,7 @@ modelSel.addEventListener('change', () => {
 </script>
 
 <!-- Plak hier je Webability widget script -->
-  <script src="https://enhancer.webability.io/widget.min.js" data-asw-position="bottom-left-x-20-y-20" data-asw-lang="auto" data-asw-icon-type="m-full" defer></script>
+    <script src="https://enhancer.webability.io/widget.min.js" data-asw-position="bottom-left-x-20-y-20" data-asw-lang="auto" data-asw-icon-type="m-full" defer></script>
 
 </body>
 </html>
