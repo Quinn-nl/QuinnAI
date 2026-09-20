@@ -8,6 +8,17 @@
 <meta property="og:title" content="QuinnAI">
 <meta property="og:description" content="Een taalmodel getraind op 14 jaar groepsapp. Antwoordt binnen 0,4 seconden. Zelden nuttig.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://quinnai.tech/">
+<meta property="og:image" content="https://quinnai.tech/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QuinnAI — Quinn antwoordt nooit, nu binnen 0,4 seconden.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="QuinnAI">
+<meta name="twitter:description" content="Een taalmodel getraind op 14 jaar groepsapp. Antwoordt binnen 0,4 seconden. Zelden nuttig.">
+<meta name="twitter:image" content="https://quinnai.tech/og-image.png">
+<meta name="theme-color" content="#0a1017">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,6 +104,25 @@
   :focus-visible{outline:2px solid var(--butter);outline-offset:3px;border-radius:6px}
 
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+  .naar-boven{
+    position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:60;
+    width:44px;height:44px;border-radius:13px;border:1px solid var(--line);
+    background:rgba(13,17,24,.85);backdrop-filter:blur(10px);color:var(--paper);
+    display:grid;place-items:center;cursor:pointer;box-shadow:0 12px 30px -12px rgba(0,0,0,.6);
+    opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .25s,transform .25s,background .2s;
+  }
+  .naar-boven.zichtbaar{opacity:1;transform:none;pointer-events:auto}
+  .naar-boven:hover{background:rgba(255,255,255,.1)}
+  .naar-boven:active{transform:scale(.92)}
+
+  .sound-btn{
+    background:none;border:1px solid var(--line-soft);border-radius:8px;color:var(--muted);
+    width:28px;height:28px;display:grid;place-items:center;cursor:pointer;flex:none;
+  }
+  .sound-btn:hover{color:var(--paper);border-color:var(--line)}
+  .sound-btn[aria-pressed="true"]{color:var(--butter);border-color:rgba(245,196,81,.4)}
+  .sound-btn[aria-pressed="true"] #sound-golf{opacity:1}
   .skip-link{
     position:absolute;left:12px;top:-60px;z-index:100;background:var(--butter);color:#241802;
     font-weight:700;font-size:14px;padding:10px 16px;border-radius:10px;text-decoration:none;
@@ -167,6 +197,7 @@
   .chips{display:flex;gap:8px;padding:0 20px 14px;flex-wrap:wrap}
   .chip{font:inherit;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line-soft);border-radius:999px;padding:7px 12px;cursor:pointer;transition:color .18s,border-color .18s,background .18s,transform .18s}
   .chip:hover{color:var(--paper);border-color:var(--line);background:rgba(255,255,255,.08);transform:translateY(-1px)}
+  .chip:active{transform:scale(.96);background:rgba(255,255,255,.12)}
   .chips.locked .chip{opacity:.35;pointer-events:none}
   .compose.locked .fake-attachment{opacity:.3;pointer-events:none}
   .compose{display:flex;gap:10px;padding:14px;border-top:1px solid var(--line-soft);background:rgba(0,0,0,.25)}
@@ -176,6 +207,7 @@
     min-width:32px;min-height:32px;border-radius:8px;
   }
   .fake-attachment:hover{color:var(--paper);transform:scale(1.1)}
+  .fake-attachment:active{transform:scale(.92)}
   .fake-attachment svg{display:block;width:20px;height:20px}
   .compose input{
     flex:1;min-width:0;font:inherit;font-size:15px;background:rgba(255,255,255,.05);border:1px solid var(--line);
@@ -195,7 +227,8 @@
   }
   .profiel-top{display:flex;align-items:center;gap:9px;margin-bottom:12px}
   .profiel-titel{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--mint);letter-spacing:.03em}
-  .vergeet{margin-left:auto;background:none;border:0;color:var(--muted-3);font:inherit;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .vergeet{background:none;border:0;color:var(--muted-3);font:inherit;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .profiel-acties{margin-left:auto;display:flex;gap:16px}
   .vergeet:hover{color:var(--rose)}
   #profiel-lijst{margin:0;display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13.5px}
   #profiel-lijst dt{color:var(--muted-3);font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding-top:2px}
@@ -221,6 +254,7 @@
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;margin-top:54px;box-shadow:0 24px 50px -42px #000}
   .stat{background:var(--ink);padding:26px 22px;transition:transform .2s,background .2s}
   .stat:hover{transform:translateY(-3px);background:rgba(255,255,255,.02)}
+  .stat:active{transform:translateY(-1px) scale(.99)}
   .stat .n{font-family:'Bricolage Grotesque',serif;font-weight:800;font-size:38px;letter-spacing:-.03em;line-height:1}
   .stat .k{color:var(--muted);font-size:13.5px;margin-top:8px}
 
@@ -228,6 +262,7 @@
   .tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:18px;align-items:start}
   .tier{border:1px solid var(--line-soft);border-radius:var(--radius);padding:28px 24px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:16px;min-height:100%;box-shadow:0 22px 48px -42px #000;transition:transform .2s,border-color .2s,background .2s}
   .tier:hover{transform:translateY(-3px);border-color:var(--line);background:rgba(255,255,255,.035)}
+  .tier:active{transform:translateY(-1px) scale(.995)}
   .tier.best{border-color:rgba(245,196,81,.45);background:linear-gradient(180deg,rgba(245,196,81,.08),rgba(255,255,255,.02));position:relative;padding-top:34px}
   .tier .ribbon{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:linear-gradient(120deg,var(--butter),#e08a3c);color:#241802;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase;padding:5px 14px;border-radius:0 0 9px 9px;box-shadow:0 6px 16px -6px rgba(245,196,81,.6)}
   .tier h3{font-size:19px}
@@ -331,7 +366,7 @@
 </head>
 <body>
 
-<a href="#hoofdinhoud" class="skip-link">Direct naar inhoud</a>
+<nav aria-label="Skip link"><a href="#hoofdinhoud" class="skip-link">Direct naar inhoud</a></nav>
 
 <div class="ticker" role="region" aria-label="Systeemmeldingen">
   <span class="dot"></span>
@@ -385,6 +420,9 @@
         <option>Quinn zelf — offline</option>
       </select>
       <div class="right">
+        <button id="sound-btn" class="sound-btn" type="button" aria-pressed="false" aria-label="Typgeluid inschakelen">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path id="sound-golf" d="M16 9a5 5 0 0 1 0 6" opacity="0"/></svg>
+        </button>
         <div class="slider-wrap">
           <label for="sarcasme">Toon</label>
           <input type="range" id="sarcasme" min="0" max="100" value="78">
@@ -427,7 +465,10 @@
     <div class="profiel-top">
       <span class="dot"></span>
       <span class="profiel-titel">Profiel wordt opgebouwd</span>
-      <button id="vergeet-btn" class="vergeet">Vergeet alles</button>
+      <div class="profiel-acties">
+        <button id="download-btn" class="vergeet">Download dossier</button>
+        <button id="vergeet-btn" class="vergeet">Vergeet alles</button>
+      </div>
     </div>
     <dl id="profiel-lijst"></dl>
     <p class="profiel-voet">Dit staat alleen in je eigen browser. Sluit het tabblad en het is weg — daar hoef je niets voor aan te klikken.</p>
@@ -557,6 +598,10 @@
   </div>
 </footer>
 
+<button id="naar-boven" class="naar-boven" aria-label="Terug naar boven" hidden>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
 <script>
 (function(){
   "use strict";
@@ -570,7 +615,7 @@
   $('#year').textContent = new Date().getFullYear();
 
   // sessie-uptime: puur decoratief, maar hoort bij het "dashboard"-gevoel
-  const sessieStart = Date.now();
+  let sessieStart = Date.now();
   const sessUptime = $('#sess-uptime');
   setInterval(() => {
     const sec = Math.floor((Date.now() - sessieStart) / 1000);
@@ -1634,6 +1679,40 @@ function hash(str){
     "antwoord verzinnen"
   ];
 
+  // typgeluid: volledig gegenereerd met Web Audio, geen los geluidsbestand nodig.
+  // Staat standaard uit — geluid vanzelf laten afspelen is vervelend, dit is een bewuste keuze.
+  let geluidAan = false;
+  let audioCtx = null;
+  try{ geluidAan = localStorage.getItem('quinnai-geluid') === 'aan'; } catch(e){}
+  function speelTik(){
+    if(!geluidAan) return;
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+      const t0 = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 720 + Math.random()*260;
+      gain.gain.setValueAtTime(0.045, t0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.03);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t0); osc.stop(t0 + 0.035);
+    }catch(e){ /* Web Audio niet beschikbaar: geluid blijft gewoon uit */ }
+  }
+  const soundBtn = $('#sound-btn');
+  function ververSoundBtn(){
+    soundBtn.setAttribute('aria-pressed', String(geluidAan));
+    soundBtn.setAttribute('aria-label', geluidAan ? 'Typgeluid uitschakelen' : 'Typgeluid inschakelen');
+  }
+  ververSoundBtn();
+  soundBtn.addEventListener('click', () => {
+    geluidAan = !geluidAan;
+    ververSoundBtn();
+    try{ localStorage.setItem('quinnai-geluid', geluidAan ? 'aan' : 'uit'); }catch(e){}
+    if(geluidAan) speelTik();
+  });
+
   function rij(klasse, avatarTekst){
     const r = document.createElement('div');
     r.className = 'row ' + klasse;
@@ -1677,6 +1756,7 @@ function hash(str){
       const brok = tekst.slice(i, i + (Math.random() > 0.8 ? 2 : 1));
       caret.insertAdjacentText('beforebegin', brok);
       i += brok.length;
+      if(/\S/.test(brok) && i % 2 === 0) speelTik();
       if(i % 8 === 0) naarBeneden();
       setTimeout(stap, tekst[i-1] === '.' ? 90 : 14 + Math.random()*22);
     };
@@ -1765,12 +1845,43 @@ function hash(str){
       lijst.appendChild(dt); lijst.appendChild(dd);
     });
   }
+  $('#download-btn').addEventListener('click', () => {
+    const regels = profielRegels();
+    const nu = new Date().toLocaleString('nl-NL');
+    let inhoud =
+      "QUINNAI — VERTROUWELIJK DOSSIER\n" +
+      "================================\n" +
+      "Gegenereerd op: " + nu + "\n" +
+      "Bron: dingen die je zelf typte tegen een nepwebsite\n" +
+      "Classificatie: volstrekt onbelangrijk\n\n";
+    if(!regels.length){
+      inhoud += "Geen gegevens. Je hebt niets prijsgegeven. Verstandig, eerlijk gezegd.\n";
+    } else {
+      regels.forEach(([k,v]) => { inhoud += "- " + k.toUpperCase() + ": " + v + "\n"; });
+    }
+    inhoud +=
+      "\n--------------------------------\n" +
+      "Dit dossier is nooit ergens opgeslagen behalve in je eigen browser,\n" +
+      "en bestaat vanaf nu alleen nog in dit bestand op je eigen computer.\n" +
+      "QuinnAI wenst je verder een fijne dag, of wat daar op lijkt.\n";
+    const blob = new Blob([inhoud], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quinnai-dossier.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
   $('#vergeet-btn').addEventListener('click', () => {
     Object.assign(geheugen, { naam:null, leeftijd:null, woont:null, werk:null });
     geheugen.houdtVan.length = 0; geheugen.haat.length = 0;
     geheugen.heeft.length = 0; geheugen.doet.length = 0;
     gehallucineerd = null;
     ververProfiel();
+    teller = 0;
+    $('#sess-msgs').textContent = '0';
+    sessieStart = Date.now();
     const x = rij('ai','Q');
     typ(x, "Alles vergeten. Dat kostte me nul moeite, want ik hing er toch al niet aan.");
     naarBeneden();
@@ -1995,6 +2106,19 @@ modelSel.addEventListener('change', () => {
     });
   }, { rootMargin: '-45% 0px -50% 0px' });
   spySecties.forEach(sec => spyIO.observe(sec));
+
+  // terug-naar-boven: verschijnt pas als je een stuk gescrold hebt
+  const naarBovenBtn = $('#naar-boven');
+  naarBovenBtn.hidden = false;
+  let scrollTimer = null;
+  window.addEventListener('scroll', () => {
+    if(scrollTimer) return;
+    scrollTimer = setTimeout(() => {
+      naarBovenBtn.classList.toggle('zichtbaar', window.scrollY > 700);
+      scrollTimer = null;
+    }, 100);
+  }, { passive: true });
+  naarBovenBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
   // kleine easter egg: konami
   const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
