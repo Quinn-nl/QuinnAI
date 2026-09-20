@@ -40,7 +40,7 @@
     --wrap:1080px;
   }
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth;scroll-padding-top:72px;scroll-padding-bottom:74px;}
+  html{scroll-behavior:smooth;scroll-padding-top:72px;scroll-padding-bottom:74px}
   body{
     margin:0;background:var(--ink);color:var(--paper);
     font-family:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -170,7 +170,7 @@
   .chat-top .right{margin-left:auto;display:flex;align-items:center;gap:14px}
   .slider-wrap{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
   input[type=range]{width:88px;accent-color:var(--butter);cursor:pointer}
-  .log{padding:22px 20px;min-height:430px;height:auto;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;background:radial-gradient(500px 220px at 50% 0,rgba(245,196,81,.035),transparent 70%);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+  .log{padding:22px 20px;min-height:430px;height:auto;max-height:600px;overflow-y:auto;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;background:radial-gradient(500px 220px at 50% 0,rgba(245,196,81,.035),transparent 70%);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
   .log::-webkit-scrollbar{width:9px}
   .log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:9px}
   .row{display:flex;gap:13px;align-items:flex-start;max-width:100%;animation:message-in .28s ease both}
@@ -356,8 +356,9 @@
     .bubble{max-width:calc(100% - 37px)}
   }
   @media (prefers-reduced-motion:reduce){
-    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
-  }
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .ticker .dot, .chat-top .dot { animation: none !important; }
+}
 
   /* ---------- reveal-on-scroll ---------- */
   .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease}
@@ -413,7 +414,7 @@
       <span class="dot"></span>
       <span class="label">Online</span>
       <span class="local-badge">100% lokaal</span>
-      <span class="session-badge mono" id="session-badge"><span id="sess-msgs" style="color:var(--paper);font-weight:600;">0</span><span class="sb-label"> berichten</span> · <span id="sess-uptime" style="color:var(--paper);font-weight:600;">0:00</span><span class="sb-label"> actief</span></span>
+      <span class="session-badge mono" id="session-badge"><span id="sess-msgs" style="font-weight:bold; color:var(--paper);">0</span><span class="sb-label"> berichten</span> · <span id="sess-uptime" style="font-weight:bold; color:var(--paper);">0:00</span><span class="sb-label"> actief</span></span>
       <select class="model" id="model" aria-label="Model kiezen">
         <option>QuinnAI 5.2 Turbo</option>
         <option>QuinnAI 5.2 Nano (heeft honger)</option>
