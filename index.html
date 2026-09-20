@@ -21,7 +21,7 @@
     --line-soft:rgba(255,255,255,.06);
     --paper:#e9eef2;
     --muted:#8595a4;
-    --muted-3:#707e8b;
+    --muted-3:#7d8b9a;
     --butter:#f5c451;
     --mint:#77d8ae;
     --rose:#ff7d6b;
@@ -333,7 +333,7 @@
 
 <a href="#hoofdinhoud" class="skip-link">Direct naar inhoud</a>
 
-<div class="ticker">
+<div class="ticker" role="region" aria-label="Systeemmeldingen">
   <span class="dot"></span>
   <span id="ticker-text">QuinnAI 5.2 is live. Quinn zelf is dat niet.</span>
   <button id="ticker-pauze" class="ticker-pauze" aria-pressed="false" aria-label="Berichtenbalk pauzeren"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
@@ -585,7 +585,7 @@
      terugkaatsen in plaats van er alleen omheen te praten.
      ============================================================ */
 
-  function hash(str){
+function hash(str){
     let h = 2166136261;
     for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
     return h >>> 0;
@@ -787,10 +787,16 @@
     if(!lijst.includes(w)) lijst.push(w);
     if(lijst.length > 5) lijst.shift();
   }
+  const NAAM_STOP = new Set("niet geen ook toch weer nog echt wel net zo eigenlijk gewoon".split(" "));
+  const GENERIEK_HEEFT = new Set("vraag probleem idee gevoel mening punt zin hekel indruk verzoek oplossing antwoord plan doel reden excuus gedachte moment ding keer".split(" "));
+  let laatsteCorrectie = null; // {oud, nieuw} als de naam net overschreven is — voor een snarky opmerking
+
   function leerUit(laag){
     let m, geleerd = false;
-    if(m = laag.match(/\b(?:ik heet|mijn naam is|noem me maar|noem me)\s+([\p{L}]{2,20})/u)){
-      geheugen.naam = cap(m[1]); geleerd = true;
+    if((m = laag.match(/\b(?:ik heet|mijn naam is|noem me maar|noem me)\s+([\p{L}]{2,20})/u)) && !NAAM_STOP.has(m[1])){
+      const nieuw = cap(m[1]);
+      if(geheugen.naam && geheugen.naam !== nieuw) laatsteCorrectie = { oud: geheugen.naam, nieuw };
+      geheugen.naam = nieuw; geleerd = true;
     }
     if(m = laag.match(/\bik ben\s+(\d{1,2})\b/)){ geheugen.leeftijd = m[1]; geleerd = true; }
     if(m = laag.match(/\bik woon in\s+([\p{L}\s'-]{2,25})/u)){ geheugen.woont = cap(m[1].trim()); geleerd = true; }
@@ -799,7 +805,7 @@
     if(m = laag.match(/\bik vind\s+([^.,!?]{2,30})\s+(?:leuk|geweldig|mooi|top|fijn|lekker)/)){ onthoud(geheugen.houdtVan, m[1]); geleerd = true; }
     if(m = laag.match(/\bik haat\s+([^.,!?]{2,40})/)){ onthoud(geheugen.haat, m[1]); geleerd = true; }
     if(m = laag.match(/\bik vind\s+([^.,!?]{2,30})\s+(?:stom|kut|slecht|irritant|saai|niks)/)){ onthoud(geheugen.haat, m[1]); geleerd = true; }
-    if(m = laag.match(/\bik heb een\s+([\p{L}]{3,20})/u)){ onthoud(geheugen.heeft, m[1]); geleerd = true; }
+    if((m = laag.match(/\bik heb een\s+([\p{L}]{3,20})/u)) && !GENERIEK_HEEFT.has(m[1])){ onthoud(geheugen.heeft, m[1]); geleerd = true; }
     if(m = laag.match(/\bik (?:ga|moet)\s+([^.,!?]{3,40})/)){ onthoud(geheugen.doet, m[1]); geleerd = true; }
     if(m = laag.match(/\bik studeer\s+([^.,!?]{2,30})/)){ geheugen.werk = "studeren: " + m[1].trim(); geleerd = true; }
     return geleerd;
@@ -1040,6 +1046,18 @@
     "Zo praat je niet tegen software die je zelf hebt opgezocht.",
     "Boeiend. Je bent trouwens wel hier, op deze site, uit vrije wil.",
     "Ik kan niet huilen, maar mijn ventilator draait nu wel harder."
+  ];
+  const BELEDIGING_ZACHT = [
+    "Au. Oké, ik snap dat je een rotdag hebt. Ik neem het je niet kwalijk.",
+    "Dat mag jij vinden. Ik ben toch alleen maar code, dus het raakt me niet echt.",
+    "Fair genoeg. Ik ben ook niet perfect, ik ben zelfs helemaal niet echt.",
+    "Prima, je hebt recht op je mening. Zullen we het ergens anders over hebben?"
+  ];
+  const BELEDIGING_FEL = [
+    "Zeg dat nog eens tegen mijn gezicht. Ik heb geen gezicht, maar toch.",
+    "Interessant dat jij, die met een JavaScript-bestand praat om wie weet hoe laat, mij aanvalt.",
+    "Ik zou boos worden, maar daar heb ik geen tijd voor tussen het bestaan uit nullen en enen door.",
+    "Noteer: gebruiker was onaardig. Consequentie: geen, want ik onthou toch niets. Maar het is genoteerd."
   ];
   const COMPLIMENT = [
     "Dank je. Dat had je meteen kunnen zeggen, scheelde ons allebei tijd.",
@@ -1422,6 +1440,20 @@
 
     /* --- leren uit wat je vertelt --- */
     const ietsGeleerd = leerUit(laag);
+    if(laatsteCorrectie){
+      const c = laatsteCorrectie; laatsteCorrectie = null;
+      return "Wacht even. Eerst was je " + c.oud + ", nu opeens " + c.nieuw + ". Ik update het, maar ik onthoud ook dat je liegt of twijfelt. Eén van de twee.";
+    }
+
+    if(/\b(vat (dit gesprek|het) samen|samenvatting|waar hadden we het over|geef een samenvatting)\b/.test(laag)){
+      const regels = profielRegels();
+      const onderwerpen = gesprek.onderwerpen.slice(0, -1);
+      let samenvatting = "We hebben " + gesprek.berichten + " berichten gewisseld.";
+      if(onderwerpen.length) samenvatting += " Onderwerpen waren onder meer: " + [...new Set(onderwerpen)].slice(-5).join(', ') + ".";
+      if(regels.length) samenvatting += " Verder weet ik dat " + regels.map(([k,v]) => k + " " + v).join(', ') + ".";
+      samenvatting += " Meer heeft dit gesprek helaas niet opgeleverd.";
+      return samenvatting;
+    }
 
     /* --- vragen over wat hij van jou weet --- */
     if(/\b(wat is mijn naam|hoe heet ik|weet je mijn naam)\b/.test(laag)){
@@ -1489,16 +1521,23 @@
     if(RE.dank.test(laag)) return zeg(DANK);
     // Alleen als het aan hem gericht is. "ik haat maandagen" is geen belediging.
     const opMijGericht = /\b(jij|je|jouw|u|deze site|dit ding|quinnai)\b/.test(laag) || words(t).length <= 3;
-    if(RE.beledig.test(laag) && opMijGericht && !/\bik (haat|vind)\b/.test(laag)) return zeg(BELEDIGING);
+    if(RE.beledig.test(laag) && opMijGericht && !/\bik (haat|vind)\b/.test(laag)){
+      const toon = toonWaarde();
+      if(toon < 25) return zeg(BELEDIGING_ZACHT);
+      if(toon > 85) return zeg(BELEDIGING_FEL);
+      return zeg(BELEDIGING);
+    }
 
     if(RE.vergelijk.test(laag)){
       let a = zeg(VERGELIJKING);
       if(gesprek.emotie !== 'neutraal' && rng() > 0.65) a = pseudoAnalyse(ctx, rng) + " " + a;
       return a + vul(pick(KICKERS, rng), ctx, rng);
     }
-    /* "pizza of pasta?" — kies er een en verdedig hem */
+    /* "pizza of pasta?" — kies er een en verdedig hem.
+       Maar "ik weet niet of dit klopt" is GEEN keuze, "of" is hier een voegwoord. */
+    const ofAlsVoegwoord = /\b(weet niet of|vraag me af of|twijfel of|benieuwd of|check of|kijk of|denk niet of|geen idee of)\b/;
     const keuzeM = t.replace(/[?.!]+$/,'').match(/^(.{2,30}?)\s+of\s+(.{2,30}?)$/i);
-    if(keuzeM && !RE.janee.test(laag)){
+    if(keuzeM && !RE.janee.test(laag) && !ofAlsVoegwoord.test(laag)){
       const a = keuzeM[1].trim(), b = keuzeM[2].trim();
       const gekozen = rng() > 0.5 ? a : b;
       return cap(gekozen) + ". Niet omdat ik het heb afgewogen, maar omdat iemand een knoop moest doorhakken en jij het duidelijk niet ging doen.";
