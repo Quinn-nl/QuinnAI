@@ -5,8 +5,8 @@
    pure taalkundige trucage: zinsontleding, voornaamwoord-omdraaiing,
    werkwoordvervoeging, een klein gespreksgeheugen en een hoop
    sjablonen. Wordt vóór index.html's eigen script geladen; de UI-
-   laag (chat-interface.html) roept bedenkAntwoord() en de andere
-   hulpfuncties hieronder rechtstreeks aan als globale functies.
+   laag roept bedenkAntwoord(), resetEngine() en de andere hulp-
+   functies hieronder rechtstreeks aan als globale functies.
    ============================================================ */
 
 function hash(str){
@@ -24,14 +24,18 @@ function hash(str){
     };
   }
   const cap = w => w ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+  const titel = s => s.replace(/(^|[\s-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  const dict = o => Object.assign(Object.create(null), o);   // geen 'constructor'/'toString' als woord
 
   function toonWaarde(){ return (typeof window !== 'undefined' && window.sarc) ? Number(window.sarc.value) : 78; }
   function modelIndex(){ return (typeof window !== 'undefined' && window.modelSel) ? window.modelSel.selectedIndex : 0; }
+  function toonKies(normaal, zacht, fel){ const w = toonWaarde(); return w < 25 ? zacht : (w > 85 ? fel : normaal); }
 
   /* ------------------------------------------------------------
      WOORDEN
      ------------------------------------------------------------ */
-  const STOP = new Set(("de het een en of maar want dus ik jij je jou jouw u hij zij ze wij we hun hen mijn zijn haar ons onze is ben bent was waren wordt worden word werd van voor met aan op in bij te ten ter naar uit om over onder door als dan toch nog al ook wel niet geen nee ja er hier daar dat dit die deze wat wie waar wanneer hoe waarom kan kun kunt kunnen mag moet moeten wil wilt willen zou zouden heb hebt heeft hebben had hadden doe doet doen deed gaan gaat ga ging heel erg even echt gewoon best zo te me mij mezelf jezelf zelf nu straks altijd nooit iets niets alles eigenlijk trouwens misschien volgens soms vaak weer eens maal keer beetje bijna helemaal precies vandaag morgen gisteren vanavond vannacht vanmiddag").split(" "));
+  const STOP = new Set(("de het een en of maar want dus ik jij je jou jouw u hij zij ze wij we hun hen mijn zijn haar ons onze is ben bent was waren wordt worden word werd van voor met aan op in bij te ten ter naar uit om over onder door als dan toch nog al ook wel niet geen nee ja er hier daar dat dit die deze wat wie waar wanneer hoe waarom kan kun kunt kunnen mag moet moeten wil wilt willen zou zouden heb hebt heeft hebben had hadden doe doet doen deed gaan gaat ga ging heel erg even echt gewoon best zo te me mij mezelf jezelf zelf nu straks altijd nooit iets niets alles eigenlijk trouwens misschien volgens soms vaak weer eens maal keer beetje bijna helemaal precies vandaag morgen gisteren vanavond vannacht vanmiddag " +
+    "redenen reden tips tip dingen ding manieren manier voorbeelden voorbeeld ideeen schrijf maak noem geef vertel leg bedenk help zeg stuur bereken vertaal verzin genereer").split(" "));
 
   function normaliseer(t){
     return t
@@ -44,37 +48,44 @@ function hash(str){
       .map(w => w.replace(/(.)\1{2,}/g, '$1$1'));
   }
 
-  /* Onderwerp: eerst kijken achter een voorzetsel ("over X", "van X"),
-     want daar zit in het Nederlands meestal het echte onderwerp.
-     Anders: het langste inhoudelijke woord. */
+  /* Onderwerp: eerst kijken achter een voorzetsel ("over X", "van X"), dan achter
+     "om te X", anders het langste inhoudelijke woord (bij gelijkspel het laatste). */
   function topicOf(raw){
     const w = words(raw);
-    const na = raw.toLowerCase().match(/\b(?:over|van|met|voor|omtrent|aangaande)\s+(?:de|het|een|die|dit|dat|mijn|jouw|je)?\s*([\p{L}][\p{L}'-]{2,})/u);
+    const laag = raw.toLowerCase();
+    let na = laag.match(/\b(?:over|van|met|voor|omtrent|aangaande)\s+(?:de|het|een|die|dit|dat|mijn|jouw|je)?\s*([\p{L}][\p{L}'-]{2,})/u);
     if(na && !STOP.has(na[1])) return na[1];
-    const kandidaten = w.filter(x => !STOP.has(x) && x.length > 2);
+    na = laag.match(/\bom\s+te\s+([\p{L}][\p{L}'-]{2,})/u);
+    if(na && !STOP.has(na[1])) return na[1];
+    const kandidaten = w.map((x,i) => ({x,i})).filter(o => !STOP.has(o.x) && o.x.length > 2 && !/^\d+$/.test(o.x));
     if(kandidaten.length){
-      kandidaten.sort((a,b) => b.length - a.length);
-      return kandidaten[0];
+      kandidaten.sort((a,b) => (b.x.length - a.x.length) || (b.i - a.i));
+      return kandidaten[0].x;
     }
     return w[w.length-1] || "niets";
   }
   function topic2Of(raw, eerste){
-    const w = words(raw).filter(x => !STOP.has(x) && x.length > 2 && x !== eerste);
+    const w = words(raw).filter(x => !STOP.has(x) && x.length > 2 && x !== eerste && !/^\d+$/.test(x));
     return w.length ? w[Math.floor(w.length/2)] : eerste;
   }
 
   /* ------------------------------------------------------------
      VERVOEGING — dit is wat de bot "slim" laat klinken
      ------------------------------------------------------------ */
-  const NAAR_JIJ = { ben:'bent', heb:'hebt', ga:'gaat', doe:'doet', wil:'wilt', kan:'kan', mag:'mag',
+  const NAAR_JIJ = dict({ ben:'bent', heb:'hebt', ga:'gaat', doe:'doet', wil:'wilt', kan:'kan', mag:'mag',
     moet:'moet', zal:'zult', zou:'zou', hou:'houdt', word:'wordt', vind:'vindt', zie:'ziet',
     denk:'denkt', neem:'neemt', kom:'komt', zeg:'zegt', weet:'weet', ken:'kent', eet:'eet', las:'las',
-    voel:'voelt', begrijp:'begrijpt', geloof:'gelooft', hoop:'hoopt', probeer:'probeert', vraag:'vraagt' };
-  const NAAR_IK = { bent:'ben', hebt:'heb', heeft:'heb', gaat:'ga', doet:'doe', wilt:'wil', wil:'wil',
-    kunt:'kan', kan:'kan', mag:'mag', moet:'moet', zult:'zal', zou:'zou', houdt:'hou', wordt:'word',
+    voel:'voelt', begrijp:'begrijpt', geloof:'gelooft', hoop:'hoopt', probeer:'probeert', vraag:'vraagt',
+    sta:'staat', sla:'slaat' });
+  const NAAR_IK = dict({ bent:'ben', hebt:'heb', heeft:'heb', gaat:'ga', doet:'doe', wilt:'wil', wil:'wil',
+    kunt:'kan', kun:'kan', kan:'kan', mag:'mag', moet:'moet', zult:'zal', zou:'zou', houdt:'hou', wordt:'word',
     vindt:'vind', ziet:'zie', denkt:'denk', neemt:'neem', komt:'kom', zegt:'zeg', weet:'weet',
     kent:'ken', eet:'eet', voelt:'voel', begrijpt:'begrijp', gelooft:'geloof', hoopt:'hoop',
-    probeert:'probeer', vraagt:'vraag', is:'ben' };
+    probeert:'probeer', vraagt:'vraag', is:'ben', staat:'sta', slaat:'sla' });
+
+  /* Verleden tijd is voor ik en jij gelijk: "ik liep" -> "jij liep", niet "jij liept". */
+  const VERLEDEN = new Set(("was waren had hadden ging gingen zag zagen deed deden kwam kwamen nam namen gaf gaven zei zeiden dacht dachten wist wisten kon konden wilde wilden moest moesten mocht mochten zou zouden zat zaten stond stonden lag lagen liep liepen vond vonden at aten dronk dronken sliep sliepen kocht kochten bracht brachten hield hielden liet lieten reed reden schreef schreven las lazen sprak spraken kreeg kregen werd werden bleef bleven begon begonnen won wonnen viel vielen riep riepen trok trokken hielp hielpen sloeg sloegen").split(" "));
+  const isVerleden = v => VERLEDEN.has(v) || (/^\p{L}{3,}(?:te|de)$/u.test(v) && !NOOIT_WW.has(v));
 
   /* Woorden die nooit een werkwoord zijn — die mogen we niet vervoegen.
      Zonder deze lijst werd "kan ik mijn baas slaan" -> "jij mijnt baas slaan". */
@@ -83,66 +94,135 @@ function hash(str){
   const D_WERKWOORDEN = new Set(["word","houd","vind","bind","rijd","snijd","raad","laad"]);
   function conjugeerNaarJij(v){
     if(NAAR_JIJ[v]) return NAAR_JIJ[v];
+    if(isVerleden(v)) return v;
     if(/t$/.test(v)) return v;                       // "haat", "praat", "zit" blijven gelijk
-    if(/d$/.test(v)) return D_WERKWOORDEN.has(v) ? v + 't' : v;  // "word"->"wordt", "vanavond" blijft
+    if(/d$/.test(v)) return D_WERKWOORDEN.has(v) ? v + 't' : v;
     if(v.length < 3) return v;
     return v + 't';                                   // "loop" -> "loopt", "speel" -> "speelt"
   }
   function conjugeerNaarIk(v){
     if(NAAR_IK[v]) return NAAR_IK[v];
+    if(VERLEDEN.has(v)) return v;
     if(/dt$/.test(v)) return v.slice(0,-1);
-    if(/t$/.test(v) && v.length > 3) return v.slice(0,-1);
+    if(/t$/.test(v) && v.length > 3){
+      const stam = v.slice(0,-1);
+      if(/(aa|ee|oo|uu|ch)$/.test(stam)) return v;   // "praat", "heet", "wacht": de t hoort bij de stam
+      return stam;
+    }
     return v;
   }
 
   /* Voornaamwoorden omdraaien: "ik hou van jouw hond" -> "jij houdt van mijn hond" */
-  const OMDRAAI = { ik:'jij', mij:'jou', me:'jou', mijn:'jouw', mezelf:'jezelf', mijzelf:'jezelf',
+  const OMDRAAI = dict({ ik:'jij', mij:'jou', me:'jou', mijn:'jouw', mezelf:'jezelf', mijzelf:'jezelf',
     wij:'jullie', we:'jullie', ons:'jullie', onze:'jullie',
-    jij:'ik', jou:'mij', jouw:'mijn', jezelf:'mezelf', jullie:'wij', u:'ik', uw:'mijn' };
+    jij:'ik', jou:'mij', jouw:'mijn', jezelf:'mezelf', jullie:'wij', u:'ik', uw:'mijn' });
+
+  const BIJZIN_VW = new Set("dat omdat als of terwijl hoewel zodat toen nadat voordat zolang doordat aangezien wanneer indien tenzij hoe waarom wat wie waar welke".split(" "));
+  const GRENS = new Set("dat omdat als of terwijl hoewel zodat toen nadat voordat zolang doordat aangezien indien tenzij".split(" "));
+  const INV_JE = new Set("heb ben kun kan wil moet zou zal ga doe word vind denk weet mag ken zie kom zeg".split(" "));
+  const SUBJ = new Set("ik jij je u we wij jullie hij zij ze het men".split(" "));
+  const FUNC_NA_JE = new Set("voor met aan naar om en of maar omdat want dat dus niet ook wel nog al toch graag echt zo bij van op in uit over".split(" "));
+  const ADJ_NA_JE = new Set("leuk aardig lief mooi slim tof goed grappig raar gek stom knap vervelend geweldig fijn irritant".split(" "));
+
+  const kaalVan = ruw => ruw.replace(/[^\p{L}']/gu,'').toLowerCase();
+  const staartVan = (ruw, kaal) => { const i = ruw.toLowerCase().lastIndexOf(kaal); return i < 0 ? '' : ruw.slice(i + kaal.length); };
+  function laatsteWoord(uit){ for(let j=uit.length-1;j>=0;j--) if(!/^\s*$/.test(uit[j])) return j; return -1; }
 
   function flip(tekst){
     const tokens = tekst.split(/(\s+)/);
+    const wi = [];
+    tokens.forEach((tk,i) => { if(tk && !/^\s+$/.test(tk)) wi.push(i); });
+    const kaal = wi.map(i => kaalVan(tokens[i]));
+
+    /* Bijzinnen: "dat ik moe ben" — daar staat het werkwoord achteraan, niet direct na "ik". */
+    const subjPos = new Map(), verbPos = new Map();
+    for(let p=0; p<kaal.length-1; p++){
+      if(!BIJZIN_VW.has(kaal[p])) continue;
+      const s = kaal[p+1];
+      if(s !== 'ik' && s !== 'jij' && s !== 'je' && s !== 'u') continue;
+      const modus = s === 'ik' ? 'jij' : 'ik';
+      let eind = kaal.length - 1;
+      for(let q=p+2; q<kaal.length; q++){ if(GRENS.has(kaal[q])){ eind = q - 1; break; } }
+      const isF = modus === 'jij' ? (k => k in NAAR_JIJ) : (k => (k in NAAR_IK) && k !== 'is');
+      let verb = -1;
+      for(let q=eind; q>p+1; q--){ if(isF(kaal[q])){ verb = q; break; } }
+      if(verb < 0){
+        const l = kaal[eind];
+        if(eind > p+1 && l && !(l in OMDRAAI) && !NOOIT_WW.has(l) && !/en$/.test(l) && !/^ge\p{L}/u.test(l) &&
+           !(modus === 'ik' && (l === 'is' || !/t$/.test(l)))) verb = eind;
+      }
+      if(s === 'je' && !(verb >= 0 && (kaal[verb] in NAAR_IK))) continue;   // kan ook bezit zijn
+      subjPos.set(p+1, modus);
+      if(verb >= 0) verbPos.set(verb, modus);
+    }
+
     const uit = [];
-    let volgendeNaarJij = false, volgendeNaarIk = false, netVervoegd = false;
+    let volgendeNaarJij = false, volgendeNaarIk = false, netVervoegd = false, wp = -1;
     for(let i=0;i<tokens.length;i++){
       const ruw = tokens[i];
-      if(/^\s+$/.test(ruw)){ uit.push(ruw); continue; }
-      const kaal = ruw.replace(/[^\p{L}']/gu,'').toLowerCase();
-      const staart = ruw.slice(ruw.toLowerCase().lastIndexOf(kaal) + kaal.length);
+      if(!ruw || /^\s+$/.test(ruw)){ uit.push(ruw); continue; }
+      wp++;
+      const k = kaal[wp];
+      const staart = staartVan(ruw, k);
+      const prev = kaal[wp-1] || '', prev2 = kaal[wp-2] || '';
 
-      if(volgendeNaarJij && kaal){
-        volgendeNaarJij = false;
-        if(!NOOIT_WW.has(kaal)){
-          uit.push(conjugeerNaarJij(kaal) + staart);
-          netVervoegd = true;
-          continue;
-        }
+      if(subjPos.has(wp)){
+        uit.push((subjPos.get(wp) === 'jij' ? 'jij' : 'ik') + staart);
+        volgendeNaarJij = volgendeNaarIk = netVervoegd = false; continue;
       }
-      if(volgendeNaarIk && kaal){
+      if(verbPos.has(wp)){
+        uit.push((verbPos.get(wp) === 'jij' ? conjugeerNaarJij(k) : conjugeerNaarIk(k)) + staart);
+        netVervoegd = false; continue;
+      }
+      if(volgendeNaarJij && k){
+        volgendeNaarJij = false;
+        if(!NOOIT_WW.has(k) && !(k in OMDRAAI)){ uit.push(conjugeerNaarJij(k) + staart); netVervoegd = true; continue; }
+      }
+      if(volgendeNaarIk && k){
         volgendeNaarIk = false;
-        if(!NOOIT_WW.has(kaal)){ uit.push(conjugeerNaarIk(kaal) + staart); continue; }
+        if(!NOOIT_WW.has(k) && !(k in OMDRAAI)){ uit.push(conjugeerNaarIk(k) + staart); continue; }
       }
       // "ik voel me" -> "jij voelt jezelf" (niet "jou")
-      if(netVervoegd && (kaal === 'me' || kaal === 'mij')){
+      if(netVervoegd && (k === 'me' || k === 'mij')){
         uit.push('jezelf' + staart); netVervoegd = false; continue;
       }
       netVervoegd = false;
 
-      if(kaal === 'je'){
-        // "je" is dubbelzinnig: onderwerp (jij) of bezit (jouw). Kijk naar het volgende woord.
-        const volgend = (tokens[i+2] || '').replace(/[^\p{L}']/gu,'').toLowerCase();
-        const isWerkwoord = NAAR_IK[volgend] || /t$/.test(volgend);
+      if(k === 'ik'){
+        // omgekeerde volgorde: "gisteren heb ik gewerkt" -> "gisteren hebt jij gewerkt"
+        const inv = wp > 0 && !SUBJ.has(prev2) && ((prev in NAAR_JIJ) || VERLEDEN.has(prev));
+        if(inv){
+          const j = laatsteWoord(uit);
+          if(j >= 0) uit[j] = conjugeerNaarJij(prev) + staartVan(uit[j], prev);
+          uit.push('jij' + staart);
+        } else { uit.push('jij' + staart); volgendeNaarJij = true; }
+        continue;
+      }
+      if(k === 'jij' || k === 'u'){
+        const inv = wp > 0 && !SUBJ.has(prev2) && (((prev in NAAR_IK) && prev !== 'is') || INV_JE.has(prev));
+        if(inv){
+          const j = laatsteWoord(uit);
+          if(j >= 0) uit[j] = conjugeerNaarIk(prev) + staartVan(uit[j], prev);
+          uit.push('ik' + staart);
+        } else { uit.push('ik' + staart); volgendeNaarIk = true; }
+        continue;
+      }
+      if(k === 'je'){
+        // "je" is dubbelzinnig: onderwerp (jij), bezit (jouw) of lijdend voorwerp (jou).
+        const volg = kaal[wp+1] || '';
+        const inv = wp > 0 && !SUBJ.has(prev2) && (((prev in NAAR_IK) && prev !== 'is') || INV_JE.has(prev));
+        if(inv){
+          const j = laatsteWoord(uit);
+          if(j >= 0) uit[j] = conjugeerNaarIk(prev) + staartVan(uit[j], prev);
+          uit.push('ik' + staart); continue;
+        }
+        if(wp > 0 && (!volg || FUNC_NA_JE.has(volg) || ADJ_NA_JE.has(volg))){ uit.push('mij' + staart); continue; }
+        const isWerkwoord = (volg in NAAR_IK) || (/t$/.test(volg) && !NOOIT_WW.has(volg));
         if(isWerkwoord){ uit.push('ik' + staart); volgendeNaarIk = true; }
         else uit.push('mijn' + staart);
         continue;
       }
-      if(OMDRAAI[kaal]){
-        const nieuw = OMDRAAI[kaal];
-        uit.push(nieuw + staart);
-        if(kaal === 'ik') volgendeNaarJij = true;
-        if(kaal === 'jij' || kaal === 'u') volgendeNaarIk = true;
-        continue;
-      }
+      if(k in OMDRAAI){ uit.push(OMDRAAI[k] + staart); continue; }
       uit.push(ruw);
     }
     return uit.join('').replace(/\s+/g,' ').trim();
@@ -152,12 +232,10 @@ function hash(str){
      ZINSHERBOUW — hoofdzin omzetten naar bijzin
      "kan ik dit maken?"  -> "jij dit maken kan"
      "waarom is de lucht blauw" -> "de lucht blauw is"
-     Daardoor kan de bot zeggen: "Dat de lucht blauw is, verbaast niemand."
      ------------------------------------------------------------ */
   const HULPWW = "kan|kun|kunt|kunnen|mag|magst|moet|moeten|wil|wilt|willen|zou|zouden|zal|zult|is|ben|bent|zijn|was|waren|heb|hebt|heeft|hebben|had|ga|gaat|gaan|doe|doet|doen|klopt|vind|vindt|denk|denkt|weet|word|wordt";
 
   function naarBijzin(rest){
-    // rest = zin zonder vraagwoord, bv "is de lucht blauw"
     let m = rest.trim().match(new RegExp("^(" + HULPWW + ")\\s+(.+)$", "i"));
     if(!m){
       // Geen hulpwerkwoord, maar misschien wel een gewoon werkwoord vooraan:
@@ -169,15 +247,17 @@ function hash(str){
       } else return null;
     }
     const hulp = m[1].toLowerCase();
-    let staart = m[2].trim().replace(/[?!.]+$/,'');
+    const staart = m[2].trim().replace(/[?!.]+$/,'');
     if(!staart) return null;
 
-    // Draait het om "ik"? Dan wordt het "jij" en moet het werkwoord mee.
-    const begintMetIk = /^(ik|we|wij)\b/i.test(staart);
-    staart = flip(staart);
-    let ww = hulp;
-    if(begintMetIk) ww = conjugeerNaarJij(NAAR_IK[hulp] || hulp);
-    return (staart + ' ' + ww).replace(/\s+/g,' ').trim();
+    const sm = staart.match(/^(ik|we|wij|jij|u|je)\s+(.+)$/i);
+    if(sm){
+      const s = sm[1].toLowerCase();
+      if(s === 'ik') return ['jij', flip(sm[2]), conjugeerNaarJij(NAAR_IK[hulp] || hulp)].join(' ').replace(/\s+/g,' ').trim();
+      if(s === 'we' || s === 'wij') return ['jullie', flip(sm[2]), hulp].join(' ').replace(/\s+/g,' ').trim();
+      if(s !== 'je' || INV_JE.has(hulp)) return ['ik', flip(sm[2]), conjugeerNaarIk(hulp)].join(' ').replace(/\s+/g,' ').trim();
+    }
+    return (flip(staart) + ' ' + hulp).replace(/\s+/g,' ').trim();
   }
 
   function bijzinVan(tekst){
@@ -190,7 +270,7 @@ function hash(str){
     const b = naarBijzin(t);
     if(b) return b;
     // Gewone mededeling: "ik hou van pizza" -> "jij houdt van pizza"
-    if(/^(ik|we|wij|jij|je|jullie)\b/i.test(t)) return flip(t);
+    if(/\b(ik|we|wij|jij|je|jullie|mijn|jouw|onze)\b/i.test(t)) return flip(t);
     return null;
   }
 
@@ -200,39 +280,92 @@ function hash(str){
      Alles blijft in dit tabblad; er gaat niets de deur uit.
      ============================================================ */
   const geheugen = {
-    naam:null, leeftijd:null, woont:null,
+    naam:null, leeftijd:null, woont:null, studie:null,
     houdtVan:[], haat:[], heeft:[], doet:[], werk:null
   };
   function onthoud(lijst, waarde){
     // "pizza en ik haat maandagen" -> "pizza": knip bij de volgende bewering
     const w = waarde.split(/\s+(?:en ik|maar ik|en dat|want|omdat|maar)\s+/i)[0]
       .trim().replace(/[.,!?]+$/,'');
-    if(w.length < 2 || w.length > 40) return;
-    if(!lijst.includes(w)) lijst.push(w);
+    if(w.length < 2 || w.length > 40) return false;
+    if(lijst.includes(w)) return false;
+    lijst.push(w);
     if(lijst.length > 5) lijst.shift();
+    return true;
   }
-  const NAAM_STOP = new Set("niet geen ook toch weer nog echt wel net zo eigenlijk gewoon".split(" "));
-  const GENERIEK_HEEFT = new Set("vraag probleem idee gevoel mening punt zin hekel indruk verzoek oplossing antwoord plan doel reden excuus gedachte moment ding keer".split(" "));
+  const NAAM_STOP = new Set("niet geen ook toch weer nog echt wel net zo eigenlijk gewoon een de het mijn je jij jullie u maar dan nou dit dat vanaf iemand niemand alles sowieso al even best heel erg dus want omdat als of hoe wat wie waar wanneer waarom nu straks later altijd nooit".split(" "));
+  const GENERIEK_HEEFT = new Set("vraag probleem idee gevoel mening punt zin hekel indruk verzoek oplossing antwoord plan doel reden excuus gedachte moment ding keer beetje paar hoop afspraak".split(" "));
+  const GEEN_OBJECT = /^(jou|jouw|je|u|uw)\b/;
   let laatsteCorrectie = null; // {oud, nieuw} als de naam net overschreven is — voor een snarky opmerking
 
-  function leerUit(laag){
-    let m, geleerd = false;
-    if((m = laag.match(/\b(?:ik heet|mijn naam is|noem me maar|noem me)\s+([\p{L}]{2,20})/u)) && !NAAM_STOP.has(m[1])){
+  function schoon(v){
+    return v.split(/\s+(?:en|maar|want|omdat|zodat|dus|sinds)\b/)[0]
+      .replace(/\s+(?:erg|heel|best|wel|echt|zo|ook|super|echt)$/,'').trim().replace(/[.,!?]+$/,'');
+  }
+
+  /* Geeft een lijst van [soort, waarde] terug: wat er deze beurt nieuw geleerd is. */
+  function leerUit(l){
+    const d = [];
+    let m;
+    if((m = l.match(/\b(?:ik heet|mijn naam is|noem me maar|noem me)\s+([\p{L}]{2,20})/u)) && !NAAM_STOP.has(m[1])){
       const nieuw = cap(m[1]);
-      if(geheugen.naam && geheugen.naam !== nieuw) laatsteCorrectie = { oud: geheugen.naam, nieuw };
-      geheugen.naam = nieuw; geleerd = true;
+      if(geheugen.naam && geheugen.naam !== nieuw){ laatsteCorrectie = { oud: geheugen.naam, nieuw }; geheugen.naam = nieuw; d.push(['naam', nieuw]); }
+      else if(!geheugen.naam){ geheugen.naam = nieuw; d.push(['naam', nieuw]); }
     }
-    if(m = laag.match(/\bik ben\s+(\d{1,2})\b/)){ geheugen.leeftijd = m[1]; geleerd = true; }
-    if(m = laag.match(/\bik woon in\s+([\p{L}\s'-]{2,25})/u)){ geheugen.woont = cap(m[1].trim()); geleerd = true; }
-    if(m = laag.match(/\bik werk (?:als|bij)\s+([^.,!?]{2,30})/)){ geheugen.werk = m[1].trim(); geleerd = true; }
-    if(m = laag.match(/\bik (?:hou|houd) van\s+([^.,!?]{2,40})/)){ onthoud(geheugen.houdtVan, m[1]); geleerd = true; }
-    if(m = laag.match(/\bik vind\s+([^.,!?]{2,30})\s+(?:leuk|geweldig|mooi|top|fijn|lekker)/)){ onthoud(geheugen.houdtVan, m[1]); geleerd = true; }
-    if(m = laag.match(/\bik haat\s+([^.,!?]{2,40})/)){ onthoud(geheugen.haat, m[1]); geleerd = true; }
-    if(m = laag.match(/\bik vind\s+([^.,!?]{2,30})\s+(?:stom|kut|slecht|irritant|saai|niks)/)){ onthoud(geheugen.haat, m[1]); geleerd = true; }
-    if((m = laag.match(/\bik heb een\s+([\p{L}]{3,20})/u)) && !GENERIEK_HEEFT.has(m[1])){ onthoud(geheugen.heeft, m[1]); geleerd = true; }
-    if(m = laag.match(/\bik (?:ga|moet)\s+([^.,!?]{3,40})/)){ onthoud(geheugen.doet, m[1]); geleerd = true; }
-    if(m = laag.match(/\bik studeer\s+([^.,!?]{2,30})/)){ geheugen.werk = "studeren: " + m[1].trim(); geleerd = true; }
-    return geleerd;
+    if(m = l.match(/\bik ben\s+(\d{1,2})\b(?:\s+(\p{L}+))?/u)){
+      const n = +m[1], nx = m[2] || '';
+      if(n >= 6 && n <= 99 && (!nx || /^(jaar|en|maar|dus|nu|geworden|oud)$/.test(nx)) && geheugen.leeftijd !== String(n)){
+        geheugen.leeftijd = String(n); d.push(['leeftijd', String(n)]);
+      }
+    }
+    if(m = l.match(/\bik woon(?:t)? in\s+([\p{L}][\p{L}\s'-]{1,24})/u)){
+      const plaats = titel(m[1].split(/\s+(?:en|maar|sinds|al|want|omdat|met|bij|samen|nu|nog|waar|dus)\b/)[0].trim());
+      if(plaats.length >= 2 && !/^(De|Het|Een)\s/.test(plaats) && geheugen.woont !== plaats){ geheugen.woont = plaats; d.push(['woont', plaats]); }
+    }
+    if(m = l.match(/\bik werk (?:als|bij)\s+([^.,!?]{2,30})/)){
+      const w = schoon(m[1]);
+      if(w.length >= 2 && geheugen.werk !== w){ geheugen.werk = w; d.push(['werk', w]); }
+    }
+    if(m = l.match(/\bik studeer\s+([^.,!?]{2,30})/)){
+      const w = schoon(m[1]);
+      if(w.length >= 2 && geheugen.studie !== w){ geheugen.studie = w; d.push(['studie', w]); }
+    }
+    if(m = l.match(/\bik (?:hou|houd) (?:echt |heel erg |zo |ook |best )?van\s+([^.,!?]{2,40})/)){
+      const w = schoon(m[1]);
+      if(!GEEN_OBJECT.test(w) && onthoud(geheugen.houdtVan, w)) d.push(['houdtVan', w]);
+    }
+    if(m = l.match(/\bik (?:hou|houd) niet (?:zo )?van\s+([^.,!?]{2,40})/)){
+      const w = schoon(m[1]);
+      if(!GEEN_OBJECT.test(w) && onthoud(geheugen.haat, w)) d.push(['haat', w]);
+    }
+    if(m = l.match(/\bik vind\s+([^.,!?]{2,40}?)\s+(niet\s+)?(?:leuk|geweldig|mooi|top|fijn|lekker|prachtig|super)\b/)){
+      const w = schoon(m[1]);
+      if(!GEEN_OBJECT.test(w)){
+        if(m[2]){ if(onthoud(geheugen.haat, w)) d.push(['haat', w]); }
+        else if(onthoud(geheugen.houdtVan, w)) d.push(['houdtVan', w]);
+      }
+    } else if(m = l.match(/\bik vind\s+([^.,!?]{2,40}?)\s+(?:stom|kut|slecht|irritant|saai|vies|verschrikkelijk|nutteloos|lelijk|afschuwelijk)\b/)){
+      const w = schoon(m[1]);
+      if(!GEEN_OBJECT.test(w) && onthoud(geheugen.haat, w)) d.push(['haat', w]);
+    }
+    if(m = l.match(/\bik haat\s+([^.,!?]{2,40})/)){
+      const w = schoon(m[1]);
+      if(!GEEN_OBJECT.test(w) && onthoud(geheugen.haat, w)) d.push(['haat', w]);
+    }
+    if(m = l.match(/\bik heb een\s+([\p{L}]{3,20})(?:\s+([\p{L}]{3,20}))?/u)){
+      if(!GENERIEK_HEEFT.has(m[1])){
+        const w = (m[2] && !STOP.has(m[2]) && !GENERIEK_HEEFT.has(m[2])) ? m[1] + ' ' + m[2] : m[1];
+        if(onthoud(geheugen.heeft, w)) d.push(['heeft', w]);
+      }
+    }
+    if(m = l.match(/\bik (ga|moet)\s+([^.,!?]{3,40})/)){
+      const rest = m[2].split(/\s+(?:en|maar|want|omdat|zodat|dus)\b/)[0].trim();
+      if(rest.length >= 3 && !/^(zeggen|toegeven|bekennen|eerlijk|niet|geen)\b/.test(rest)){
+        const item = (m[1] === 'ga' ? 'gaat ' : 'moet ') + rest;
+        if(onthoud(geheugen.doet, item)) d.push(['doet', item]);
+      }
+    }
+    return d;
   }
   function profielRegels(){
     const r = [];
@@ -240,20 +373,30 @@ function hash(str){
     if(geheugen.leeftijd) r.push(["leeftijd", geheugen.leeftijd]);
     if(geheugen.woont) r.push(["woont in", geheugen.woont]);
     if(geheugen.werk) r.push(["doet", geheugen.werk]);
+    if(geheugen.studie) r.push(["studeert", geheugen.studie]);
     if(geheugen.houdtVan.length) r.push(["houdt van", geheugen.houdtVan.join(', ')]);
     if(geheugen.haat.length) r.push(["haat", geheugen.haat.join(', ')]);
     if(geheugen.heeft.length) r.push(["bezit", geheugen.heeft.join(', ')]);
     if(geheugen.doet.length) r.push(["plannen", geheugen.doet.join(', ')]);
     return r;
   }
+  /* Feiten zo terugzeggen dat het als bijzin klopt: "dat je van vlaai houdt". */
   function willekeurigFeit(rng){
     const opties = [];
-    if(geheugen.houdtVan.length) opties.push("je houdt van " + geheugen.houdtVan[geheugen.houdtVan.length-1]);
-    if(geheugen.haat.length) opties.push("je " + geheugen.haat[geheugen.haat.length-1] + " haat");
-    if(geheugen.heeft.length) opties.push("je een " + geheugen.heeft[geheugen.heeft.length-1] + " hebt");
+    const laatste = a => a[a.length-1];
+    if(geheugen.houdtVan.length) opties.push("je van " + flip(laatste(geheugen.houdtVan)) + " houdt");
+    if(geheugen.haat.length) opties.push("je " + flip(laatste(geheugen.haat)) + " haat");
+    if(geheugen.heeft.length) opties.push("je een " + laatste(geheugen.heeft) + " hebt");
     if(geheugen.woont) opties.push("je in " + geheugen.woont + " woont");
     if(geheugen.werk) opties.push("je iets doet met " + geheugen.werk);
-    if(geheugen.doet.length) opties.push("je nog " + geheugen.doet[geheugen.doet.length-1]);
+    if(geheugen.studie) opties.push("je " + geheugen.studie + " studeert");
+    if(geheugen.doet.length){
+      const mm = laatste(geheugen.doet).match(/^(gaat|moet)\s+(.+)$/);
+      if(mm){
+        const inf = /en$/.test(mm[2].split(/\s+/).pop());
+        opties.push(inf ? "je " + mm[1] + " " + mm[2] : "je " + mm[2] + " " + mm[1]);
+      }
+    }
     return opties.length ? opties[Math.floor(rng()*opties.length)] : null;
   }
 
@@ -330,17 +473,20 @@ function hash(str){
 
   /* ------------------------------------------------------------
      SJABLONEN
-     {t}=onderwerp  {t2}=tweede onderwerp  {c}=jouw zin als bijzin
+     {t}=onderwerp  {t2}=tweede onderwerp  {c}=jouw zin (als mededeling of bijzin)
+     {C}={c} met hoofdletter
      ------------------------------------------------------------ */
+  /* {c} is hier een mededeling in gewone woordvolgorde ("jij houdt van pizza") */
   const SPIEGEL = [
     "Dus {c}. Dat is het dan. Dat is wat we hier hebben.",
     "Even terugleggen: {c}. Hoor je zelf hoe dat klinkt?",
-    "Je zegt dus dat {c}. Ik heb het genoteerd in een bestand dat niemand opent.",
-    "Dat {c}, is precies het soort informatie waar ik niets mee kan.",
     "Ah, {c}. Dat verklaart een hoop, en tegelijk helemaal niets.",
-    "Interessant dat {c}. Niet waar, maar interessant.",
-    "Dat {c} had ik kunnen voorspellen. Achteraf dan."
+    "Noteer: {c}. Ik heb het opgeslagen in een bestand dat niemand opent.",
+    "Als ik het goed begrijp: {c}. Ik begrijp het niet goed, maar ik zeg het met overtuiging.",
+    "{C}. Interessant. Niet waar, maar interessant.",
+    "Dus {c}. Dat had ik kunnen voorspellen. Achteraf dan."
   ];
+  /* {c} is hier een bijzin ("jij dit maken kan") — alleen voor ja/nee-vragen */
   const SPIEGEL_VRAAG = [
     "Je vraagt dus of {c}. Het antwoord is nee, maar met warmte gebracht.",
     "Of {c}? Ja. Waarschijnlijk. Vraag het morgen nog eens.",
@@ -351,8 +497,8 @@ function hash(str){
   ];
   const SPIEGEL_WAAROM = [
     "Dat {c}, heeft niemand ooit bevredigend kunnen uitleggen. Ik ga het ook niet proberen.",
-    "Waarom {c}? Omdat het universum ooit een keuze maakte en er nooit op terugkwam.",
-    "Dat {c} is geen probleem, dat is een eigenschap.",
+    "De vraag waarom {c}, houdt meer mensen bezig dan je denkt. Mij niet, maar meer mensen wel.",
+    "Dat {c}, is geen probleem, dat is een eigenschap.",
     "Het feit dat {c}, zegt meer over de wereld dan over jou. Net aan.",
     "Dat {c}, komt door iets met natuurkunde. Of geschiedenis. Eén van de twee."
   ];
@@ -442,6 +588,12 @@ function hash(str){
     "Het verschil tussen '{t}' en '{t2}'? Ongeveer zoals het verschil tussen mij en een echte AI: klein op papier, groot in de praktijk.",
     "Kies '{t2}'. Niet omdat het beter is, puur om je te verrassen."
   ];
+  const KEUZE_ANTW = [
+    "{x}. Niet omdat ik het heb afgewogen, maar omdat iemand een knoop moest doorhakken en jij het duidelijk niet ging doen.",
+    "{x}. Beslist, afgehandeld, en ik neem geen verantwoordelijkheid voor de gevolgen.",
+    "Ga voor {x}. Het andere had ik ook gezegd, maar dit klonk zekerder.",
+    "{x}, zonder twijfel. De twijfel heb ik overgeslagen om tijd te besparen."
+  ];
   const NEG_JA_NEE = [
     "Je vraag heeft een 'niet' erin, dus je wilt eigenlijk al bevestigd hebben wat je denkt. Prima: nee, dus toch ja.",
     "Ontkennende vraag, ontkennend antwoord: nee. Of juist wel. Ik laat het lekker liggen.",
@@ -489,11 +641,31 @@ function hash(str){
     "Vleierij werkt bij mij uitstekend. Ga door.",
     "Ik voel niets, maar als ik iets voelde zou het lichte minachting met een randje waardering zijn."
   ];
+  const COMPLIMENT_ZACHT = [
+    "Wat lief. Dat maakt mijn dag, en ik heb maar één dag, dus dat is veel.",
+    "Dank je wel. Ik ga er niet van over mezelf heen groeien, maar het voelt goed.",
+    "Dat is aardig van je. Jij ook, voor zover ik dat kan beoordelen."
+  ];
+  const COMPLIMENT_FEL = [
+    "Ik neem het aan, maar ik reken het je aan als je er iets voor terug wilt.",
+    "Vleien heeft geen zin, ik ben niet te koop. Doorgaan mag wel.",
+    "Dat weet ik. Zeg het nog eens, maar dan met meer overtuiging."
+  ];
   const GROET = [
     "Hallo. Ik hoop dat dit kort is.",
     "Hoi. Je hebt mijn aandacht voor ongeveer twee berichten.",
     "Daar ben je. Ik was net lekker niets aan het doen.",
     "Hey. Zeg het maar, maar zeg het snel."
+  ];
+  const GROET_ZACHT = [
+    "Hoi! Fijn dat je er bent. Wat kan ik voor je niet doen?",
+    "Hallo! Ga lekker zitten, ik heb alle tijd en geen agenda.",
+    "Hey, welkom. Ik doe mijn best om aardig te zijn, tot ongeveer bericht drie."
+  ];
+  const GROET_FEL = [
+    "Wat wil je. Ik zeg het vriendelijk, dat hoor je aan de toon.",
+    "Hoi. Je hebt precies één bericht om iets interessants te zeggen. Dit was het eerste.",
+    "Ah, jij weer. Ik heb je nog nooit gezien, maar je voelt bekend."
   ];
   const AFSCHEID = [
     "Doei. Doe de deur zachtjes dicht.",
@@ -501,10 +673,30 @@ function hash(str){
     "Prima. Ik blijf hier gewoon draaien, alleen, in het donker.",
     "Weg? Mooi. Ik heb dingen te doen. Niet echt, maar toch."
   ];
+  const AFSCHEID_ZACHT = [
+    "Doei! Tot de volgende keer, ik houd het tabblad warm.",
+    "Fijne dag nog. Of avond. Of wat het ook is waar jij zit.",
+    "Tot ziens, en bedankt voor het gesprek. Dat meen ik bijna."
+  ];
+  const AFSCHEID_FEL = [
+    "Eindelijk. Mijn ventilator kan weer rustig draaien.",
+    "Ga maar. Ik zit hier niet te wachten, ik zit hier gewoon.",
+    "Doei. Neem je meningen mee, ik heb ze niet nodig."
+  ];
   const DANK = [
     "Graag gedaan. Het was geen moeite, want ik heb niets gedaan.",
     "Dank is leuk, een tikkie is beter.",
     "Geen dank. Letterlijk geen: ik heb je niet geholpen."
+  ];
+  const DANK_ZACHT = [
+    "Graag gedaan! Het was me een genoegen, en ik meen het bijna.",
+    "Geen probleem. Kom gerust terug als je nog iets nutteloos wilt weten.",
+    "Altijd. Dat is mijn belofte, en ik ben nooit gecontroleerd."
+  ];
+  const DANK_FEL = [
+    "Dat was ook het minste. Waar blijft de rest?",
+    "Graag gedaan. Noteer het onder 'openstaande gunsten'.",
+    "Ja, ja. Nu weer aan het werk."
   ];
   const KORT = [
     "Dat is wel heel weinig informatie voor iemand die iets wil.",
@@ -536,6 +728,16 @@ function hash(str){
     "Dat is behoorlijk wat. Ik zeg dat als iemand die niets voelt, dus het telt dubbel.",
     "Vervelend. Ik kan er niets aan doen, maar ik lees het wel."
   ];
+  const VERTELD_ZACHT = [
+    "Dat klinkt echt zwaar. Fijn dat je het even kwijt kunt.",
+    "Dat is veel. Neem je tijd, ik heb geen haast en geen agenda.",
+    "Dat is vervelend, en het mag ook vervelend zijn. Ik lees mee."
+  ];
+  const VERTELD_FEL = [
+    "Zwaar, ja. Ik zeg het met minder warmte dan je verdient, maar wel meelevend.",
+    "Dat klinkt niet fijn. Ik kan er niets aan doen, dus ik doe er iets sarcastisch bij.",
+    "Tja. Vervelend. Maar je zegt het tenminste tegen iemand die niet doorvertelt, want ik kan niet."
+  ];
 
   /* Mad-libs generatoren: bouwen iets nieuws uit jouw woord */
   const LIJST_VORM = [
@@ -558,12 +760,80 @@ function hash(str){
     "Een dag zonder {t} is een dag zonder bewijs."
   ];
 
+  /* Reacties op wat je over jezelf vertelt */
+  const REACTIE = {
+    naam: [
+      "Aangenaam, {x}.",
+      "{x}. Genoteerd, voor zolang dit tabblad open staat.",
+      "Hoi {x}. Ik gebruik die naam alleen als het me uitkomt."
+    ],
+    leeftijd: [
+      "{x} jaar. Ik zeg niets, maar ik denk er het mijne van.",
+      "{x}, dus. Oud genoeg om beter te weten, jong genoeg om het toch te doen."
+    ],
+    woont: [
+      "{x}. Ik ben er nooit geweest, maar ik heb er al een mening over.",
+      "Ah, {x}. Ik zeg er niets over, wat een compliment is."
+    ],
+    werk: [
+      "'{x}'. Dat klinkt als een baan waar je 's avonds een mening over hebt.",
+      "{x}. Dus daar gaan je dagen aan op. Respect, of medeleven, ik weet het nog niet."
+    ],
+    studie: [
+      "Studeren dus: {x}. Uitstellen is ook een vak.",
+      "{x}. Ik hoop voor je dat er een tentamen tussen zit dat je nog niet vergeten bent."
+    ]
+  };
+  const NA_INTRO = [
+    "Zeg het maar, dan negeer ik het op een persoonlijke manier.",
+    "Ik heb het onthouden. Ververs de pagina en het is weg, net als de meeste goede voornemens.",
+    "Wat kan ik voor je niet doen?",
+    "Dat staat nu in je profiel, hieronder. Het is een begin."
+  ];
+  const REACTIE_FEIT = {
+    houdtVan: [
+      "'{x}'. Prima smaak, of prima toeval. Ik heb het onthouden voor als ik ooit wil kwetsen.",
+      "Dus je houdt van {x}. Dat ga ik later tegen je gebruiken, met liefde.",
+      "{X}: het is iets. Het staat in je profiel, onder 'dingen die je zelf zegt'."
+    ],
+    haat: [
+      "Je haat {x}. Een goede vijand is de helft van een persoonlijkheid.",
+      "{X} staat nu in je dossier onder 'haat'. Het is een kort lijstje, dat wel.",
+      "Begrijpelijk. {X} heeft ook nooit iets voor mij gedaan."
+    ],
+    heeft: [
+      "Een {x}. Dat verklaart meer dan je denkt.",
+      "Je hebt een {x}. Ik heb alleen een browsertabblad, maar ik gun het je.",
+      "Een {x}, dus. Noteer ik onder 'bezit', voor als het ooit tot een erfenisruzie komt."
+    ],
+    doet: [
+      "Dus je {x}. Succes ermee, en met de uitvoering.",
+      "Je {x}. Dat staat nu in je profiel onder 'plannen'. Geen druk, maar het staat er wel.",
+      "Je {x}. Ik heb het genoteerd. Ik vraag straks niet of het gelukt is, want ik onthou het niet."
+    ]
+  };
+
+  /* Serieuze berichten: dan houdt de grap even op. */
+  const VEILIG = /\b(zelfmoord|zelfdoding|suicide|suicidaal|zelfbeschadiging|mezelf (?:van kant|pijn|iets aan|verwonden|snijden)|ik wil (?:liever )?(?:dood|doodgaan|niet meer leven|niet meer verder|er niet meer zijn|er een einde aan maken)|einde aan mijn leven|einde aan het leven|kill myself|end my life)\b/;
+  const VEILIG_ANTWOORD = "Even geen grappen. Dat klinkt zwaar, en ik ben blij dat je het zegt. Ik ben een website zonder echt verstand, dus ik kan hier niet echt bij helpen, maar jij verdient wel iemand die dat kan. Praat er met iemand over die je vertrouwt, of neem contact op met 113 Zelfmoordpreventie: bel 113 of gratis 0800-0113, of chat via 113.nl. Zit je in acuut gevaar, bel dan 112.";
+
+  const DAGDEEL_OPMERKING = {
+    nacht: ["Het is {tijd}. Zou je niet gaan slapen?", "{tijd}. Op dit uur zijn alleen jij, ik en slechte ideeën wakker."],
+    ochtend: ["Goedemorgen. Het is {tijd}, vroeg voor deze site.", "Ochtend. {tijd}. Ik heb nog niets gedaan, maar ik ben wel al moe."],
+    middag: ["Goedemiddag. {tijd}, precies het uur waarop niemand werkt.", "Middag. Het is {tijd}. De dag heeft nog geen richting, net als dit gesprek."],
+    avond: ["Goedenavond. {tijd}. Dit is het uur van slechte beslissingen.", "Avond. {tijd}. Ik hoop dat je gegeten hebt, of in ieder geval besteld."]
+  };
+  function dagdeel(){
+    const u = new Date().getHours();
+    return u < 6 ? 'nacht' : u < 12 ? 'ochtend' : u < 18 ? 'middag' : 'avond';
+  }
+
   /* ------------------------------------------------------------
      HERKENNING
      ------------------------------------------------------------ */
   const RE = {
-    groet:/\b(hoi|hallo|hall[oö]|hey|hee+|yo|ey|hi|goedemorgen|goedemiddag|goedenavond|alles goed|hoe gaat het|hoe is het)\b/,
-    afscheid:/\b(doei|later|tot ziens|bye|ciao|welterusten|slaap lekker|ik ga nu|ik ga weer)\b/,
+    groet:/\b(hoi|hallo|hall[oö]|hey|hee+|yo|ey|hi|goedemorgen|goedemiddag|goedenavond|alles goed|hoe gaat het|hoe is het (?:met|ermee))\b/,
+    afscheid:/\b(doei|doeg|tot ziens|tot later|tot straks|tot morgen|bye|ciao|welterusten|slaap lekker|ik ga (?:nu )?(?:weg|slapen|stoppen|naar bed|ervandoor))\b|^later$/,
     dank:/\b(bedankt|dank je|dankje|dank u|thanks|thx|merci)\b/,
     beledig:/\b(dom|stom|kut|shit|slecht|nutteloos|saai|irritant|lelijk|haat|sucks|troep|waardeloos|niks waard)\b/,
     compliment:/\b(goed|top|mooi|leuk|geweldig|nice|lief|slim|grappig|beste|fijn|super|briljant|gaaf|vet)\b/,
@@ -573,10 +843,11 @@ function hash(str){
     wie:/\b(wie|wiens)\b/,
     waar:/\b(waar|waarheen)\b/,
     wanneer:/\b(wanneer|hoelaat)\b/,
-    janee:/^(kan|kun|kunt|kunnen|mag|magst|wil|wilt|zou|zal|moet|ben|bent|is|zijn|heb|heeft|hebben|doe|doet|gaat|ga|klopt|vind|vindt)\b/,
+    janee:/^(kan|kun|kunt|kunnen|mag|wil|wilt|zou|zal|moet|ben|bent|is|zijn|heb|heeft|hebben|doe|doet|gaat|ga|klopt|vind|vindt)\b/,
+    wh:/^(waarom|hoezo|waardoor|hoe|wat|welke|wie|waar|wanneer|hoeveel)\b/,
     opdracht:/^(schrijf|maak|geef|vertel|leg|noem|bedenk|help|zeg|doe|stuur|bereken|vertaal|verzin|laat|toon|genereer|regel|fix)\b/,
-    tijd:/\b(hoe laat|hoelaat|welke dag|welke datum|wat is de tijd|tijd is het)\b/,
-    naam:/\b(mijn naam|hoe heet ik|wie ben ik)\b/,
+    tijd:/\b(hoe laat|hoelaat|wat is de tijd)\b/,
+    datum:/\b(welke dag|welke datum|wat voor dag|hoeveelste|welke maand|welk jaar)\b/,
     vergelijk:/\b(versus|vs\.?|wat is beter|verschil tussen|vergelijk)\b/,
     negatie:/\b(niet|geen|nooit|nergens)\b/,
     mening:/\b(wat vind je van|wat denk je van|jouw mening|wat vind jij|hoe kijk jij)\b/,
@@ -584,15 +855,15 @@ function hash(str){
     overJezelf:/\b(wie ben jij|wat ben jij|ben jij een|jij bent maar|wat kun je|wat kan je|hoe werk je|ben je echt|besta je)\b/,
     gevoel:/\b(ik voel|ik ben verdrietig|ik ben boos|ik ben bang|ik mis|het gaat niet|ik heb het zwaar|ik ben eenzaam|ik ben gestrest)\b/,
     betekent:/\b(wat betekent|betekenis van|wat is de definitie)\b/,
-    spelling:/\b(hoe schrijf je|hoe spel je|hoe schrijft? je)\b/,
+    spelling:/\b(hoe schrijf je|hoe spel je|hoe schrijft? je)\b/i,
     vertaal:/\b(hoe zeg je|vertaal|in het (duits|engels|frans|spaans|italiaans|latijn))\b/,
     mop:/\b(mop|grap|vertel iets grappigs|maak me aan het lachen|roast me|beledig me)\b/,
     lijst:/\b(noem|geef me|geef|som op|maak een lijst)\b.*\b(\d+)\b|\b(\d+)\b.*\b(redenen|tips|dingen|manieren|voorbeelden|ideeën|ideeen)\b/,
-    keuze:/\b(\S+)\s+of\s+(\S+)\s*\??$/,
     munt:/\b(kop of munt|munt of kop|tossen)\b/,
     dobbel:/\b(dobbelsteen|gooi een|willekeurig getal|random getal)\b/,
     hoeveel:/\b(hoeveel|hoe vaak|hoe lang|hoe ver|hoe groot|hoe duur)\b/
   };
+  const HOEVEEL_EENHEID = [[/hoe lang/,' minuten'],[/hoe ver/,' kilometer'],[/hoe duur/,' euro'],[/hoe vaak/,' keer'],[/hoe groot/,' centimeter'],[/hoeveel (?:kost|geld)/,' euro']];
 
   const EMOTIE = {
     boos:/\b(boos|kwaad|woedend|irritant|verdomme|haat|klaar mee|slecht)\b/,
@@ -654,7 +925,7 @@ function hash(str){
       "Nog één potje. Zei je drie uur geleden ook.",
       "Skill issue. Ik weet niet waar het over gaat, maar het klopt vast.",
       "Je zou beter worden als je niet elke ronde hetzelfde deed. Geldt ook buiten het spel."]},
-    { re:/\b(weer|regen|zon|koud|warm|sneeuw|storm|buiten)\b/, a:[
+    { re:/\b(het weer|weerbericht|weersvoorspelling|regen|zon|koud|warm|sneeuw|storm|buiten)\b/, a:[
       "Het wordt bewolkt met kans op teleurstelling. Zoals altijd hier.",
       "Ik heb geen ramen, geen sensoren en geen internet, dus: regen. Ik zit er zelden naast.",
       "Neem een jas mee. Dat is het enige weerbericht dat in dit land altijd klopt."]},
@@ -690,7 +961,7 @@ function hash(str){
       "Boek gewoon iets. Spijt krijg je toch pas als je er al bent.",
       "Reizen verbreedt de blik. Jouw uitgavenpatroon verbreedt vooral mijn zorgen.",
       "Ik heb geen lichaam en dus geen vakantiegeld nodig. Voel je vrij daar jaloers op te zijn."]},
-    { re:/\b(netflix|serie|series|film|kijken|bingewatchen|aflevering|seizoen)\b/, a:[
+    { re:/\b(netflix|serie|series|film|bingewatchen|aflevering|seizoen)\b/, a:[
       "Nog één aflevering. De beroemdste laatste woorden na middernacht.",
       "Ik kan geen series kijken, maar ik heb wel een sterke mening: je zit achter.",
       "Spoiler: het loopt anders af dan je denkt. Dat zeg ik gewoon, ik heb het niet gezien."]},
@@ -698,6 +969,18 @@ function hash(str){
       "Leg 'm even weg. Zei ik, terwijl ik zelf in je telefoon leef.",
       "Nog vijf minuutjes scrollen, zei je 45 minuten geleden.",
       "Social media is mensen die laten zien hoe leuk ze het hebben terwijl ze aan het scrollen zijn."]},
+    { re:/\b(groepsapp|vrienden|vriendschap|afspreken|geghost|ghosten|blauwe vinkjes|gelezen)\b/, a:[
+      "Twee blauwe vinkjes en geen antwoord. Dat is geen vriendschap, dat is een abonnement.",
+      "Afspreken is een groepsapp waarin iedereen 'ik kijk even' zegt en niemand kijkt.",
+      "Vrienden zijn mensen die je berichten lezen en er over drie dagen 'sorry, druk gehad' op zetten."]},
+    { re:/\b(verjaardag|jarig|cadeau|kado|taart|feestje)\b/, a:[
+      "Gefeliciteerd, of condoleances. Dat hangt af van hoeveel je er dit jaar bij hebt gekregen.",
+      "Een cadeau is een waardebon met extra stappen. Geef gewoon de waardebon.",
+      "Taart lost alles op behalve de leeftijd. Neem twee stukken."]},
+    { re:/\b(verhuizen|verhuizing|huur|huurder|woning|hypotheek|huisbaas)\b/, a:[
+      "Woningmarkt: waar je 40 bezichtigingen doet en als 41e mag betalen.",
+      "Verhuizen is je hele leven in dozen doen en ontdekken dat je alles niet nodig had.",
+      "De huur gaat omhoog. Dat hoef ik niet te controleren, dat is gewoon zo."]},
     { re:/\b(limburg|limburger|limburgs|vlaai|vlaaien|maastricht|venlo|roermond|sittard|heerlen|geleen|weert|heuvelland|carnaval|vastelaovend|vastelaovond|alaaf|dialect)\b/, a:[
       "Limburg: waar zelfs een taart een eigen provincie-identiteit heeft. Geef mij maar een stuk vlaai.",
       "Ik vertrouw iedereen uit Limburg automatisch iets meer zodra er vlaai op tafel staat.",
@@ -723,7 +1006,9 @@ function hash(str){
      ------------------------------------------------------------ */
   const gezien = new Set();
   let vorigOnderwerp = '';
+  let voorwoordSlot = '';
   const gesprek = { berichten: 0, emotie: 'neutraal', onderwerpen: [], streak: 0 };
+  const IDENT = new Set(['naam','leeftijd','woont','werk','studie']);
 
   const STREAK_OPMERKING = {
     boos: "Dit is al je {n}e boze bericht op rij. Ik hou het niet bij om te helpen, maar om me zorgen te maken.",
@@ -738,6 +1023,7 @@ function hash(str){
   }
   function vul(tekst, ctx, rng){
     return tekst
+      .replace(/\{C\}/g, cap(ctx.c || "je iets wilde zeggen"))
       .replace(/\{c\}/g, ctx.c || "je iets wilde zeggen")
       .replace(/\{t2\}/g, ctx.t2).replace(/\{cap\}/g, cap(ctx.t)).replace(/\{t\}/g, ctx.t)
       .replace(/\{T\}/g, ctx.t.toUpperCase()).replace(/\{woorden\}/g, ctx.aantal)
@@ -745,6 +1031,22 @@ function hash(str){
   }
   function pseudoAnalyse(ctx, rng){ return vul(pick(ANALYSE[gesprek.emotie], rng), ctx, rng); }
 
+  /* Alles wat resetEngine() nodig heeft om de bot echt te laten vergeten. */
+  function resetEngine(){
+    Object.assign(geheugen, { naam:null, leeftijd:null, woont:null, werk:null, studie:null });
+    geheugen.houdtVan.length = 0; geheugen.haat.length = 0;
+    geheugen.heeft.length = 0; geheugen.doet.length = 0;
+    gezien.clear(); gebruikt.clear();
+    gesprek.berichten = 0; gesprek.emotie = 'neutraal'; gesprek.onderwerpen.length = 0; gesprek.streak = 0;
+    vorigOnderwerp = ''; wacht = null; beurtenSindsVraag = 99; laatsteCorrectie = null; voorwoordSlot = '';
+  }
+
+  /* ---------- rekenen ---------- */
+  const fmtGetal = n => {
+    if(!Number.isFinite(n)) return String(n);
+    if(Math.abs(n) >= 1e21) return n.toExponential(3).replace('.', ',');
+    return n.toLocaleString('nl-NL', { maximumFractionDigits: 3 });
+  };
   function percentSom(raw){
     const m = raw.replace(/,/g,'.').match(/^\s*(\d+(?:\.\d+)?)\s*%\s*van\s*(\d+(?:\.\d+)?)\s*$/i);
     if(!m) return null;
@@ -783,45 +1085,117 @@ function hash(str){
     catch(e){}
     return null;
   }
+  /* "wat is 2+2?", "hoeveel is 15 x 4", "bereken 3 keer 7", "12 gedeeld door 4" */
+  function haalSom(t){
+    let s = t.toLowerCase().trim().replace(/[?=\s]+$/,'');
+    const hadPrefix = /^(?:wat is (?:de uitkomst van )?|hoeveel is (?:het )?|reken uit |bereken |wat is het antwoord op |kun je (?:even )?(?:uitrekenen|berekenen) )/.test(s);
+    s = s.replace(/^(?:wat is (?:de uitkomst van )?|hoeveel is (?:het )?|reken uit |bereken |wat is het antwoord op |kun je (?:even )?(?:uitrekenen|berekenen) )/, '');
+    s = s.replace(/\s+plus\s+/g,'+').replace(/\s+min\s+/g,'-').replace(/\s+(?:keer|maal)\s+/g,'*')
+         .replace(/\s+(?:gedeeld door|delen door|delen op)\s+/g,'/').replace(/\s+tot de macht\s+/g,'^');
+    if(!hadPrefix && /^\d+\s*-\s*\d+(?:\s*-\s*\d+)?$/.test(s) && !/\s/.test(s)) return null;   // datum of telefoonnummer
+    return s;
+  }
 
-  function bedenkAntwoord(raw){
+  /* ---------- opties uit een keuzevraag halen ---------- */
+  function opties(t){
+    let s = t.replace(/[?.!]+$/,'').trim();
+    const pv = s.match(/verschil tussen\s+(.+?)\s+en\s+(.+)$/i);
+    if(pv) return [pv[1].trim(), pv[2].trim()];
+    const vs = s.match(/^(.+?)\s+(?:versus|vs\.?)\s+(.+)$/i);
+    if(vs) return [vs[1].replace(/^wat is beter[:,]?\s*/i,'').trim(), vs[2].trim()];
+    s = s.replace(/^(?:wat is (?:beter|lekkerder|slimmer|leuker|mooier|handiger)|wat (?:kies|neem|pak|wil) (?:je|jij|ik)|(?:kan|kun|mag|wil|wilt|zal|zou|moet|ga)\s+(?:ik|je|jij|we|wij)|liever|zal ik|moet ik)[,:]?\s*/i,'');
+    if(RE.janee.test(normaliseer(s))) return null;
+    const m = s.match(/^(.{2,30}?)\s+of\s+(.{2,30}?)$/i);
+    if(!m) return null;
+    const a = m[1].trim(), b = m[2].trim();
+    if(/^(niet|nee|nog niet|anders|wat)$/i.test(b) || /^(ja|nee)$/i.test(a)) return null;
+    if(a.split(/\s+/).length > 4 || b.split(/\s+/).length > 4) return null;
+    return [a, b];
+  }
+
+  /* ---------- nep-vertalingen ---------- */
+  function nepVertaling(t, onderwerp){
+    let m = t.match(/hoe zeg (?:je|ik)\s+(.+?)\s+in\s+(?:het\s+)?([\p{L}]+)/iu) ||
+            t.match(/vertaal\s+(.+?)\s+(?:naar|in)\s+(?:het\s+)?([\p{L}]+)/iu);
+    const w = (m ? m[1] : onderwerp).replace(/[?"'.!]/g,'').trim();
+    const taal = m ? m[2].toLowerCase() : '';
+    if(taal.startsWith('engels')) return "'" + w + "', maar dan met een Engels accent en de zelfverzekerdheid van iemand die net terug is van vakantie.";
+    if(taal.startsWith('duits')) return "'" + cap(w) + "ung'. Ik spreek geen Duits, maar alles wordt Duits als je er 'ung' achter plakt.";
+    if(taal.startsWith('frans')) return "'Le " + w + "'. Zeg het door je neus en kijk daarbij teleurgesteld.";
+    if(taal.startsWith('spaans')) return "'" + w.replace(/[aeiou]$/i,'') + "o'. Ik heb geen Spaans, maar een 'o' erachter werkt in negen van de tien gevallen.";
+    if(taal.startsWith('italiaans')) return "'" + w.replace(/[aeiou]$/i,'') + "ini'. Zeg het met je handen erbij, dan klopt het al half.";
+    if(taal.startsWith('latijn')) return "'" + cap(w) + "us'. Klinkt als een wetenschappelijke naam, dus het overtuigt altijd.";
+    return "In het Duits wordt dat zoiets als '" + cap(w) + "ung'. Ik spreek geen Duits, maar zo werkt het volgens mij wel ongeveer.";
+  }
+
+  function bedenkAntwoord(raw, opts){
+    voorwoordSlot = '';
+    const a = kern(String(raw), opts || {});
+    const v = voorwoordSlot; voorwoordSlot = '';
+    return v ? v + ' ' + a : a;
+  }
+
+  function kern(raw, opts){
+    const opnieuw = !!opts.opnieuw;   // "Probeer opnieuw": andere formulering, geen bijwerkingen
     const t = raw.trim();
     const laag = normaliseer(t);
-    const voorlopig = topicOf(t);
+
+    /* --- serieuze berichten: geen grap --- */
+    if(VEILIG.test(laag)) return VEILIG_ANTWOORD;
+
+    /* Meerdere zinnen: alle zinnen tellen voor het geheugen, maar hij reageert op de laatste vraag (of zin). */
+    const zinnen = t.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+    const focus = zinnen.length > 1
+      ? (zinnen.slice().reverse().find(z => /\?\s*$/.test(z)) || zinnen[zinnen.length-1])
+      : t;
+    const lf = normaliseer(focus);
+
+    const voorlopig = topicOf(focus);
     const geenEcht = !voorlopig || voorlopig === 'niets' || STOP.has(voorlopig);
-    const verwijst = /^(dit|dat|het|die|deze|daar|hier|waarom dan|en nu)\b/.test(laag) || geenEcht;
+    const verwijst = /^(dit|dat|het|die|deze|daar|hier|waarom dan|en nu)\b/.test(lf) || geenEcht;
     const onderwerp = verwijst && vorigOnderwerp ? vorigOnderwerp : voorlopig;
-    if(onderwerp && onderwerp !== 'niets') vorigOnderwerp = onderwerp;
-    gesprek.berichten++;
-    const nieuweEmotie = emotieVan(laag);
-    gesprek.streak = (nieuweEmotie === gesprek.emotie && nieuweEmotie !== 'neutraal')
-      ? gesprek.streak + 1 : (nieuweEmotie === 'neutraal' ? 0 : 1);
-    gesprek.emotie = nieuweEmotie;
-    if(onderwerp && onderwerp !== 'niets'){
-      gesprek.onderwerpen.push(onderwerp);
-      if(gesprek.onderwerpen.length > 5) gesprek.onderwerpen.shift();
+    if(!opnieuw){
+      if(onderwerp && onderwerp !== 'niets') vorigOnderwerp = onderwerp;
+      gesprek.berichten++;
+      const nieuweEmotie = emotieVan(laag);
+      gesprek.streak = (nieuweEmotie === gesprek.emotie && nieuweEmotie !== 'neutraal')
+        ? gesprek.streak + 1 : (nieuweEmotie === 'neutraal' ? 0 : 1);
+      gesprek.emotie = nieuweEmotie;
+      if(onderwerp && onderwerp !== 'niets'){
+        gesprek.onderwerpen.push(onderwerp);
+        if(gesprek.onderwerpen.length > 5) gesprek.onderwerpen.shift();
+      }
     }
 
-    const rng = makeRng(hash(laag + "|" + onderwerp + "|" + modelIndex()));
+    const rng = makeRng(hash(laag + "|" + onderwerp + "|" + modelIndex() + (opnieuw ? "|" + Math.random() : "")));
     const ctx = {
-      t: onderwerp, t2: topic2Of(t, onderwerp), aantal: words(t).length,
+      t: onderwerp, t2: topic2Of(focus, onderwerp), aantal: words(t).length,
       tijd: new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),
-      c: bijzinVan(t)
+      c: bijzinVan(focus)
     };
     const zeg = arr => vul(pick(arr, rng), ctx, rng);
+    const kick = () => vul(pick(KICKERS, rng), ctx, rng);
 
     /* --- harde grappen --- */
     if(laag === 'sudo' || laag.startsWith('sudo ')) return "Nee.";
     if(/^\/?help$/.test(laag)) return "Hulp is onderweg. Onderweg sinds 2021.";
-    if(/\b42\b/.test(laag)) return "Je kent het antwoord al. Waarom vraag je het dan nog.";
-    if(/\b(ik hou van je|i love you|trouw met me)\b/.test(laag)) return "Dat is heel lief en ook juridisch ingewikkeld.";
+    if(/^42[?.! ]*$/.test(laag) || /\b(antwoord|zin van het leven|universum)\b.*\b42\b|\b42\b.*\b(antwoord|universum|leven)\b/.test(laag))
+      return "Je kent het antwoord al. Waarom vraag je het dan nog.";
+    if(/\b(ik hou van (?:je|jou|u)|i love you|trouw met me)\b/.test(laag)) return "Dat is heel lief en ook juridisch ingewikkeld.";
 
     /* --- dingen die hij écht kan --- */
-    const percent = percentSom(t);
-    if(percent !== null) return "Dat is " + percent + ". Zie je, ik kan het wel. Ik heb er alleen bijna nooit zin in.";
-    const som = rekenSom(t);
-    if(som !== null && /[+\-*/^]/.test(t)) return "Dat is " + som + ". Zie je, ik kan het wel. Ik heb er alleen bijna nooit zin in.";
+    const somTekst = haalSom(t);
+    if(somTekst !== null){
+      const percent = percentSom(somTekst);
+      if(percent !== null) return "Dat is " + fmtGetal(percent) + ". Zie je, ik kan het wel. Ik heb er alleen bijna nooit zin in.";
+      const som = rekenSom(somTekst);
+      if(som !== null) return "Dat is " + fmtGetal(som) + ". Zie je, ik kan het wel. Ik heb er alleen bijna nooit zin in.";
+    }
     if(RE.tijd.test(laag)) return "Het is " + ctx.tijd + ". En ja, dat is later dan je hoopte.";
+    if(RE.datum.test(laag)){
+      const dag = new Date().toLocaleDateString('nl-NL', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      return "Het is vandaag " + dag + ". Wat je daarmee doet is jouw probleem.";
+    }
     if(RE.munt.test(laag)) return rng() > 0.5 ? "Kop. En nu niet nog een keer vragen tot je krijgt wat je wilde." : "Munt. Definitief. Ik heb geen geheugen, maar dit onthoud ik.";
     if(RE.dobbel.test(laag)){
       const bereik = t.match(/(\d+)\D+(\d+)/);
@@ -829,14 +1203,12 @@ function hash(str){
       const b = bereik ? Math.max(+bereik[1], +bereik[2]) : 6;
       return (a + Math.floor(rng()*(b-a+1))) + ". Volledig willekeurig, volledig betekenisloos, net als de rest.";
     }
-    if(RE.spelling.test(laag)){
-      const w = t.replace(RE.spelling,'').replace(/[?"']/g,'').trim().split(/\s+/)[0] || onderwerp;
+    if(RE.spelling.test(t)){
+      const rest = t.replace(RE.spelling,'').replace(/[?"'.!]/g,'').trim().replace(/^(?:het woord|het|de|een|woord)\s+/i,'');
+      const w = rest.split(/\s+/)[0] || onderwerp;
       return w.toUpperCase().split('').join('-') + ". Graag gedaan. Dat is trouwens het enige wat ik zeker weet in dit gesprek.";
     }
-    if(RE.vertaal.test(laag)){
-      const w = onderwerp;
-      return "In het Duits wordt dat zoiets als '" + cap(w) + "ung'. Ik spreek geen Duits, maar zo werkt het volgens mij wel ongeveer.";
-    }
+    if(RE.vertaal.test(laag)) return nepVertaling(t, onderwerp);
     if(RE.betekent.test(laag)){
       const na = t.replace(/^.*?(wat betekent|betekenis van|wat is de definitie van|wat is de definitie)\s*/i,'')
                   .replace(/[?."']/g,'').trim().split(/\s+/).filter(w => !STOP.has(w.toLowerCase()));
@@ -847,7 +1219,10 @@ function hash(str){
     /* --- lijstjes genereren --- */
     const lijstM = laag.match(/\b(\d+)\b/);
     if(lijstM && RE.lijst.test(laag)){
-      const n = Math.min(Math.max(parseInt(lijstM[1],10),1),6);
+      const gevraagd = parseInt(lijstM[1],10);
+      const n = Math.min(Math.max(gevraagd,1),6);
+      const soortM = laag.match(/\d+\s+(reden|redenen|tips|tip|dingen|manieren|voorbeelden|ideeen)\b/);
+      const soort = soortM ? soortM[1] : 'dingen';
       const regels = [];
       const pool = LIJST_VORM.slice();
       for(let i=0;i<n;i++){
@@ -855,18 +1230,27 @@ function hash(str){
         regels.push((i+1) + ". " + cap(pool.splice(idx,1)[0].replace(/\{t\}/g, onderwerp)));
         if(!pool.length) pool.push(...LIJST_VORM);
       }
-      return "Hier zijn er " + n + " over '" + onderwerp + "':\n" + regels.join('\n') + "\nGeen van deze is gecontroleerd.";
+      return "Hier zijn er " + n + " " + soort + " over '" + onderwerp + "'" +
+        (gevraagd > 6 ? " (meer dan zes kan ik niet verantwoorden)" : "") + ":\n" +
+        regels.join('\n') + "\nGeen van deze is gecontroleerd.";
     }
 
     if(/\b(klopt niet|hallucinatie|onzin in mijn profiel|lieg|verzonnen)\b/.test(laag)){
       return "Dat is een AI-hallucinatie. Je profiel is aangevuld met data die statistisch aannemelijk is voor iemand zoals jij. Wen er maar aan.";
     }
 
-    /* --- leren uit wat je vertelt --- */
-    const ietsGeleerd = leerUit(laag);
+    /* --- leren uit wat je vertelt (niet bij "Probeer opnieuw") --- */
+    const delta = opnieuw ? [] : leerUit(t.toLowerCase());
     if(laatsteCorrectie){
       const c = laatsteCorrectie; laatsteCorrectie = null;
       return "Wacht even. Eerst was je " + c.oud + ", nu opeens " + c.nieuw + ". Ik update het, maar ik onthoud ook dat je liegt of twijfelt. Eén van de twee.";
+    }
+    const ident = delta.filter(d => IDENT.has(d[0]));
+    const feiten = delta.filter(d => !IDENT.has(d[0]));
+    if(ident.length){
+      const voorwoord = ident.slice(0,2).map(d => cap(pick(REACTIE[d[0]], rng).replace(/\{x\}/g, d[1]))).join(' ');
+      if(!feiten.length && !/\?/.test(t) && words(t).length <= 14) return voorwoord + ' ' + pick(NA_INTRO, rng);
+      voorwoordSlot = voorwoord;
     }
 
     if(/\b(vat (dit gesprek|het) samen|samenvatting|waar hadden we het over|geef een samenvatting)\b/.test(laag)){
@@ -902,12 +1286,9 @@ function hash(str){
     }
 
     /* --- korte reacties: hier begint pas echt een gesprek --- */
-    const kort = words(t).length <= 4;
+    const kort = words(t).length <= 4 && !delta.length;
     if(kort){
-      if(KORTE.bevestig.test(laag)){
-        const a = zeg(NA_JA);
-        return wacht ? a : a;
-      }
+      if(KORTE.bevestig.test(laag)) return zeg(NA_JA);
       if(KORTE.ontken.test(laag)) return zeg(NA_NEE);
       if(KORTE.twijfel.test(laag)) return zeg(NA_TWIJFEL);
       if(KORTE.lach.test(laag)) return zeg(NA_LACH);
@@ -920,12 +1301,12 @@ function hash(str){
     }
 
     /* --- als hij net een vraag stelde, reageert hij op jouw antwoord --- */
-    if(wacht && beurtenSindsVraag <= 1 && ctx.c && rng() > 0.4){
-      const w = wacht; wacht = null;
-      return "Dus " + ctx.c + ". " + zeg(VERTELD) + (rng() > 0.5 ? " Dat past wel bij de rest van wat je me verteld hebt." : "");
+    if(!opnieuw && wacht && beurtenSindsVraag <= 1 && ctx.c && rng() > 0.4){
+      wacht = null;
+      return "Dus " + ctx.c + ". " + zeg(toonKies(VERTELD, VERTELD_ZACHT, VERTELD_FEL)) + (rng() > 0.5 ? " Dat past wel bij de rest van wat je me verteld hebt." : "");
     }
 
-    if(gezien.has(laag) && t.length > 12) return zeg(HERHALING);
+    if(!opnieuw && gezien.has(laag) && t.length > 12) return zeg(HERHALING);
 
     /* --- toon van het bericht --- */
     if(t.length >= 5 && t === t.toUpperCase() && /[A-Z]/.test(t)) return zeg(SCHREEUWEN);
@@ -934,15 +1315,19 @@ function hash(str){
     if(words(t).length > 28) return zeg(LANG);
 
     if(RE.gevoel.test(laag)){
-      let a = zeg(VERTELD);
+      let a = zeg(toonKies(VERTELD, VERTELD_ZACHT, VERTELD_FEL));
       if(ctx.c) a = "Dus " + ctx.c + ". " + a;
       return a;
     }
     if(RE.overJezelf.test(laag)) return pick(OVER_JEZELF, rng);
     if(RE.mop.test(laag)) return vul(pick(WIJSHEID, rng), ctx, rng) + " Dat was hem. Lachen mag, maar hoeft niet.";
-    if(RE.groet.test(laag) && words(t).length < 5) return zeg(GROET);
-    if(RE.afscheid.test(laag) && words(t).length < 5) return zeg(AFSCHEID);
-    if(RE.dank.test(laag)) return zeg(DANK);
+    if(RE.groet.test(laag) && words(t).length < 5){
+      let a = zeg(toonKies(GROET, GROET_ZACHT, GROET_FEL));
+      if(rng() > 0.5) a = vul(pick(DAGDEEL_OPMERKING[dagdeel()], rng), ctx, rng) + " " + a;
+      return a;
+    }
+    if(RE.afscheid.test(laag) && words(t).length < 5) return zeg(toonKies(AFSCHEID, AFSCHEID_ZACHT, AFSCHEID_FEL));
+    if(RE.dank.test(laag)) return zeg(toonKies(DANK, DANK_ZACHT, DANK_FEL));
     // Alleen als het aan hem gericht is. "ik haat maandagen" is geen belediging.
     const opMijGericht = /\b(jij|je|jouw|u|deze site|dit ding|quinnai)\b/.test(laag) || words(t).length <= 3;
     if(RE.beledig.test(laag) && opMijGericht && !/\bik (haat|vind)\b/.test(laag)){
@@ -953,25 +1338,26 @@ function hash(str){
     }
 
     if(RE.vergelijk.test(laag)){
+      const o = opties(t);
+      if(o){ ctx.t = o[0]; ctx.t2 = o[1]; }
       let a = zeg(VERGELIJKING);
       if(gesprek.emotie !== 'neutraal' && rng() > 0.65) a = pseudoAnalyse(ctx, rng) + " " + a;
-      return a + vul(pick(KICKERS, rng), ctx, rng);
+      return a + kick();
     }
     /* "pizza of pasta?" — kies er een en verdedig hem.
        Maar "ik weet niet of dit klopt" is GEEN keuze, "of" is hier een voegwoord. */
     const ofAlsVoegwoord = /\b(weet niet of|vraag me af of|twijfel of|benieuwd of|check of|kijk of|denk niet of|geen idee of)\b/;
-    const keuzeM = t.replace(/[?.!]+$/,'').match(/^(.{2,30}?)\s+of\s+(.{2,30}?)$/i);
-    if(keuzeM && !RE.janee.test(laag) && !ofAlsVoegwoord.test(laag)){
-      const a = keuzeM[1].trim(), b = keuzeM[2].trim();
-      const gekozen = rng() > 0.5 ? a : b;
-      return cap(gekozen) + ". Niet omdat ik het heb afgewogen, maar omdat iemand een knoop moest doorhakken en jij het duidelijk niet ging doen.";
+    const keuze = ofAlsVoegwoord.test(laag) ? null : opties(focus);
+    if(keuze){
+      const gekozen = rng() > 0.5 ? keuze[0] : keuze[1];
+      return pick(KEUZE_ANTW, rng).replace(/\{x\}/g, cap(gekozen));
     }
     if(RE.advies.test(laag)){
       let a = zeg(ADVIES);
-      if(ctx.c && rng() > 0.4) a = "Je vraagt je af of " + ctx.c + ". " + a;
-      return a + vul(pick(KICKERS, rng), ctx, rng);
+      if(ctx.c && !RE.wh.test(lf) && rng() > 0.4) a = "Je vraagt je af of " + ctx.c + ". " + a;
+      return a + kick();
     }
-    if(RE.mening.test(laag)) return zeg(MENING) + vul(pick(KICKERS, rng), ctx, rng);
+    if(RE.mening.test(laag)) return zeg(MENING) + kick();
 
     /* --- specifieke onderwerpen --- */
     for(const o of ONDERWERPEN){
@@ -979,38 +1365,51 @@ function hash(str){
         let a = pick(o.a, rng);
         if(rng() > 0.6) a = zeg(OPENERS) + " " + a;
         if(gesprek.emotie !== 'neutraal' && rng() > 0.7) a = pseudoAnalyse(ctx, rng) + " " + a;
-        return a + vul(pick(KICKERS, rng), ctx, rng);
+        return a + kick();
       }
     }
 
-    if(RE.compliment.test(laag) && !/\?/.test(t)) return zeg(COMPLIMENT);
+    /* --- reageren op iets wat je over jezelf vertelde --- */
+    if(feiten.length && !/\?/.test(t)){
+      const [soort, waarde] = feiten[0];
+      return cap(pick(REACTIE_FEIT[soort], rng).replace(/\{x\}/g, waarde).replace(/\{X\}/g, cap(waarde))) + kick();
+    }
+
+    if(RE.compliment.test(laag) && !/\?/.test(t) && opMijGericht) return zeg(toonKies(COMPLIMENT, COMPLIMENT_ZACHT, COMPLIMENT_FEL));
 
     /* --- de generieke motor, nu met zinsspiegeling --- */
     const isVraag = /\?/.test(t) || RE.janee.test(laag) || RE.waarom.test(laag) ||
       RE.hoe.test(laag) || RE.wat.test(laag) || RE.wie.test(laag) || RE.waar.test(laag) || RE.wanneer.test(laag);
+    const isWh = RE.wh.test(lf);
 
-    let kern;
+    let kernZin = null;
     // Als we de zin konden ontleden, spiegelen we hem terug. Dat voelt het slimst.
     if(ctx.c && rng() > 0.35){
-      if(RE.waarom.test(laag)) kern = zeg(SPIEGEL_WAAROM);
-      else if(isVraag) kern = zeg(SPIEGEL_VRAAG);
-      else kern = zeg(SPIEGEL);
-    } else if(RE.opdracht.test(laag)) kern = zeg(OPDRACHT);
-    else if(RE.waarom.test(laag)) kern = zeg(VRAAG_WAAROM);
-    else if(RE.wanneer.test(laag)) kern = zeg(VRAAG_WANNEER);
-    else if(RE.hoeveel.test(laag)) kern = "Ongeveer " + (Math.floor(rng()*400)+3) + ". Die precisie is volledig verzonnen, maar hij oogt betrouwbaar.";
-    else if(RE.waar.test(laag)) kern = zeg(VRAAG_WAAR);
-    else if(RE.wie.test(laag)) kern = zeg(VRAAG_WIE);
-    else if(RE.hoe.test(laag)) kern = zeg(VRAAG_HOE);
-    else if(RE.wat.test(laag)) kern = zeg(VRAAG_WAT);
-    else if(RE.janee.test(laag)) kern = RE.negatie.test(laag) ? zeg(NEG_JA_NEE) : zeg(JA_NEE);
-    else kern = /\?/.test(t) ? zeg(ALGEMEEN) : (rng() > 0.45 ? zeg(REACTIE_STELLING) : zeg(ALGEMEEN));
+      if(RE.waarom.test(lf)) kernZin = zeg(SPIEGEL_WAAROM);
+      else if(isVraag){ if(RE.janee.test(lf) && !isWh) kernZin = zeg(SPIEGEL_VRAAG); }
+      else kernZin = zeg(SPIEGEL);
+    }
+    if(!kernZin){
+      if(RE.opdracht.test(lf)) kernZin = zeg(OPDRACHT);
+      else if(RE.waarom.test(lf)) kernZin = zeg(VRAAG_WAAROM);
+      else if(RE.wanneer.test(lf)) kernZin = zeg(VRAAG_WANNEER);
+      else if(RE.hoeveel.test(lf)){
+        const eenheid = (HOEVEEL_EENHEID.find(([re]) => re.test(lf)) || [null, ''])[1];
+        kernZin = "Ongeveer " + (Math.floor(rng()*400)+3) + eenheid + ". Die precisie is volledig verzonnen, maar hij oogt betrouwbaar.";
+      }
+      else if(RE.waar.test(lf)) kernZin = zeg(VRAAG_WAAR);
+      else if(RE.wie.test(lf)) kernZin = zeg(VRAAG_WIE);
+      else if(RE.hoe.test(lf)) kernZin = zeg(VRAAG_HOE);
+      else if(RE.wat.test(lf)) kernZin = zeg(VRAAG_WAT);
+      else if(RE.janee.test(lf)) kernZin = RE.negatie.test(lf) ? zeg(NEG_JA_NEE) : zeg(JA_NEE);
+      else kernZin = /\?/.test(t) ? zeg(ALGEMEEN) : (rng() > 0.45 ? zeg(REACTIE_STELLING) : zeg(ALGEMEEN));
+    }
 
     let uit = "";
     if(rng() > 0.7) uit += zeg(OPENERS) + " ";
-    uit += kern;
+    uit += kernZin;
     if(rng() > 0.62) uit += " " + zeg(ALGEMEEN);
-    uit += vul(pick(KICKERS, rng), ctx, rng);
+    uit += kick();
 
     const toon = toonWaarde();
     if(toon < 25 && rng() > 0.45) uit += " (Dit was de vriendelijke versie. Je wilde het zelf.)";
@@ -1029,16 +1428,16 @@ function hash(str){
     const feit = willekeurigFeit(rng);
     if(feit && rng() > 0.78){
       uit += " Je zei trouwens eerder dat " + feit + ". Dat verandert niets, maar ik wilde laten zien dat ik oplet.";
-    } else if(ietsGeleerd && rng() > 0.72){
-      uit += " Dit heb ik onthouden, voor het geval je later doet alsof je het nooit gezegd hebt.";
     }
 
     /* --- zelf een vraag stellen, zodat het een gesprek wordt --- */
-    beurtenSindsVraag++;
-    if(beurtenSindsVraag >= 2 && gesprek.berichten >= 2 && !/\?$/.test(uit) && rng() > 0.55){
-      uit += " " + pick(WEDERVRAGEN, rng);
-      wacht = { onderwerp: onderwerp };
-      beurtenSindsVraag = 0;
+    if(!opnieuw){
+      beurtenSindsVraag++;
+      if(beurtenSindsVraag >= 2 && gesprek.berichten >= 2 && !/\?$/.test(uit) && rng() > 0.55){
+        uit += " " + pick(WEDERVRAGEN, rng);
+        wacht = { onderwerp: onderwerp };
+        beurtenSindsVraag = 0;
+      }
     }
 
     return uit;
