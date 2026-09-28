@@ -776,7 +776,7 @@
             meta.remove();
             bezig = true;
             // andere formulering afdwingen door de vraag minimaal te variëren
-            const alt = bedenkAntwoord(vraag + ' '.repeat(1 + Math.floor(Math.random()*9)));
+            const alt = bedenkAntwoord(vraag, { opnieuw: true });
             typ(bubble, alt, () => { bezig = false; bubble.appendChild(meta); });
           };
           meta.appendChild(opnieuw);
