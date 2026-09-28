@@ -853,9 +853,7 @@
   });
 
   $('#vergeet-btn').addEventListener('click', () => {
-    Object.assign(geheugen, { naam:null, leeftijd:null, woont:null, werk:null });
-    geheugen.houdtVan.length = 0; geheugen.haat.length = 0;
-    geheugen.heeft.length = 0; geheugen.doet.length = 0;
+    resetEngine();
     gehallucineerd = null;
     ververProfiel();
     teller = 0;
