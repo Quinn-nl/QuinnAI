@@ -19,3 +19,11 @@ Host het simpelweg via GitHub Pages, open de link en laat je beledigen.
 
 ## 🛠️ Disclaimer
 Dit is een grap van en voor vrienden[cite: 1]. Er wordt niets verstuurd, opgeslagen of geanalyseerd[cite: 1]. Alles wat je hier leest is verzonnen, inclusief de benchmarks, de certificeringen en het zelfvertrouwen[cite: 1].
+
+## 🧪 Testen
+`engine.js` heeft een testsuite die los van de browser draait (in Node, via een losse VM-context).
+
+    node test.js
+
+Test de taalkunde (voornaamwoord-omdraaiing, vervoeging), het geheugen, rekenkunde, de
+veiligheidsmodus en 4000 willekeurige berichten op crashes. Exitcode 0 = alles groen.
