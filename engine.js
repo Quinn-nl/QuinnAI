@@ -29,7 +29,22 @@ function hash(str){
 
   function toonWaarde(){ return (typeof window !== 'undefined' && window.sarc) ? Number(window.sarc.value) : 78; }
   function modelIndex(){ return (typeof window !== 'undefined' && window.modelSel) ? window.modelSel.selectedIndex : 0; }
-  function toonKies(normaal, zacht, fel){ const w = toonWaarde(); return w < 25 ? zacht : (w > 85 ? fel : normaal); }
+  /* Modellen: 0 Turbo (standaard), 1 Nano (kort en 'hongerig'), 2 Legacy (altijd fel, ongeacht de slider). */
+  function isNano(){ return modelIndex() === 1; }
+  function isLegacy(){ return modelIndex() === 2; }
+  function toonModus(){
+    if(isLegacy()) return 'fel';
+    const w = toonWaarde();
+    return w < 25 ? 'zacht' : (w > 85 ? 'fel' : 'normaal');
+  }
+  function toonKies(normaal, zacht, fel){
+    const m = toonModus();
+    return m === 'zacht' ? zacht : (m === 'fel' ? fel : normaal);
+  }
+  /* Kans op een extra sneer (kicker/pseudo-analyse), schaalt met de sarcasme-slider:
+     30% bij toon 0, 70% bij toon 100. Legacy voelt altijd als een hoge toon. */
+  function kansOpKicker(){ const w = isLegacy() ? 90 : toonWaarde(); return 0.3 + (w/100)*0.4; }
+  function kansOpAnalyse(){ const w = isLegacy() ? 90 : toonWaarde(); return 0.15 + (w/100)*0.3; }
 
   /* ------------------------------------------------------------
      WOORDEN
@@ -37,10 +52,18 @@ function hash(str){
   const STOP = new Set(("de het een en of maar want dus ik jij je jou jouw u hij zij ze wij we hun hen mijn zijn haar ons onze is ben bent was waren wordt worden word werd van voor met aan op in bij te ten ter naar uit om over onder door als dan toch nog al ook wel niet geen nee ja er hier daar dat dit die deze wat wie waar wanneer hoe waarom kan kun kunt kunnen mag moet moeten wil wilt willen zou zouden heb hebt heeft hebben had hadden doe doet doen deed gaan gaat ga ging heel erg even echt gewoon best zo te me mij mezelf jezelf zelf nu straks altijd nooit iets niets alles eigenlijk trouwens misschien volgens soms vaak weer eens maal keer beetje bijna helemaal precies vandaag morgen gisteren vanavond vannacht vanmiddag " +
     "redenen reden tips tip dingen ding manieren manier voorbeelden voorbeeld ideeen schrijf maak noem geef vertel leg bedenk help zeg stuur bereken vertaal verzin genereer").split(" "));
 
+  /* Lichte typo/afkortingsnormalisatie: alleen voor de herkenning (regex-matching),
+     niet voor wat er ooit teruggezegd wordt — dat blijft altijd jouw eigen woorden. */
+  const AFKORTINGEN = dict({ wrs:'waarschijnlijk', ff:'even', iig:'in ieder geval', sws:'sowieso',
+    msch:'misschien', ivm:'in verband met', ivg:'in vergelijking', tgo:'ten opzichte van',
+    idd:'inderdaad', mss:'misschien', anws:'antwoord', ws:'waarschijnlijk' });
+  function ontafkort(laag){
+    return laag.replace(/\b[a-z]{2,5}\b/g, w => AFKORTINGEN[w] || w);
+  }
   function normaliseer(t){
-    return t
+    return ontafkort(t
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .toLowerCase().replace(/\s+/g,' ').trim()
+      .toLowerCase().replace(/\s+/g,' ').trim())
       .replace(/(.)\1{2,}/g, '$1$1');
   }
   function words(t){
@@ -905,7 +928,7 @@ function hash(str){
       "Geld maakt niet gelukkig, maar armoede maakt ook echt niet grappig.",
       "Mijn beleggingsadvies: alles inzetten op iets anders dan wat ik zeg.",
       "Stuur die tikkie. Nu. Hij staat al drie weken open en iedereen weet het."]},
-    { re:/\b(liefde|vriendin|vriendje|date|relatie|verliefd|ex|tinder)\b/, a:[
+    { re:/\b(liefde|vriendin|vriendje|date|relatie|verliefd|ex)\b/, a:[
       "Mijn voorspelling: het komt goed, alleen niet met deze, en niet dit jaar.",
       "Stuur gewoon dat bericht. Slechtste geval verhuis je.",
       "Liefde is twee mensen die afspreken elkaars slechtste eigenschappen te negeren. Veel succes."]},
@@ -990,7 +1013,19 @@ function hash(str){
     { re:/\b(nederland|eindhoven|brabant|amsterdam|helmond|tilburg|dorp|stad)\b/, a:[
       "Prima plek. Vlakke grond, veel wind, matige koffie.",
       "Daar ben ik ooit geweest in de zin dat ik het woord ken.",
-      "Elke stad is hetzelfde: een station, drie kroegen en iemand die vindt dat het vroeger beter was."]}
+      "Elke stad is hetzelfde: een station, drie kroegen en iemand die vindt dat het vroeger beter was."]},
+    { re:/\b(kamergenoot|huisgenoot|studentenkamer|studentenhuis|hospiteren|hospiteeravond|kraakpand|sleutelgeld)\b|(?=.*\bkamer\b)(?=.*\bzoek)/, a:[
+      "Een kamer zoeken is veertig hospiteeravonden overleven om bij de veertigste te horen dat hij al vergeven is aan de neef van iemand.",
+      "Sleutelgeld is gewoon huur met een eufemisme ervoor. Betaal het, klaag erover, en doe het toch.",
+      "Kamergenoten zijn mensen die je afwas zien staan en er precies niets mee doen, net als jij."]},
+    { re:/\b(tentamenweek|tentamens|herkansing|stof leren|studeren voor|deadline scriptie|nog niet begonnen|leerachterstand)\b/, a:[
+      "Nog niet begonnen met leren en het is al tentamenweek. Klassiek. Dat wordt weer een nacht met te veel koffie en te weinig plan.",
+      "Een herkansing is gewoon een tweede kans om hetzelfde niet te doen.",
+      "Stof leren de avond ervoor werkt statistisch nooit, en toch doet iedereen het elke keer opnieuw."]},
+    { re:/\b(tinder|bumble|hinge|dating app|match(?:en|je)?|ghosten|ghosted|super\s?like|rechts swipen|links swipen|swipen)\b/, a:[
+      "Swipen is winkelen zonder ooit iets te kopen, maar dan met je gevoel van eigenwaarde als betaalmiddel.",
+      "Een match is geen gesprek, het is een belofte van een gesprek dat waarschijnlijk nooit komt.",
+      "Geghost worden na een match is het moderne equivalent van iemand die wegloopt tijdens een gesprek, alleen zonder de moeite."]}
   ];
 
   const OVER_JEZELF = [
@@ -1007,7 +1042,9 @@ function hash(str){
   const gezien = new Set();
   let vorigOnderwerp = '';
   let voorwoordSlot = '';
-  const gesprek = { berichten: 0, emotie: 'neutraal', onderwerpen: [], streak: 0 };
+  const gesprek = { berichten: 0, emotie: 'neutraal', onderwerpen: [], streak: 0, beledigingen: 0 };
+  const KRIBBIG_GRENS = 3;   // vanaf hoeveel beledigingen in de hele sessie hij echt kortaf wordt
+  const ZUCHT_OPENERS = ["Zucht.", "Weer dit.", "Oké dan.", "Tuurlijk.", "Nog een keer, dus."];
   const IDENT = new Set(['naam','leeftijd','woont','werk','studie']);
 
   const STREAK_OPMERKING = {
@@ -1038,6 +1075,7 @@ function hash(str){
     geheugen.heeft.length = 0; geheugen.doet.length = 0;
     gezien.clear(); gebruikt.clear();
     gesprek.berichten = 0; gesprek.emotie = 'neutraal'; gesprek.onderwerpen.length = 0; gesprek.streak = 0;
+    gesprek.beledigingen = 0;
     vorigOnderwerp = ''; wacht = null; beurtenSindsVraag = 99; laatsteCorrectie = null; voorwoordSlot = '';
   }
 
@@ -1174,7 +1212,8 @@ function hash(str){
       c: bijzinVan(focus)
     };
     const zeg = arr => vul(pick(arr, rng), ctx, rng);
-    const kick = () => vul(pick(KICKERS, rng), ctx, rng);
+    // Kans op een niet-lege kicker schaalt met de sarcasme-slider (zie kansOpKicker()).
+    const kick = () => rng() < kansOpKicker() ? vul(pick(KICKERS.filter(k => k), rng), ctx, rng) : '';
 
     /* --- harde grappen --- */
     if(laag === 'sudo' || laag.startsWith('sudo ')) return "Nee.";
@@ -1330,11 +1369,17 @@ function hash(str){
     if(RE.dank.test(laag)) return zeg(toonKies(DANK, DANK_ZACHT, DANK_FEL));
     // Alleen als het aan hem gericht is. "ik haat maandagen" is geen belediging.
     const opMijGericht = /\b(jij|je|jouw|u|deze site|dit ding|quinnai)\b/.test(laag) || words(t).length <= 3;
+    // Nano houdt het kort; na te veel beledigingen in de sessie wordt hij kribbig-kort.
+    // Beide onderdrukken openers/uitweidingen verderop (ook in de onderwerp-specifieke antwoorden).
+    const kribbig = gesprek.beledigingen > KRIBBIG_GRENS;
+    const beknopt = isNano() || kribbig;
     if(RE.beledig.test(laag) && opMijGericht && !/\bik (haat|vind)\b/.test(laag)){
-      const toon = toonWaarde();
-      if(toon < 25) return zeg(BELEDIGING_ZACHT);
-      if(toon > 85) return zeg(BELEDIGING_FEL);
-      return zeg(BELEDIGING);
+      if(!opnieuw) gesprek.beledigingen++;
+      // Na een paar keer is de welwillendheid op, ongeacht wat de slider zegt.
+      if(gesprek.beledigingen > KRIBBIG_GRENS){
+        return zeg(BELEDIGING_FEL) + (rng() > 0.5 ? " Dat is trouwens al bericht " + gesprek.beledigingen + " met een sneer erin." : "");
+      }
+      return zeg(toonKies(BELEDIGING, BELEDIGING_ZACHT, BELEDIGING_FEL));
     }
 
     if(RE.vergelijk.test(laag)){
@@ -1363,9 +1408,10 @@ function hash(str){
     for(const o of ONDERWERPEN){
       if(o.re.test(laag)){
         let a = pick(o.a, rng);
-        if(rng() > 0.6) a = zeg(OPENERS) + " " + a;
-        if(gesprek.emotie !== 'neutraal' && rng() > 0.7) a = pseudoAnalyse(ctx, rng) + " " + a;
-        return a + kick();
+        if(kribbig && rng() > 0.45) a = pick(ZUCHT_OPENERS, rng) + " " + a;
+        else if(!beknopt && rng() > 0.6) a = zeg(OPENERS) + " " + a;
+        if(!beknopt && gesprek.emotie !== 'neutraal' && rng() < kansOpAnalyse()) a = pseudoAnalyse(ctx, rng) + " " + a;
+        return a + (isNano() && rng() > 0.5 ? " Te weinig honger-tokens over voor meer." : kick());
       }
     }
 
@@ -1406,28 +1452,40 @@ function hash(str){
     }
 
     let uit = "";
-    if(rng() > 0.7) uit += zeg(OPENERS) + " ";
+    if(kribbig && rng() > 0.45) uit += pick(ZUCHT_OPENERS, rng) + " ";
+    else if(!beknopt && rng() > 0.7) uit += zeg(OPENERS) + " ";
     uit += kernZin;
-    if(rng() > 0.62) uit += " " + zeg(ALGEMEEN);
-    uit += kick();
+    if(!beknopt && rng() > 0.62) uit += " " + zeg(ALGEMEEN);
+    uit += isNano() && rng() > 0.5 ? " Te weinig honger-tokens over voor meer." : kick();
 
-    const toon = toonWaarde();
-    if(toon < 25 && rng() > 0.45) uit += " (Dit was de vriendelijke versie. Je wilde het zelf.)";
-    if(toon > 92 && rng() > 0.55) uit += " En ja, je ziet er moe uit.";
-    if(rng() > 0.72) uit = pseudoAnalyse(ctx, rng) + " " + uit;
+    if(!beknopt){
+      const toon = toonWaarde();
+      if(toon < 25 && rng() > 0.45) uit += " (Dit was de vriendelijke versie. Je wilde het zelf.)";
+      if(toon > 92 && rng() > 0.55) uit += " En ja, je ziet er moe uit.";
+      if(rng() < kansOpAnalyse()) uit = pseudoAnalyse(ctx, rng) + " " + uit;
 
-    if(gesprek.streak >= 3 && STREAK_OPMERKING[gesprek.emotie] && rng() > 0.5){
-      uit += " " + STREAK_OPMERKING[gesprek.emotie].replace('{n}', gesprek.streak);
-    } else if(gesprek.berichten >= 4 && gesprek.onderwerpen.length >= 3 && rng() > 0.75){
-      const eerdere = gesprek.onderwerpen.slice(0,-1).filter(o => o !== onderwerp);
-      if(eerdere.length){
-        uit += " Twee berichten geleden ging het nog over '" + eerdere[eerdere.length-1] + "'. Aandachtsspanne van een goudvis, met liefde gezegd.";
+      if(gesprek.streak >= 3 && STREAK_OPMERKING[gesprek.emotie] && rng() > 0.5){
+        uit += " " + STREAK_OPMERKING[gesprek.emotie].replace('{n}', gesprek.streak);
+      } else if(gesprek.berichten >= 4 && gesprek.onderwerpen.length >= 3 && rng() > 0.75){
+        const eerdere = gesprek.onderwerpen.slice(0,-1).filter(o => o !== onderwerp);
+        if(eerdere.length){
+          uit += " Twee berichten geleden ging het nog over '" + eerdere[eerdere.length-1] + "'. Aandachtsspanne van een goudvis, met liefde gezegd.";
+        }
       }
-    }
-    /* --- terugkomen op iets wat je eerder vertelde --- */
-    const feit = willekeurigFeit(rng);
-    if(feit && rng() > 0.78){
-      uit += " Je zei trouwens eerder dat " + feit + ". Dat verandert niets, maar ik wilde laten zien dat ik oplet.";
+      /* --- terugkomen op iets wat je eerder vertelde: 35% kans, soms als tussenzin --- */
+      const feit = willekeurigFeit(rng);
+      if(feit && rng() > 0.65){
+        if(rng() > 0.55){
+          const einde = uit.search(/[.!?](?=\s|$)/);
+          if(einde >= 0){
+            uit = uit.slice(0, einde+1) + " (je zei trouwens eerder dat " + feit + ")" + uit.slice(einde+1);
+          } else {
+            uit += " (je zei trouwens eerder dat " + feit + ")";
+          }
+        } else {
+          uit += " Je zei trouwens eerder dat " + feit + ". Dat verandert niets, maar ik wilde laten zien dat ik oplet.";
+        }
+      }
     }
 
     /* --- zelf een vraag stellen, zodat het een gesprek wordt --- */
