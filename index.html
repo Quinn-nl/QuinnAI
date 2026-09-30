@@ -273,7 +273,7 @@
   .tier li{display:flex;gap:10px;color:#cfd8e0}
   .tier li i{font-style:normal;color:var(--mint);flex:none}
   .tier li.no{color:var(--muted-3)}
-  .tier li.no i{color:#4a5764}
+  .tier li.no i{color:var(--muted-3)}
 
   /* faq */
   .faq{border-top:1px solid var(--line-soft)}
@@ -929,6 +929,10 @@ modelSel.addEventListener('change', () => {
         sendBtn.style.cursor = "not-allowed";
         $('#chips').classList.add('locked');
         $('.compose').classList.add('locked');
+        // SC 4.1.2: de uitgeschakelde staat van de chips en de bijlage/microfoon-knoppen
+        // was alleen visueel (opacity + pointer-events); toetsenbordgebruikers konden er
+        // nog naartoe tabben zonder dat ooit werd aangegeven dat ze niets doen.
+        document.querySelectorAll('.chip, #fake-clip, #fake-mic').forEach(el => el.setAttribute('aria-disabled', 'true'));
     } else {
         b.textContent = "Overgeschakeld naar " + naam + ". Je merkt er niets van, maar het klinkt duur.";
         b.removeAttribute('aria-hidden'); announce(b.textContent);
@@ -940,6 +944,7 @@ modelSel.addEventListener('change', () => {
         sendBtn.style.cursor = "pointer";
         $('#chips').classList.remove('locked');
         $('.compose').classList.remove('locked');
+        document.querySelectorAll('.chip, #fake-clip, #fake-mic').forEach(el => el.removeAttribute('aria-disabled'));
     }
     naarBeneden();
   });
