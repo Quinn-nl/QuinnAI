@@ -21,11 +21,26 @@ vm.runInContext(fs.readFileSync(ENGINE_PATH, 'utf8'), ctx, { filename: ENGINE_PA
 // het ook gebruikt: gewoon de globals aanroepen).
 const {
   flip, bijzinVan, topicOf, bedenkAntwoord, resetEngine,
-  geheugen, profielRegels, gezien, normaliseer, gesprek
+  geheugen, profielRegels, gezien, normaliseer, gesprek,
+  isNano, isLegacy, toonModus, kansOpKicker, kansOpAnalyse, OPENERS
 } = vm.runInContext(
-  "({flip,bijzinVan,topicOf,bedenkAntwoord,resetEngine,geheugen,profielRegels,gezien,normaliseer,gesprek})",
+  "({flip,bijzinVan,topicOf,bedenkAntwoord,resetEngine,geheugen,profielRegels,gezien,normaliseer,gesprek," +
+  "isNano,isLegacy,toonModus,kansOpKicker,kansOpAnalyse,OPENERS})",
   ctx
 );
+
+// LET OP: bedenkAntwoord() gebruikt een RNG die volledig deterministisch geseed wordt
+// door (bericht + onderwerp + model-index). Hetzelfde bericht keer op keer aanbieden
+// geeft dus NIET telkens een andere uitkomst voor kansen die vroeg in die vaste volgorde
+// zitten — alleen de 'gebruikt'-anti-herhaling (die los van rng() bijhoudt wat al gekozen
+// is) zorgt voor variatie bij identieke input. Tests die "over meerdere pogingen" een kans
+// willen raken, variëren daarom het bericht zelf (niet alleen de lus-teller).
+
+// Nep-DOM voor sarc (toon-slider) en modelSel (modelkeuze), zoals index.html ze aan engine.js geeft.
+ctx.window = ctx.window || {};
+function zetToon(v){ ctx.window.sarc = { value: String(v) }; }
+function zetModel(i){ ctx.window.modelSel = { selectedIndex: i }; }
+zetToon(78); zetModel(0);   // standaardstand: Turbo, toon zoals in index.html
 
 let ok = 0, fail = 0;
 let groep = '';
@@ -185,18 +200,23 @@ for(const invoer of randInputs){
   }
 }
 
-sectie('fuzzing — 4000 willekeurige berichten');
-const WOORDEN = 'ik jij je mijn dat omdat als ben heb ga kan wil moet niet pizza vlaai werk huis waarom hoe wat of en maar hou van haat voel me moe blij Sam 25 jaar woon in Breda studeer ga naar liep kocht'.split(' ');
+sectie('fuzzing — 4000 willekeurige berichten, over alle modellen en toonstanden');
+const WOORDEN = 'ik jij je mijn dat omdat als ben heb ga kan wil moet niet pizza vlaai werk huis waarom hoe wat of en maar hou van haat voel me moe blij Sam 25 jaar woon in Breda studeer ga naar liep kocht dom stom saai irritant tinder kamer zoeken tentamen'.split(' ');
 let seed = 7;
 const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 let fuzzFout = false;
+resetEngine();
 for(let i = 0; i < 4000 && !fuzzFout; i++){
+  // Modellen en toon-standen door elkaar, zodat Nano/Legacy/kribbige toestanden ook
+  // door de robuustheidstest gaan, niet alleen het Turbo-standaardpad.
+  zetModel(Math.floor(rnd() * 3));
+  zetToon(Math.floor(rnd() * 101));
   const n = 1 + Math.floor(rnd() * 12);
   const woorden = [];
   for(let j = 0; j < n; j++) woorden.push(WOORDEN[Math.floor(rnd() * WOORDEN.length)]);
   const bericht = woorden.join(' ') + (rnd() > 0.5 ? '?' : '');
   try{
-    const uitvoer = A(bericht);
+    const uitvoer = A(bericht, rnd() > 0.9 ? { opnieuw: true } : undefined);
     if(typeof uitvoer !== 'string' || KAPOT_PATROON.test(uitvoer)){
       fail++; console.log('FAIL [fuzzing] rare output voor', JSON.stringify(bericht), '->', JSON.stringify(uitvoer));
       fuzzFout = true;
@@ -206,7 +226,117 @@ for(let i = 0; i < 4000 && !fuzzFout; i++){
     fuzzFout = true;
   }
 }
-if(!fuzzFout) console.log('  4000 willekeurige berichten doorstaan zonder crash of kapotte output.');
+zetModel(0); zetToon(78);
+if(!fuzzFout) console.log('  4000 willekeurige berichten (alle modellen/toonstanden) doorstaan zonder crash of kapotte output.');
+
+/* ------------------------------------------------------------ */
+sectie('B1 — kribbig worden na herhaalde belediging');
+resetEngine(); zetToon(78); zetModel(0);
+for(let i=0;i<3;i++) A('jij bent dom');   // 3x beledigen: nog binnen de marge
+eq('teller telt mee', gesprek.beledigingen, 3);
+A('jij bent dom');                         // 4e keer: nog steeds binnen de marge (>3 triggert pas)
+eq('grens nog niet overschreden bij 4', gesprek.beledigingen > 3, true);
+// Elke net iets andere formulering geeft een andere hash-seed (zolang er een woord in
+// staat dat RE.beledig ook echt herkent), dus dit zijn wel onafhankelijke trekkingen
+// van de "50% kans op een sneer erbij"-check.
+const VERWIJT_ZINNEN = [
+  'jij bent stom', 'jij bent nogal dom', 'jij bent gewoon nutteloos', 'jij bent zo saai',
+  'jij bent nogal irritant', 'jij bent duidelijk lelijk', 'deze site is waardeloos',
+  'dit ding is pure troep', 'jij bent echt kut', 'quinnai is nutteloos', 'jij bent compleet waardeloos',
+  'jij bent best wel dom', 'jij bent behoorlijk irritant', 'jij bent best wel saai', 'jij bent gewoon slecht',
+  'jij bent zo waardeloos', 'jij bent vreselijk dom', 'jij bent zo lelijk'
+];
+const isFel = r => /gezicht|JavaScript-bestand|nullen en enen|Noteer: gebruiker/.test(r);
+let kribbigGezien = false, alleFel = true;
+for(const zin of VERWIJT_ZINNEN){
+  const r = A(zin);
+  if(!isFel(r)) alleFel = false;
+  if(/met een sneer erin/.test(r)) kribbigGezien = true;
+}
+eq('elk antwoord na de grens komt uit BELEDIGING_FEL', alleFel, true);
+eq('de "met een sneer"-zin verschijnt bij voldoende verschillende beledigingen', kribbigGezien, true);
+
+sectie('B2 — nieuwe onderwerpen');
+resetEngine();
+match('kamer zoeken', A('ik ben een kamer aan het zoeken'), /kamer|hospiteer|sleutelgeld/i);
+resetEngine();
+match('tentamenweek', A('het is weer tentamenweek en ik ben nog niet begonnen'), /tentamen|herkansing|leren/i);
+resetEngine();
+match('dating app', A('ik heb een match op tinder'), /swipen|match|ghost/i);
+
+sectie('B3 — callback op eerder verteld feit');
+resetEngine(); zetToon(78); zetModel(0);
+A('ik hou van vlaai');
+let callbackGezien = false;
+for(let i=0;i<60 && !callbackGezien;i++){
+  // neutrale vraag die niet meteen op een vroege tak (mening/advies/onderwerp) uitkomt
+  const r = A('Wat gebeurt er vandaag?');
+  if(/vlaai/.test(r)) callbackGezien = true;
+}
+eq('callback komt binnen 60 pogingen voor (kans is nu 35%)', callbackGezien, true);
+
+sectie('C1 — modelkeuze heeft echt effect');
+zetModel(0); eq('index 0 is geen Nano', isNano(), false);
+zetModel(1); eq('index 1 is Nano', isNano(), true);
+zetModel(2); eq('index 2 is Legacy', isLegacy(), true);
+zetModel(2); zetToon(5);  eq('Legacy forceert fel, ook bij lage toon-slider', toonModus(), 'fel');
+zetModel(0); zetToon(5);  eq('Turbo bij lage toon-slider is gewoon zacht', toonModus(), 'zacht');
+
+// Gestructureerde steekproef met verschillende berichten (elk bericht = eigen hash-seed,
+// dus dit zijn wel onafhankelijke trekkingen — zie de opmerking hierboven).
+const GENERIEKE_VRAGEN = ['waarom regent het', 'wat is een blackhole', 'hoe werkt een motor',
+  'wie heeft het wiel uitgevonden', 'waar ligt IJsland', 'wanneer is het weekend',
+  'kan een vis vliegen', 'moet ik een paraplu meenemen', 'wat is de hoofdstad van Peru',
+  'hoe laat gaat de zon onder', 'waarom is water nat', 'wat is zwaartekracht precies'];
+
+resetEngine(); zetModel(0); zetToon(78);
+const turboAntwoorden = GENERIEKE_VRAGEN.map(v => A(v));
+resetEngine(); zetModel(1); zetToon(78);
+const nanoAntwoorden = GENERIEKE_VRAGEN.map(v => A(v));
+
+const gemTurbo = turboAntwoorden.reduce((s,r) => s + r.length, 0) / turboAntwoorden.length;
+const gemNano = nanoAntwoorden.reduce((s,r) => s + r.length, 0) / nanoAntwoorden.length;
+if(gemNano < gemTurbo){ ok++; } else { fail++; console.log('FAIL [C1] Nano niet korter dan Turbo over dezelfde vragen (' + gemNano.toFixed(0) + ' vs ' + gemTurbo.toFixed(0) + ')'); }
+
+const begintMetOpener = (r) => OPENERS.some(o => r.startsWith(o + ' '));
+eq('Nano begint nooit met een opener-zin', nanoAntwoorden.some(begintMetOpener), false);
+eq('Turbo gebruikt wél openers over genoeg pogingen', turboAntwoorden.some(begintMetOpener), true);
+match('minstens één Nano-antwoord heeft de honger-kicker', nanoAntwoorden.join(' | '), /honger-tokens/);
+
+resetEngine(); zetModel(2); zetToon(5);   // Legacy: toon-slider staat laag, moet toch fel klinken
+match('Legacy negeert lage toon-slider', A('jij bent dom'), /(gezicht|JavaScript-bestand|nullen en enen|Noteer: gebruiker)/);
+
+sectie('C2 — sarcasme-slider stuurt kicker/analyse-frequentie');
+// De kansformules zelf: rechttoe-rechtaan, geen bericht-hash bij betrokken.
+eq('kansOpKicker bij toon 0', (() => { zetModel(0); zetToon(0); return Math.round(kansOpKicker()*100); })(), 30);
+eq('kansOpKicker bij toon 100', (() => { zetToon(100); return Math.round(kansOpKicker()*100); })(), 70);
+eq('kansOpAnalyse bij toon 0', (() => { zetToon(0); return Math.round(kansOpAnalyse()*100); })(), 15);
+eq('kansOpAnalyse bij toon 100', (() => { zetToon(100); return Math.round(kansOpAnalyse()*100); })(), 45);
+eq('Legacy geeft dezelfde (hoge) kicker-kans als toon 90, ongeacht de slider', (() => {
+  zetModel(2); zetToon(5); const legacy = kansOpKicker();
+  zetModel(0); zetToon(90); const hoog = kansOpKicker();
+  zetModel(0); zetToon(5);
+  return Math.round(legacy*100) === Math.round(hoog*100);
+})(), true);
+
+// En het werkt ook echt door in de antwoorden: over verschillende berichten heen
+// geeft een hoge toon gemiddeld langere (sneriger) antwoorden dan een lage toon.
+const KOFFIE_VRAGEN = ['vertel eens iets over koffie', 'wat vind je van thee', 'wat is jouw kijk op ontbijt',
+  'waarom drinken mensen koffie', 'is cafeïne gezond', 'wat is een goede koffiemachine',
+  'hoe zet je koffie', 'waarom ruikt koffie beter dan het smaakt'];
+resetEngine(); zetModel(0); zetToon(3);
+const laagAntwoorden = KOFFIE_VRAGEN.map(v => A(v));
+resetEngine(); zetModel(0); zetToon(97);
+const hoogAntwoorden = KOFFIE_VRAGEN.map(v => A(v));
+const gemLaag = laagAntwoorden.reduce((s,r) => s + r.length, 0) / laagAntwoorden.length;
+const gemHoog = hoogAntwoorden.reduce((s,r) => s + r.length, 0) / hoogAntwoorden.length;
+if(gemHoog > gemLaag){ ok++; } else { fail++; console.log('FAIL [C2] hoge toon niet gemiddeld langer dan lage toon:', gemHoog.toFixed(0), 'vs', gemLaag.toFixed(0)); }
+zetToon(78);
+
+sectie('C3 — lichte typo-normalisatie');
+resetEngine(); zetModel(0); zetToon(78);
+eq('afkorting wordt herkend voor "even"', normaliseer('kun je dat ff doen'), normaliseer('kun je dat even doen'));
+match('afkorting in echte zin verandert herkenning', A('ik ga wrs naar de kroeg'), /kroeg|bier|pilsener|drank/i);
 
 /* ------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(40));
