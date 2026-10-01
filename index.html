@@ -181,6 +181,7 @@
   .av.me{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--muted);font-size:12px}
   .bubble{padding:13px 16px;border-radius:15px;max-width:76%;font-size:15px;white-space:pre-wrap}
   .row.ai .bubble{background:rgba(255,255,255,.045);border:1px solid var(--line-soft);border-top-left-radius:5px;box-shadow:0 8px 22px -18px #000}
+  .row.ai .bubble a{color:var(--butter);text-underline-offset:3px}
   .row.me .bubble{background:var(--paper);color:#0d151d;border-top-right-radius:5px;font-weight:500;box-shadow:0 8px 22px -18px #000}
   .meta{margin-top:9px;font-size:11px;color:var(--muted-3);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .meta button{background:none;border:0;color:var(--muted-3);font:inherit;font-size:11px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
@@ -742,11 +743,28 @@
     stap();
   }
 
+  function veiligBericht(bubble, tekst){
+    bubble.textContent = '';
+    tekst.split(/(0800-0113|113\.nl|112|113)/).forEach((deel, i) => {
+      if(i % 2 === 0){ bubble.appendChild(document.createTextNode(deel)); return; }
+      const a = document.createElement('a');
+      a.textContent = deel;
+      if(deel === '113.nl'){ a.href = 'https://113.nl'; a.target = '_blank'; a.rel = 'noopener'; }
+      else a.href = 'tel:' + deel;
+      bubble.appendChild(a);
+    });
+    bubble.removeAttribute('aria-hidden');
+    announce(tekst);
+    bezig = false;
+    naarBeneden();
+  }
+
   function aiBericht(vraag){
     const bubble = rij('ai','Q');
     bubble.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
     naarBeneden();
     const antwoord = bedenkAntwoord(vraag);
+    if(isVeilig(vraag)){ veiligBericht(bubble, antwoord); return; }
     const onderwerp = topicOf(vraag);
     const stappen = DENKSTAPPEN
       .slice()
