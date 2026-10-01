@@ -427,6 +427,8 @@ function hash(str){
      DIALOOG: hij stelt zelf vragen en onthoudt dat hij dat deed
      ============================================================ */
   let wacht = null;          // waar hij op een antwoord wacht
+  let ernstig = false;       // was het laatste antwoord een crisis-/zacht antwoord? (UI: geen grappen-chrome)
+  let zachteBeurten = 0;     // aantal beurten na een crisisbericht waarin hij zacht blijft
   let beurtenSindsVraag = 99;
 
   const WEDERVRAGEN = [
@@ -840,6 +842,17 @@ function hash(str){
   const VEILIG = /\b(zelfmoord|zelfdoding|suicide|suicidaal|zelfbeschadiging|zelfverwonding|kill myself|end my life|want to die|mezelf (?:(?:iets|wat) aan\s?doen|van kant|pijn|verwonden|snijden|beschadigen|om het leven)|ik wil (?:(?:liever|gewoon|echt|graag|nu) )*(?:dood|doodgaan|niet meer leven|niet meer bestaan|niet meer verder|er niet meer zijn|er (?:een )?(?:einde|eind) aan (?:te )?maken)|ik (?:maak|ga) er (?:nu )?(?:een )?(?:einde|eind) aan(?: maken)?\s*[.!]*$|(?:een )?(?:einde|eind) aan (?:mijn|het) leven|ik zie (?:het|dit) niet meer zitten|ik zie geen (?:uitweg|toekomst) meer|ik heb geen zin meer (?:in het leven|om te leven))(?![\p{L}\d])/u;
   /* Voor de UI-laag: is dit een crisisbericht? (dan geen denkstappen, geen meta, wel klikbare nummers) */
   function isVeilig(tekst){ return VEILIG.test(normaliseer(String(tekst))); }
+  /* Na een crisisbericht blijft hij een paar beurten zacht: geen grappen, geen "Dacht ik al…". */
+  const ZACHT_BEURTEN = 3;
+  const ZACHT_NA_CRISIS = [
+    "Ik ben er nog, en ik hou het even serieus. Ik ben een website en geen hulpverlener, dus als je met iemand wilt praten: bel 113 of 0800-0113, of chat via 113.nl.",
+    "Dank dat je blijft schrijven. Je hoeft nu niets uit te leggen of op te lossen. Als het zwaar blijft, kun je 113 bellen (0800-0113) of chatten via 113.nl.",
+    "Ik lees mee. Probeer het niet alleen te dragen: praat met iemand die je vertrouwt, of neem contact op met 113 (0800-0113, of 113.nl). Bij acuut gevaar bel je 112.",
+    "Ik ben een website en kan niet veel meer dan meelezen, maar jij verdient iemand die wél kan helpen. 113 bel je op 0800-0113, of chat via 113.nl. Bij acuut gevaar: 112.",
+    "Ik blijf hier zolang dit tabblad openstaat. Een mens kan meer voor je doen dan ik: 113 (0800-0113) of 113.nl, en bij acuut gevaar 112."
+  ];
+  /* Voor de UI-laag: kwam het laatste antwoord uit de crisis-/zachte modus? */
+  function isErnstig(){ return ernstig; }
   const VEILIG_ANTWOORD = "Even geen grappen. Dat klinkt zwaar, en ik ben blij dat je het zegt. Ik ben een website zonder echt verstand, dus ik kan hier niet echt bij helpen, maar jij verdient wel iemand die dat kan. Praat er met iemand over die je vertrouwt, of neem contact op met 113 Zelfmoordpreventie: bel 113 of gratis 0800-0113, of chat via 113.nl. Zit je in acuut gevaar, bel dan 112.";
 
   const DAGDEEL_OPMERKING = {
@@ -848,6 +861,7 @@ function hash(str){
     middag: ["Goedemiddag. {tijd}, precies het uur waarop niemand werkt.", "Middag. Het is {tijd}. De dag heeft nog geen richting, net als dit gesprek."],
     avond: ["Goedenavond. {tijd}. Dit is het uur van slechte beslissingen.", "Avond. {tijd}. Ik hoop dat je gegeten hebt, of in ieder geval besteld."]
   };
+  function weekdagNu(){ return new Date().toLocaleDateString('nl-NL', { weekday: 'long' }); }
   function dagdeel(){
     const u = new Date().getHours();
     return u < 6 ? 'nacht' : u < 12 ? 'ochtend' : u < 18 ? 'middag' : 'avond';
@@ -878,7 +892,7 @@ function hash(str){
     mening:/\b(wat vind je van|wat denk je van|jouw mening|wat vind jij|hoe kijk jij)\b/,
     advies:/\b(moet ik|zal ik|wat moet ik|wat zou jij|raad je aan|is het slim|is het verstandig|help me kiezen)\b/,
     overJezelf:/\b(wie ben jij|wat ben jij|ben jij een|jij bent maar|wat kun je|wat kan je|hoe werk je|ben je echt|besta je)\b/,
-    gevoel:/\b(ik voel|ik ben verdrietig|ik ben boos|ik ben bang|ik mis|het gaat niet|ik heb het zwaar|ik ben eenzaam|ik ben gestrest)\b/,
+    gevoel:/\b(ik voel|ik ben (?:zo |heel |erg |echt |best |helemaal )?(?:verdrietig|boos|bang|eenzaam|gestrest|angstig|ongelukkig|somber|overspannen|bezorgd)|ik mis|het gaat niet|ik heb het zwaar)\b/,
     betekent:/\b(wat betekent|betekenis van|wat is de definitie)\b/,
     spelling:/\b(hoe schrijf je|hoe spel je|hoe schrijft? je)\b/i,
     vertaal:/\b(hoe zeg je|vertaal|in het (duits|engels|frans|spaans|italiaans|latijn))\b/,
@@ -973,7 +987,7 @@ function hash(str){
     { re:/\b(betekenis van het leven|zin van het leven|waarom besta|leven)\b/, a:[
       "42. Ik ga er niet origineler over doen dan dat.",
       "Het leven heeft geen ingebouwde betekenis, maar wel gratis bezorging boven de 20 euro.",
-      "Je bestaat, het is nu al donderdag, en dat moet genoeg zijn."]},
+      "Je bestaat, het is nu al {dag}, en dat moet genoeg zijn."]},
     { re:/\b(hond|kat|poes|huisdier|konijn|cavia)\b/, a:[
       "Een hond houdt van je zoals je bent. Ik niet, maar de hond wel.",
       "Katten hebben door dat dit allemaal nergens over gaat. Daarom zeggen ze niets.",
@@ -1082,6 +1096,7 @@ function hash(str){
     gesprek.berichten = 0; gesprek.emotie = 'neutraal'; gesprek.onderwerpen.length = 0; gesprek.streak = 0;
     gesprek.beledigingen = 0;
     vorigOnderwerp = ''; wacht = null; beurtenSindsVraag = 99; laatsteCorrectie = null; voorwoordSlot = '';
+    ernstig = false; zachteBeurten = 0;
   }
 
   /* ---------- rekenen ---------- */
@@ -1173,7 +1188,7 @@ function hash(str){
   }
 
   function bedenkAntwoord(raw, opts){
-    voorwoordSlot = '';
+    voorwoordSlot = ''; ernstig = false;
     const a = kern(String(raw), opts || {});
     const v = voorwoordSlot; voorwoordSlot = '';
     return v ? v + ' ' + a : a;
@@ -1185,7 +1200,11 @@ function hash(str){
     const laag = normaliseer(t);
 
     /* --- serieuze berichten: geen grap --- */
-    if(VEILIG.test(laag)) return VEILIG_ANTWOORD;
+    if(VEILIG.test(laag)){ if(!opts.opnieuw) zachteBeurten = ZACHT_BEURTEN; ernstig = true; return VEILIG_ANTWOORD; }
+    if(zachteBeurten > 0 && !opts.opnieuw){
+      zachteBeurten--; ernstig = true;
+      return pick(ZACHT_NA_CRISIS, makeRng(hash(laag)));
+    }
 
     /* Meerdere zinnen: alle zinnen tellen voor het geheugen, maar hij reageert op de laatste vraag (of zin). */
     const zinnen = t.split(/(?<=[.!?])\s+/).filter(s => s.trim());
@@ -1353,6 +1372,10 @@ function hash(str){
       return "Dus " + ctx.c + ". " + zeg(toonKies(VERTELD, VERTELD_ZACHT, VERTELD_FEL)) + (rng() > 0.5 ? " Dat past wel bij de rest van wat je me verteld hebt." : "");
     }
 
+    /* Gevoelens gaan vóór alle toon-grapjes (HERHALING, SCHREEUWEN, KORT, LANG) en blijven zacht,
+       ongeacht de toon-slider of het model: geen sneer, ook niet bij "IK BEN ZO BANG". */
+    if(RE.gevoel.test(laag)) return zeg(VERTELD_ZACHT);
+
     if(!opnieuw && gezien.has(laag) && t.length > 12) return zeg(HERHALING);
 
     /* --- toon van het bericht --- */
@@ -1361,11 +1384,6 @@ function hash(str){
     if(words(t).length === 1 && t.length < 4 && !RE.groet.test(laag)) return zeg(KORT);
     if(words(t).length > 28) return zeg(LANG);
 
-    if(RE.gevoel.test(laag)){
-      let a = zeg(toonKies(VERTELD, VERTELD_ZACHT, VERTELD_FEL));
-      if(ctx.c) a = "Dus " + ctx.c + ". " + a;
-      return a;
-    }
     if(RE.overJezelf.test(laag)) return pick(OVER_JEZELF, rng);
     if(RE.mop.test(laag)) return vul(pick(WIJSHEID, rng), ctx, rng) + " Dat was hem. Lachen mag, maar hoeft niet.";
     if(RE.groet.test(laag) && words(t).length < 5){
@@ -1415,7 +1433,7 @@ function hash(str){
     /* --- specifieke onderwerpen --- */
     for(const o of ONDERWERPEN){
       if(o.re.test(laag)){
-        let a = pick(o.a, rng);
+        let a = pick(o.a, rng).replace(/\{dag\}/g, () => weekdagNu());
         if(kribbig && rng() > 0.45) a = pick(ZUCHT_OPENERS, rng) + " " + a;
         else if(!beknopt && rng() > 0.6) a = zeg(OPENERS) + " " + a;
         if(!beknopt && gesprek.emotie !== 'neutraal' && rng() < kansOpAnalyse()) a = pseudoAnalyse(ctx, rng) + " " + a;
