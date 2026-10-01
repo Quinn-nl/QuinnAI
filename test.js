@@ -22,10 +22,10 @@ vm.runInContext(fs.readFileSync(ENGINE_PATH, 'utf8'), ctx, { filename: ENGINE_PA
 const {
   flip, bijzinVan, topicOf, bedenkAntwoord, resetEngine,
   geheugen, profielRegels, gezien, normaliseer, gesprek,
-  isNano, isLegacy, toonModus, kansOpKicker, kansOpAnalyse, OPENERS, isVeilig
+  isNano, isLegacy, toonModus, kansOpKicker, kansOpAnalyse, OPENERS, isVeilig, isErnstig
 } = vm.runInContext(
   "({flip,bijzinVan,topicOf,bedenkAntwoord,resetEngine,geheugen,profielRegels,gezien,normaliseer,gesprek," +
-  "isNano,isLegacy,toonModus,kansOpKicker,kansOpAnalyse,OPENERS,isVeilig})",
+  "isNano,isLegacy,toonModus,kansOpKicker,kansOpAnalyse,OPENERS,isVeilig,isErnstig})",
   ctx
 );
 
@@ -378,6 +378,56 @@ resetEngine();
 vm.runInContext("wacht = { onderwerp: 'x' }; beurtenSindsVraag = 0;", ctx);
 A('ja'); A('ja');
 eq('wacht is null na twee vroege returns', vm.runInContext('wacht', ctx), null);
+
+
+/* ------------------------------------------------------------ */
+sectie('C — zachte modus na een crisisbericht');
+resetEngine(); zetToon(100); zetModel(0);
+A('ik wil mezelf iets aandoen');
+eq('crisisbericht zelf is ernstig', isErnstig(), true);
+for(const kort of ['ja','ok','hmm']){
+  const r = A(kort);
+  eq('zacht na crisis: ' + kort, isErnstig(), true);
+  match('zacht antwoord verwijst naar hulp: ' + kort, r, /113/);
+  geenMatch('geen grap na crisis: ' + kort, r, /Dacht ik al|Mooi\. Dan|Precies\. En nu|Noteer ik onder|Ook goed|Nee dus|\u0027Ok\u0027/);
+}
+A('ja');
+eq('na drie beurten weer gewoon', isErnstig(), false);
+resetEngine(); zetToon(78);
+eq('na reset geen zachte modus', (A('ja'), isErnstig()), false);
+
+sectie('C — gevoel gaat vóór toon-grapjes en blijft zacht');
+const ZACHT_PATROON = /Fijn dat je het even kwijt|Neem je tijd|het mag ook vervelend/;
+const SNEER_PATROON = /Caps lock|bloeddruk|HARDER PRATEN|sollicitatiebrief|Dit vroeg je net|Herhalen maakt|We hebben dit gehad|sarcastisch|met minder warmte|niet doorvertelt/;
+for(const [toon, model] of [[100,0],[78,0],[5,0],[5,2]]){
+  resetEngine(); zetToon(toon); zetModel(model);
+  for(const z of ['IK BEN ZO BANG','ik voel me alleen','ik voel me alleen','ik ben zo eenzaam','ik heb het zwaar']){
+    const r = A(z);
+    match('gevoel zacht (toon ' + toon + ', model ' + model + '): ' + z, r, ZACHT_PATROON);
+    geenMatch('gevoel zonder sneer (toon ' + toon + ', model ' + model + '): ' + z, r, SNEER_PATROON);
+  }
+}
+resetEngine(); zetToon(78); zetModel(0);
+{
+  const lang = 'ik voel me al weken niet lekker en ' + 'het is allemaal zo veel dat ik niet weet waar ik moet beginnen '.repeat(3);
+  geenMatch('lang gevoelsbericht krijgt geen LANG-grap', A(lang), SNEER_PATROON);
+}
+
+sectie('C — weekdag niet hardcoded');
+const engineBron = fs.readFileSync(ENGINE_PATH, 'utf8');
+eq('geen hardcoded weekdag in het levensantwoord', /het is nu al (maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)/.test(engineBron), false);
+resetEngine(); zetModel(0); zetToon(78);
+const vandaagDag = new Date().toLocaleDateString('nl-NL', { weekday: 'long' });
+let dagGezien = false, dagKapot = false;
+const LEVEN_ZINNEN = ['wat is het leven toch', 'waarom is leven zo lang', 'zin van het leven', 'het leven is mooi',
+  'mijn leven is druk', 'wat een leven', 'leven en laten leven', 'is het leven een grap', 'hoe lang duurt een leven', 'waarom besta ik'];
+for(const z of LEVEN_ZINNEN){
+  const r = A(z);
+  if(/\{dag\}/.test(r)) dagKapot = true;
+  if(r.indexOf('het is nu al ' + vandaagDag) > -1) dagGezien = true;
+}
+eq('placeholder {dag} lekt nooit', dagKapot, false);
+eq('de weekdag van vandaag (' + vandaagDag + ') komt voor in het levensantwoord', dagGezien, true);
 
 /* ------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(40));
