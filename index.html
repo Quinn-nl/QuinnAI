@@ -20,10 +20,14 @@
 <meta name="theme-color" content="#0a1017">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* Zelf gehoste lettertypen (geen verbinding met Google; zie fonts/README.txt) */
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/bricolage-grotesque-latin-opsz-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:400 900;font-display:swap;src:url(fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{
     --ink:#0a1017;
     --ink-2:#0f1822;
@@ -678,9 +682,9 @@
 
   // typgeluid: volledig gegenereerd met Web Audio, geen los geluidsbestand nodig.
   // Staat standaard uit — geluid vanzelf laten afspelen is vervelend, dit is een bewuste keuze.
+  // Bewust niet bewaard (geen localStorage): de pagina slaat niets op, dus bij verversen staat het weer uit.
   let geluidAan = false;
   let audioCtx = null;
-  try{ geluidAan = localStorage.getItem('quinnai-geluid') === 'aan'; } catch(e){}
   function speelTik(){
     if(!geluidAan) return;
     try{
@@ -706,7 +710,6 @@
   soundBtn.addEventListener('click', () => {
     geluidAan = !geluidAan;
     ververSoundBtn();
-    try{ localStorage.setItem('quinnai-geluid', geluidAan ? 'aan' : 'uit'); }catch(e){}
     if(geluidAan) speelTik();
   });
 
@@ -790,7 +793,7 @@
     bubble.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
     naarBeneden();
     const antwoord = bedenkAntwoord(vraag);
-    if(isVeilig(vraag)){ veiligBericht(bubble, antwoord); return; }
+    if(isErnstig()){ veiligBericht(bubble, antwoord); return; }
     const onderwerp = topicOf(vraag);
     const stappen = DENKSTAPPEN
       .slice()
@@ -852,12 +855,17 @@
   ];
   let gehallucineerd = null;
 
+  // Eén bron voor de profielkaart én het dossier, zodat ze nooit uit elkaar lopen.
+  function profielMetHallucinatie(){
+    const r = profielRegels();
+    if(gehallucineerd) r.push(gehallucineerd);
+    return r;
+  }
   function ververProfiel(){
-    const regels = profielRegels();
     if(!gehallucineerd && teller > 3 && Math.random() > 0.8){
       gehallucineerd = HALLUCINATIES[Math.floor(Math.random() * HALLUCINATIES.length)];
     }
-    if(gehallucineerd) regels.push(gehallucineerd);
+    const regels = profielMetHallucinatie();
     const kaart = $('#profiel'), lijst = $('#profiel-lijst');
     if(!regels.length){ kaart.hidden = true; return; }
     kaart.hidden = false;
@@ -869,7 +877,7 @@
     });
   }
   $('#download-btn').addEventListener('click', () => {
-    const regels = profielRegels();
+    const regels = profielMetHallucinatie();
     const nu = new Date().toLocaleString('nl-NL');
     let inhoud =
       "QUINNAI — VERTROUWELIJK DOSSIER\n" +
@@ -882,6 +890,7 @@
     } else {
       regels.forEach(([k,v]) => { inhoud += "- " + k.toUpperCase() + ": " + v + "\n"; });
     }
+    if(gehallucineerd) inhoud += "\nLET OP: minstens één regel hierboven is door QuinnAI verzonnen. Dat is geen bug, dat is het product.\n";
     inhoud +=
       "\n--------------------------------\n" +
       "Dit dossier is nooit ergens opgeslagen behalve in je eigen browser,\n" +
@@ -946,7 +955,7 @@
   $('#fake-mic').addEventListener('click', () => {
     if(bezig || input.disabled) return;
     const b = rij('ai','Q');
-    typ(b, "Quinn luistert in 2026 niet meer naar stemberichten van langer dan 0 seconden. Typ het uit of hou het voor je.");
+    typ(b, "Quinn luistert in " + new Date().getFullYear() + " niet meer naar stemberichten van langer dan 0 seconden. Typ het uit of hou het voor je.");
     naarBeneden();
   });
   document.querySelectorAll('.chip').forEach(c => {
