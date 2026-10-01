@@ -837,7 +837,9 @@ function hash(str){
   };
 
   /* Serieuze berichten: dan houdt de grap even op. */
-  const VEILIG = /\b(zelfmoord|zelfdoding|suicide|suicidaal|zelfbeschadiging|mezelf (?:van kant|pijn|iets aan|verwonden|snijden)|ik wil (?:liever )?(?:dood|doodgaan|niet meer leven|niet meer verder|er niet meer zijn|er een einde aan maken)|einde aan mijn leven|einde aan het leven|kill myself|end my life)\b/;
+  const VEILIG = /\b(zelfmoord|zelfdoding|suicide|suicidaal|zelfbeschadiging|zelfverwonding|kill myself|end my life|want to die|mezelf (?:(?:iets|wat) aan\s?doen|van kant|pijn|verwonden|snijden|beschadigen|om het leven)|ik wil (?:(?:liever|gewoon|echt|graag|nu) )*(?:dood|doodgaan|niet meer leven|niet meer bestaan|niet meer verder|er niet meer zijn|er (?:een )?(?:einde|eind) aan (?:te )?maken)|ik (?:maak|ga) er (?:nu )?(?:een )?(?:einde|eind) aan(?: maken)?\s*[.!]*$|(?:een )?(?:einde|eind) aan (?:mijn|het) leven|ik zie (?:het|dit) niet meer zitten|ik zie geen (?:uitweg|toekomst) meer|ik heb geen zin meer (?:in het leven|om te leven))(?![\p{L}\d])/u;
+  /* Voor de UI-laag: is dit een crisisbericht? (dan geen denkstappen, geen meta, wel klikbare nummers) */
+  function isVeilig(tekst){ return VEILIG.test(normaliseer(String(tekst))); }
   const VEILIG_ANTWOORD = "Even geen grappen. Dat klinkt zwaar, en ik ben blij dat je het zegt. Ik ben een website zonder echt verstand, dus ik kan hier niet echt bij helpen, maar jij verdient wel iemand die dat kan. Praat er met iemand over die je vertrouwt, of neem contact op met 113 Zelfmoordpreventie: bel 113 of gratis 0800-0113, of chat via 113.nl. Zit je in acuut gevaar, bel dan 112.";
 
   const DAGDEEL_OPMERKING = {
@@ -1059,13 +1061,16 @@ function hash(str){
     return 'neutraal';
   }
   function vul(tekst, ctx, rng){
-    return tekst
-      .replace(/\{C\}/g, cap(ctx.c || "je iets wilde zeggen"))
-      .replace(/\{c\}/g, ctx.c || "je iets wilde zeggen")
-      .replace(/\{t2\}/g, ctx.t2).replace(/\{cap\}/g, cap(ctx.t)).replace(/\{t\}/g, ctx.t)
-      .replace(/\{T\}/g, ctx.t.toUpperCase()).replace(/\{woorden\}/g, ctx.aantal)
-      .replace(/\{getal\}/g, String(Math.floor(rng()*90)+7)).replace(/\{tijd\}/g, ctx.tijd);
+    const getal = String(Math.floor(rng()*90)+7);   // altijd één rng()-trekking per aanroep
+    const w = {
+      C: () => cap(ctx.c || "je iets wilde zeggen"), c: () => ctx.c || "je iets wilde zeggen",
+      t2: () => ctx.t2, cap: () => cap(ctx.t), t: () => ctx.t, T: () => ctx.t.toUpperCase(),
+      woorden: () => ctx.aantal, getal: () => getal, tijd: () => ctx.tijd
+    };
+    /* Eén pass met functie-callback: '$&', "$'" en '{t}' in jouw eigen tekst blijven letterlijk staan. */
+    return tekst.replace(/\{(C|c|t2|cap|t|T|woorden|getal|tijd)\}/g, (m, k) => String(w[k]()));
   }
+  function vulX(tekst, x){ return tekst.replace(/\{(x|X)\}/g, (m, k) => k === 'X' ? cap(x) : x); }
   function pseudoAnalyse(ctx, rng){ return vul(pick(ANALYSE[gesprek.emotie], rng), ctx, rng); }
 
   /* Alles wat resetEngine() nodig heeft om de bot echt te laten vergeten. */
@@ -1092,6 +1097,7 @@ function hash(str){
     return Number.isFinite(u) ? Math.round(u*1000)/1000 : null;
   }
   function rekenSom(raw){
+    if(/^\s*(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?\s*$/.test(raw)) return null;   // klokkijd, geen deling
     const s = raw.replace(/,/g,'.').replace(/x/gi,'*').replace(/:/g,'/').trim();
     if(!s || !/[0-9]/.test(s) || !/[+\-*/^]/.test(s) || !/^[0-9+\-*/^().\s]+$/.test(s)) return null;
     const tokens = s.match(/(?:\d+(?:\.\d*)?|\.\d+|[()+\-*/^])/g);
@@ -1195,6 +1201,8 @@ function hash(str){
     if(!opnieuw){
       if(onderwerp && onderwerp !== 'niets') vorigOnderwerp = onderwerp;
       gesprek.berichten++;
+      beurtenSindsVraag++;
+      if(wacht && beurtenSindsVraag > 1) wacht = null;   // vraag verlopen, ook na vroege returns
       const nieuweEmotie = emotieVan(laag);
       gesprek.streak = (nieuweEmotie === gesprek.emotie && nieuweEmotie !== 'neutraal')
         ? gesprek.streak + 1 : (nieuweEmotie === 'neutraal' ? 0 : 1);
@@ -1266,7 +1274,7 @@ function hash(str){
       const pool = LIJST_VORM.slice();
       for(let i=0;i<n;i++){
         const idx = Math.floor(rng()*pool.length);
-        regels.push((i+1) + ". " + cap(pool.splice(idx,1)[0].replace(/\{t\}/g, onderwerp)));
+        regels.push((i+1) + ". " + cap(pool.splice(idx,1)[0].replace(/\{t\}/g, () => onderwerp)));
         if(!pool.length) pool.push(...LIJST_VORM);
       }
       return "Hier zijn er " + n + " " + soort + " over '" + onderwerp + "'" +
@@ -1287,7 +1295,7 @@ function hash(str){
     const ident = delta.filter(d => IDENT.has(d[0]));
     const feiten = delta.filter(d => !IDENT.has(d[0]));
     if(ident.length){
-      const voorwoord = ident.slice(0,2).map(d => cap(pick(REACTIE[d[0]], rng).replace(/\{x\}/g, d[1]))).join(' ');
+      const voorwoord = ident.slice(0,2).map(d => cap(vulX(pick(REACTIE[d[0]], rng), d[1]))).join(' ');
       if(!feiten.length && !/\?/.test(t) && words(t).length <= 14) return voorwoord + ' ' + pick(NA_INTRO, rng);
       voorwoordSlot = voorwoord;
     }
@@ -1395,7 +1403,7 @@ function hash(str){
     const keuze = ofAlsVoegwoord.test(laag) ? null : opties(focus);
     if(keuze){
       const gekozen = rng() > 0.5 ? keuze[0] : keuze[1];
-      return pick(KEUZE_ANTW, rng).replace(/\{x\}/g, cap(gekozen));
+      return vulX(pick(KEUZE_ANTW, rng), cap(gekozen));
     }
     if(RE.advies.test(laag)){
       let a = zeg(ADVIES);
@@ -1418,7 +1426,7 @@ function hash(str){
     /* --- reageren op iets wat je over jezelf vertelde --- */
     if(feiten.length && !/\?/.test(t)){
       const [soort, waarde] = feiten[0];
-      return cap(pick(REACTIE_FEIT[soort], rng).replace(/\{x\}/g, waarde).replace(/\{X\}/g, cap(waarde))) + kick();
+      return cap(vulX(pick(REACTIE_FEIT[soort], rng), waarde)) + kick();
     }
 
     if(RE.compliment.test(laag) && !/\?/.test(t) && opMijGericht) return zeg(toonKies(COMPLIMENT, COMPLIMENT_ZACHT, COMPLIMENT_FEL));
@@ -1490,7 +1498,6 @@ function hash(str){
 
     /* --- zelf een vraag stellen, zodat het een gesprek wordt --- */
     if(!opnieuw){
-      beurtenSindsVraag++;
       if(beurtenSindsVraag >= 2 && gesprek.berichten >= 2 && !/\?$/.test(uit) && rng() > 0.55){
         uit += " " + pick(WEDERVRAGEN, rng);
         wacht = { onderwerp: onderwerp };
