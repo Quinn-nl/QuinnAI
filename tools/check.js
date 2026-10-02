@@ -8,7 +8,7 @@
    1. of de inline scripts in index.html en 404.html syntactisch kloppen
    2. of elk lokaal bestand waarnaar verwezen wordt (scripts, fonts, iconen,
       og-image, CSS url()) ook echt in de repo staat
-   3. of index.html/404.html style.css, engine.js en ui.js met de juiste versie-hash laden (cachebuster)
+   3. of index.html/404.html style.css, de engine-bestanden en ui.js met de juiste versie-hash laden (cachebuster)
    4. of de kleurparen uit :root hun WCAG-contrastdrempel halen
    Exitcode 0 = alles goed, 1 = er klopt iets niet.
    ============================================================ */

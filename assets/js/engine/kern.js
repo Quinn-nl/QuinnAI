@@ -262,8 +262,10 @@ function flip(tekst){
    ------------------------------------------------------------ */
 const HULPWW = "kan|kun|kunt|kunnen|mag|magst|moet|moeten|wil|wilt|willen|zou|zouden|zal|zult|is|ben|bent|zijn|was|waren|heb|hebt|heeft|hebben|had|ga|gaat|gaan|doe|doet|doen|klopt|vind|vindt|denk|denkt|weet|word|wordt";
 
+const RE_HULPWW = new RegExp("^(" + HULPWW + ")\\s+(.+)$", "i");   // één keer compileren, niet per bericht
+
 function naarBijzin(rest){
-  let m = rest.trim().match(new RegExp("^(" + HULPWW + ")\\s+(.+)$", "i"));
+  let m = rest.trim().match(RE_HULPWW);
   if(!m){
     // Geen hulpwerkwoord, maar misschien wel een gewoon werkwoord vooraan:
     // "werkt een motor" -> "een motor werkt"

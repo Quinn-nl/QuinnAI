@@ -34,6 +34,10 @@ function stemmingLabel(){
 }
 function huidigeStemming(){ return stemmingLabel(); }
 
+/* Regex per relatie-woord (moeder, vader, ...) één keer bouwen. */
+const relatieRes = dict({});
+function relatieRe(rel){ return relatieRes[rel] || (relatieRes[rel] = new RegExp('\\b' + rel + '\\b')); }
+
 /* Stemming bijwerken op basis van één bericht (niet bij "Probeer opnieuw", niet bij crisis/gevoel). */
 function werkStemmingBij(laag, t, herhaald){
   const s = stemming;
@@ -108,7 +112,7 @@ function persoonlijkheidsExtra(laag, t, rng2){
   const rustig = gesprek.berichten - laatsteExtra >= 3;
   // 2. navraag bij een relatie die je zelf noemde ("mijn moeder heet Anna")
   if(rustig) for(const rel of Object.keys(geheugen.relaties)){
-    if(new RegExp('\\b' + rel + '\\b').test(laag) && gesprek.berichten - (relatieGevraagd[rel] === undefined ? -99 : relatieGevraagd[rel]) > 5 && rng2() < 0.6){
+    if(relatieRe(rel).test(laag) && gesprek.berichten - (relatieGevraagd[rel] === undefined ? -99 : relatieGevraagd[rel]) > 5 && rng2() < 0.6){
       relatieGevraagd[rel] = gesprek.berichten; laatsteExtra = gesprek.berichten;
       return "Hoe is het trouwens met " + geheugen.relaties[rel] + "?";
     }
