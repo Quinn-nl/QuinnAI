@@ -1,9 +1,9 @@
 /* Alleen wat de 404 extra nodig heeft; ticker, nav, knoppen en lettertypen komen uit style.css */
 html{overflow-y:scroll}   /* zelfde scrollbalk als de homepage, zodat het merk op exact dezelfde x-plek staat */
 .nf{min-height:min(72vh,640px);display:grid;align-content:center;justify-items:center;text-align:center;padding-top:40px;padding-bottom:70px}
-.nf-code{font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;font-size:clamp(88px,26vw,168px);margin:0;color:var(--butter)}
+.nf-code{font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;font-size:clamp(88px,26vw,168px);margin:0;color:var(--lime)}
 @supports (background-clip:text) or (-webkit-background-clip:text){
-  .nf-code{background:linear-gradient(150deg,var(--butter),var(--butter-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .nf-code{background:linear-gradient(150deg,var(--lime),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 }
 h1.nf-h{font-size:clamp(32px,6.5vw,56px);line-height:1;letter-spacing:-.034em;margin-top:10px}
 h1.nf-h .serif{font-size:1.07em}
@@ -13,7 +13,7 @@ h1.nf-h .serif{font-size:1.07em}
   background:var(--ink-2);font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.4;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.pad b{font-weight:500;color:var(--mint)}
+.pad b{font-weight:500;color:var(--cyan)}
 #pad{color:var(--paper)}
 .nf .hero-cta{margin-top:30px}
 .klein{font-size:13px;margin-top:34px;color:var(--muted-3)}

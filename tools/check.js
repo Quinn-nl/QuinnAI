@@ -107,9 +107,15 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
   const lum = v => { const [r, g, b] = v.map(x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const ratio = (f, bg) => { const a = lum(op(f, bg)), b = lum(rgb(bg).slice(0, 3)); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
   const paren = [
-    ['paper', 'ink', 4.5], ['muted', 'ink', 4.5], ['muted-3', 'ink', 4.5], ['butter', 'ink', 4.5], ['mint', 'ink', 4.5], ['rose', 'ink', 4.5],
-    ['paper', 'ink-2', 4.5], ['text-soft', 'ink', 4.5], ['text-soft', 'ink-2', 4.5], ['muted', 'ink-2', 4.5], ['muted-3', 'ink-2', 4.5], ['mint', 'ink-2', 4.5],
-    ['muted', 'ink-3', 4.5], ['line', 'ink', 3], ['butter-2', 'ink', 3], ['line', 'ink-2', 3]
+    // tekst en accenten op de pagina-achtergrond (4,5:1)
+    ['paper', 'ink', 4.5], ['muted', 'ink', 4.5], ['muted-3', 'ink', 4.5], ['text-soft', 'ink', 4.5],
+    ['lime', 'ink', 4.5], ['cyan', 'ink', 4.5], ['pink', 'ink', 4.5], ['orange', 'ink', 4.5], ['violet', 'ink', 4.5],
+    // op kaarten en verhoogde vlakken
+    ['paper', 'ink-2', 4.5], ['text-soft', 'ink-2', 4.5], ['muted', 'ink-2', 4.5], ['muted-3', 'ink-2', 4.5],
+    ['lime', 'ink-2', 4.5], ['cyan', 'ink-2', 4.5], ['pink', 'ink-2', 4.5],
+    ['muted', 'ink-3', 4.5], ['paper', 'ink-3', 4.5], ['cyan', 'ink-3', 4.5], ['lime', 'ink-3', 4.5],
+    // randen en niet-tekst (3:1, WCAG 1.4.11)
+    ['line', 'ink', 3], ['line', 'ink-2', 3]
   ];
   let n = 0;
   for(const [f, bg, min] of paren){
@@ -117,8 +123,8 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
     const r = ratio(kleur[f], kleur[bg]); n++;
     if(r < min) fout('contrast: --' + f + ' op --' + bg + ' is ' + r.toFixed(2) + ':1, minimaal ' + min + ':1 nodig');
   }
-  // tekst op de gele knop en het Q-merk (tokens --on-butter*)
-  for(const [t, bg] of [['on-butter', 'butter'], ['on-butter', 'butter-hover'], ['on-butter-mark', 'butter'], ['on-butter-mark', 'butter-2']]){
+  // donkere tekst op neon-vlakken (knoppen, stickers, het Q-merk)
+  for(const [t, bg] of [['on-lime', 'lime'], ['on-lime', 'lime-hover'], ['on-lime', 'cyan'], ['on-lime', 'pink'], ['on-lime', 'orange'], ['on-lime-mark', 'lime'], ['on-lime-mark', 'cyan']]){
     if(!kleur[t] || !kleur[bg]){ fout('contrast: --' + t + ' of --' + bg + ' niet gevonden in :root'); continue; }
     const kn = ratio(kleur[t], kleur[bg]); n++;
     if(kn < 4.5) fout('contrast: --' + t + ' op --' + bg + ' is ' + kn.toFixed(2) + ':1, minimaal 4.5:1 nodig');
