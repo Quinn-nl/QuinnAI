@@ -35,7 +35,7 @@ for(const pagina of PAGINAS){
   });
   if(scripts.length) goed(pagina + ': ' + scripts.length + ' inline script(s) syntactisch in orde');
 }
-for(const js of ['assets/js/engine.js', 'assets/js/ui.js', 'assets/js/404.js']){
+for(const js of ['assets/js/engine.js', 'assets/js/proof.js', 'assets/js/ui.js', 'assets/js/404.js']){
   try{ new vm.Script(fs.readFileSync(path.join(ROOT, js), 'utf8'), { filename: js }); goed(js + ': syntax in orde'); }
   catch(e){ fout(js + ': ' + e.message); }
 }
@@ -69,8 +69,8 @@ for(const pagina of PAGINAS){
 
 /* 3. cachebuster: elk eigen css/js-bestand krijgt ?v=<eerste 8 tekens sha1, CRLF genormaliseerd> */
 const ASSETS = {
-  'index.html': ['assets/css/style.css', 'assets/js/engine.js', 'assets/js/ui.js'],
-  '404.html':   ['assets/css/style.css', 'assets/css/404.css', 'assets/js/404.js']
+  'index.html': ['assets/css/style.css', 'assets/js/engine.js', 'assets/js/proof.js', 'assets/js/ui.js'],
+  '404.html':   ['assets/css/style.css', 'assets/css/404.css', 'assets/js/proof.js', 'assets/js/404.js']
 };
 const hashVan = rel => crypto.createHash('sha1')
   .update(fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n'), 'utf8').digest('hex').slice(0, 8);

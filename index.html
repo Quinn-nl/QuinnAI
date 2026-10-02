@@ -27,7 +27,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23f5c451'/><stop offset='1' stop-color='%23e08a3c'/></linearGradient></defs><rect width='64' height='64' rx='16' fill='url(%23g)'/><text x='32' y='47' font-size='42' font-weight='800' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' fill='%232a1a04'>Q</text></svg>">
 <link rel="preload" href="assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/style.css?v=95367c58">
+<link rel="stylesheet" href="assets/css/style.css?v=49ffb548">
 </head>
 <body>
 
@@ -54,8 +54,8 @@
 
 <header id="top">
   <div class="wrap">
-    <span class="pill">Getraind op 14 jaar groepsapp en twee werkende hersencellen</span>
-    <h1>Quinn antwoordt <s>nooit<span class="sr-only"> (doorgestreept)</span></s><br>nu binnen 0,4 seconden.</h1>
+    <span class="pill"><span class="pr" aria-hidden="true">$</span> Getraind op 14 jaar groepsapp en twee werkende hersencellen<span class="cursor" aria-hidden="true"></span></span>
+    <h1>Quinn antwoordt <s>nooit<span class="sr-only"> (doorgestreept)</span></s><br>nu binnen <span class="serif">0,4 seconden.</span></h1>
     <p class="lede">QuinnAI is een volledig kunstmatige intelligentie, waarbij vooral het woord <em>kunstmatig</em> goed is gelukt. Hij reageert op werkelijk alles wat je typt. Of dat antwoord ergens op slaat, is een aparte discussie.</p>
     <div class="hero-cta">
       <a href="#chat" class="btn btn-primary">Begin een gesprek</a>
@@ -67,6 +67,12 @@
       <span>Genoemd door een man uit Helmond</span>
       <span>Nog niet aangeklaagd</span>
     </div>
+    <div class="proof" role="group" aria-label="Privacy-meting van deze pagina">
+      <span class="proof-label">Zojuist zelf gemeten:</span>
+      <span><b data-proof="ext">0</b> externe verzoeken</span>
+      <span><b data-proof="cookie">0</b> cookies</span>
+      <span><b data-proof="opslag">0</b> bytes opgeslagen</span>
+    </div>
   </div>
 </header>
 
@@ -75,6 +81,7 @@
   <h2 class="sr-only">Gesprek met QuinnAI</h2>
   <noscript><p class="noscript-melding">QuinnAI draait volledig in je browser en heeft daar JavaScript voor nodig. Zonder JavaScript is er alleen Quinn zelf, en die antwoordt nooit.</p></noscript>
   <div class="chat-shell">
+    <div class="chat-title" aria-hidden="true"><i></i><i></i><i></i><span>quinnai &mdash; lokaal &mdash; geen verbinding</span></div>
     <div class="chat-top">
       <span class="dot"></span>
       <span class="label">Online</span>
@@ -145,7 +152,8 @@
 <section id="benchmarks" aria-labelledby="h-benchmarks">
   <div class="wrap">
     <div class="sec-head">
-      <h2 id="h-benchmarks">De cijfers liegen niet, wij wel</h2>
+      <p class="eyebrow" aria-hidden="true">01 &middot; Benchmarks</p>
+      <h2 id="h-benchmarks">De cijfers liegen niet, <span class="serif">wij wel</span></h2>
       <p>We hebben QuinnAI vergeleken met de bekende modellen op de enige benchmark die er in een groepsapp toe doet.</p>
     </div>
 
@@ -170,6 +178,7 @@
 <section id="prijzen" aria-labelledby="h-prijzen">
   <div class="wrap">
     <div class="sec-head">
+      <p class="eyebrow" aria-hidden="true">02 &middot; Capitalism&trade;</p>
       <h2 id="h-prijzen">Prijzen</h2>
       <p>Alle abonnementen zijn gratis, want er is geen betaalsysteem, geen bedrijf en geen bankrekening. De knoppen doen wel iets.</p>
     </div>
@@ -218,7 +227,8 @@
 <section id="vragen" aria-labelledby="h-vragen">
   <div class="wrap">
     <div class="sec-head">
-      <h2 id="h-vragen">Vragen die niemand stelde</h2>
+      <p class="eyebrow" aria-hidden="true">03 &middot; FAQ</p>
+      <h2 id="h-vragen">Vragen die <span class="serif">niemand stelde</span></h2>
       <p>Toch beantwoord, want een echte AI-site heeft dit nou eenmaal.</p>
     </div>
     <div class="faq" id="faq">
@@ -269,8 +279,15 @@
       <span class="badge">SOC 2 — betekenis onbekend</span>
     </div>
     <p>© <span id="year">2026</span> QuinnAI. Geen bedrijf, geen model, geen aansprakelijkheid.</p>
+    <div class="proof" role="group" aria-label="Privacy-meting van deze pagina">
+      <span class="proof-label">Zojuist zelf gemeten:</span>
+      <span><b data-proof="ext">0</b> externe verzoeken</span>
+      <span><b data-proof="cookie">0</b> cookies</span>
+      <span><b data-proof="opslag">0</b> bytes opgeslagen</span>
+    </div>
     <p class="foot-real">Dit is een grap van en voor vrienden. Er wordt niets verstuurd, opgeslagen of geanalyseerd. Alles wat je hier leest is verzonnen, inclusief de benchmarks, de certificeringen en het zelfvertrouwen.</p>
   </div>
+  <div class="wordmark" aria-hidden="true">QuinnAI</div>
 </footer>
 
 <button id="naar-boven" class="naar-boven" aria-label="Terug naar boven" hidden>
@@ -278,6 +295,7 @@
 </button>
 
 <script src="assets/js/engine.js?v=b5133b54"></script>
+<script src="assets/js/proof.js?v=f2be174e"></script>
 <script src="assets/js/ui.js?v=608b50bf"></script>
 </body>
 </html>

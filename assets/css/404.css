@@ -5,7 +5,8 @@ html{overflow-y:scroll}   /* zelfde scrollbalk als de homepage, zodat het merk o
 @supports (background-clip:text) or (-webkit-background-clip:text){
   .nf-code{background:linear-gradient(150deg,var(--butter),var(--butter-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 }
-h1.nf-h{font-size:clamp(26px,6vw,38px);line-height:1.05;margin-top:6px}
+h1.nf-h{font-size:clamp(32px,6.5vw,56px);line-height:1;letter-spacing:-.034em;margin-top:10px}
+h1.nf-h .serif{font-size:1.07em}
 .nf-p{color:var(--muted);margin-top:18px;font-size:17px;max-width:560px}
 .pad{
   display:block;max-width:100%;margin-top:26px;padding:7px 14px;border:1px solid var(--line);border-radius:999px;
@@ -14,6 +15,5 @@ h1.nf-h{font-size:clamp(26px,6vw,38px);line-height:1.05;margin-top:6px}
 }
 .pad b{font-weight:500;color:var(--mint)}
 #pad{color:var(--paper)}
-.cursor{display:inline-block;width:.55em;height:1em;background:var(--butter);margin-left:4px;vertical-align:-2px;animation:blink 1s steps(1) infinite}   /* blink: zie style.css; uit bij reduced motion en gepauzeerde animaties */
 .nf .hero-cta{margin-top:30px}
 .klein{font-size:13px;margin-top:34px;color:var(--muted-3)}

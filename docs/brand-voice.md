@@ -12,7 +12,7 @@
 | Stem | Droog-sarcastisch Nederlands, zelfverzekerd zonder reden |
 | Kleuren | `--ink` #0a1017 (achtergrond), `--butter` #f5c451 (accent/knoppen), `--mint` #77d8ae (status/lokaal), `--rose` #ff7d6b (doorhaling/vergeten) |
 | Tekst | `--paper` #fff, `--muted` #b0becd, `--muted-3` #9ba8b6 (alles ≥ 4,5:1, bewaakt door `tools/check.js`) |
-| Lettertypen | Bricolage Grotesque (koppen), Schibsted Grotesk (tekst), IBM Plex Mono (data/labels), zelf gehost |
+| Lettertypen | Bricolage Grotesque (koppen), Instrument Serif cursief (pointe in koppen, `.serif`, altijd in `--butter`), Schibsted Grotesk (tekst), IBM Plex Mono (data/labels), allemaal zelf gehost |
 | Merk | Gele "Q"-tegel (verloop `--butter` → `--butter-2`, Q in `--on-butter-mark`) + "QuinnAI" |
 
 ## Persoonlijkheid (stem)
@@ -49,9 +49,18 @@ schermlezer te verifiëren.
 
 ## Beeld
 
+Concept: **eerlijke terminal**. Een parodie op gladde AI-marketing, met een terminal eronder die de waarheid vertelt: prompt-pil (`$`), chat als terminalvenster (drie stipjes, "geen verbinding"), mono-labels met nummering (`01 · Benchmarks`) en één serif-cursieve pointe per kop.
+
 Donker thema, veel witruimte, kaarten met 1px rand (`--line-soft`), pillen voor labels, één gele
 primaire actie per scherm. Animaties zijn kort (`--dur-fast` 150 ms, `--dur` 220 ms), respecteren
 `prefers-reduced-motion` en kunnen gepauzeerd worden (ticker).
+
+## Privacy (technisch afgedwongen)
+
+- Strenge Content-Security-Policy (meta): `default-src 'none'`, alleen `'self'` voor script/style/font, `connect-src 'none'`. De browser blokkeert dus zelf elke externe verbinding.
+- `referrer: no-referrer`, geen cookies, geen localStorage/sessionStorage.
+- `assets/js/proof.js` meet live op de pagina zelf: externe verzoeken, cookies en opgeslagen bytes (nu overal 0).
+- Daarom: geen inline `<style>`/`<script>`/`style=""` in de HTML, en geen externe fonts, scripts of afbeeldingen.
 
 ## Nieuwe kleur of component toevoegen
 

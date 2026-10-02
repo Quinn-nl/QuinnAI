@@ -19,6 +19,8 @@ Dit project heeft geen backend, geen server en geen internetverbinding nodig na 
 * `assets/css/style.css` is de styling.
 * `assets/js/engine.js` is de nep-AI zelf: zinsontleding, voornaamwoord-omdraaiing, werkwoordvervoeging, gespreksgeheugen en een hoop sjablonen. Wordt vóór `ui.js` geladen.
 * `assets/js/ui.js` is de UI-laag (chat, profielkaart, knoppen).
+* `assets/js/proof.js` meet live wat de pagina zelf doet (externe verzoeken, cookies, opgeslagen bytes) en toont dat.
+* `assets/css/404.css` en `assets/js/404.js` horen bij de foutpagina (geen inline code, vanwege de CSP).
 * `assets/fonts/` bevat de zelf gehoste lettertypen (woff2, latin-subset, OFL-licentie), zodat de pagina geen verbinding met Google Fonts maakt.
 * `assets/img/` bevat `og-image.png` en `apple-touch-icon.png`.
 * `tools/` bevat `test.js` en `check.js` (zie Testen).
@@ -26,6 +28,9 @@ Dit project heeft geen backend, geen server en geen internetverbinding nodig na 
 * `style.css`, `engine.js` en `ui.js` worden met een versie-hash geladen (`?v=…`, eerste 8 tekens van de sha1) tegen verouderde caches.
 
 Host het simpelweg via GitHub Pages, open de link en laat je beledigen.
+
+## 🔒 Privacy
+De pagina draagt een strenge Content-Security-Policy (meta-tag): alles komt van de eigen herkomst en `connect-src` is dicht, dus de browser blokkeert elke externe verbinding. Er zijn geen cookies en geen localStorage. In de hero en de footer staat een live meting.
 
 ## 🛠️ Disclaimer
 Dit is een grap van en voor vrienden. Er wordt niets verstuurd, opgeslagen of geanalyseerd. Alles wat je hier leest is verzonnen, inclusief de benchmarks, de certificeringen en het zelfvertrouwen.

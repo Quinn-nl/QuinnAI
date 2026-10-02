@@ -13,8 +13,8 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23f5c451'/><stop offset='1' stop-color='%23e08a3c'/></linearGradient></defs><rect width='64' height='64' rx='16' fill='url(%23g)'/><text x='32' y='47' font-size='42' font-weight='800' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' fill='%232a1a04'>Q</text></svg>">
 <link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/style.css?v=95367c58">
-<link rel="stylesheet" href="/assets/css/404.css?v=27d563d5">
+<link rel="stylesheet" href="/assets/css/style.css?v=49ffb548">
+<link rel="stylesheet" href="/assets/css/404.css?v=1b5f9d58">
 </head>
 <body>
 <a href="#hoofdinhoud" class="skip-link">Direct naar inhoud</a>
@@ -40,7 +40,7 @@
 
 <main id="hoofdinhoud" class="wrap nf" tabindex="-1">
   <p class="nf-code" aria-hidden="true">404</p>
-  <h1 class="nf-h">Deze pagina bestaat niet.</h1>
+  <h1 class="nf-h">Deze pagina bestaat <span class="serif">niet.</span></h1>
   <p class="nf-p" id="nf-regel">QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het &ldquo;zo even opzoekt&rdquo;.</p>
   <code class="pad" id="pad-regel" hidden><b>GET</b> <span id="pad"></span> &rarr; 404<span class="cursor" aria-hidden="true"></span></code>
   <div class="hero-cta">
@@ -68,9 +68,17 @@
       <span class="badge">SOC 2 — betekenis onbekend</span>
     </div>
     <p>© <span id="year">2026</span> QuinnAI. Geen bedrijf, geen model, geen aansprakelijkheid.</p>
+    <div class="proof" role="group" aria-label="Privacy-meting van deze pagina">
+      <span class="proof-label">Zojuist zelf gemeten:</span>
+      <span><b data-proof="ext">0</b> externe verzoeken</span>
+      <span><b data-proof="cookie">0</b> cookies</span>
+      <span><b data-proof="opslag">0</b> bytes opgeslagen</span>
+    </div>
     <p class="foot-real">Dit is een grap van en voor vrienden. Er wordt niets verstuurd, opgeslagen of geanalyseerd. Alles wat je hier leest is verzonnen, inclusief de benchmarks, de certificeringen en het zelfvertrouwen.</p>
   </div>
+  <div class="wordmark" aria-hidden="true">QuinnAI</div>
 </footer>
+<script src="/assets/js/proof.js?v=f2be174e"></script>
 <script src="/assets/js/404.js?v=c5503cc2"></script>
 </body>
 </html>
