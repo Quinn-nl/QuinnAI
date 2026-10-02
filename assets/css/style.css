@@ -276,10 +276,12 @@
   .qa[open] button::after{content:"–"}
   /* SC 1.3.1 / 4.1.2: ingeklapte antwoorden zijn ook voor schermlezers verborgen. De visibility-
      overgang wacht bij sluiten tot de grid-animatie klaar is, bij openen gaat hij direct aan. */
-  .qa .a{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows .32s ease,visibility 0s linear .32s;color:var(--muted);font-size:15.5px}
+  .qa .a{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows .32s ease,visibility 0s linear .32s;color:var(--muted);font-size:15.5px;padding-bottom:24px}
   .qa[open] .a{grid-template-rows:1fr;visibility:visible;transition:grid-template-rows .32s ease,visibility 0s}
   .qa .a > p{overflow:hidden;min-height:0}
-  .qa .a p{padding:0 40px 24px 0;max-width:68ch}
+  /* De 24px onderruimte staat op .a, niet op de p: padding op een overflow:hidden grid-item
+     houdt de rij op minimaal die hoogte, waardoor inklappen halverwege 'bottomt' en abrupt eindigt. */
+  .qa .a p{padding:0 40px 0 0;max-width:68ch}
 
   /* footer */
   footer{border-top:1px solid var(--line-soft);padding:54px 0 70px;font-size:13.5px;color:var(--muted-3)}
