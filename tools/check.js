@@ -35,7 +35,7 @@ for(const pagina of PAGINAS){
   });
   if(scripts.length) goed(pagina + ': ' + scripts.length + ' inline script(s) syntactisch in orde');
 }
-for(const js of ['assets/js/engine.js', 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/404.js']){
+for(const js of ['assets/js/engine.js', 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/bsod.js', 'assets/js/404.js']){
   try{ new vm.Script(fs.readFileSync(path.join(ROOT, js), 'utf8'), { filename: js }); goed(js + ': syntax in orde'); }
   catch(e){ fout(js + ': ' + e.message); }
 }
@@ -69,7 +69,7 @@ for(const pagina of PAGINAS){
 
 /* 3. cachebuster: elk eigen css/js-bestand krijgt ?v=<eerste 8 tekens sha1, CRLF genormaliseerd> */
 const ASSETS = {
-  'index.html': ['assets/css/style.css', 'assets/js/engine.js', 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js'],
+  'index.html': ['assets/css/style.css', 'assets/js/engine.js', 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/bsod.js'],
   '404.html':   ['assets/css/style.css', 'assets/css/404.css', 'assets/js/proof.js', 'assets/js/404.js']
 };
 const hashVan = rel => crypto.createHash('sha1')
@@ -114,6 +114,8 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
     ['paper', 'ink-2', 4.5], ['text-soft', 'ink-2', 4.5], ['muted', 'ink-2', 4.5], ['muted-3', 'ink-2', 4.5],
     ['lime', 'ink-2', 4.5], ['cyan', 'ink-2', 4.5], ['pink', 'ink-2', 4.5],
     ['muted', 'ink-3', 4.5], ['paper', 'ink-3', 4.5], ['cyan', 'ink-3', 4.5], ['lime', 'ink-3', 4.5],
+    // nep-crash: witte tekst op BSOD-blauw
+    ['paper', 'bsod', 4.5],
     // randen en niet-tekst (3:1, WCAG 1.4.11)
     ['line', 'ink', 3], ['line', 'ink-2', 3]
   ];

@@ -19,10 +19,12 @@ Dit project heeft geen backend, geen server en geen internetverbinding nodig na 
 * `assets/css/style.css` is de styling.
 * `assets/js/engine.js` is de nep-AI zelf: zinsontleding, voornaamwoord-omdraaiing, werkwoordvervoeging, gespreksgeheugen en een hoop sjablonen. Wordt vóór `ui.js` geladen.
 * `assets/js/ui.js` is de UI-laag (chat, profielkaart, knoppen).
+* `assets/js/arcade.js` (spotlight, tilt, chat-glow, flits) en `assets/js/bsod.js` (Do Not Click) zijn de effecten-laag.
 * `assets/js/proof.js` meet live wat de pagina zelf doet (externe verzoeken, cookies, opgeslagen bytes) en toont dat.
 * `assets/css/404.css` en `assets/js/404.js` horen bij de foutpagina (geen inline code, vanwege de CSP).
 * `assets/fonts/` bevat de zelf gehoste lettertypen (woff2, latin-subset, OFL-licentie), zodat de pagina geen verbinding met Google Fonts maakt.
 * `assets/img/` bevat `og-image.png` en `apple-touch-icon.png`.
+* `docs/` bevat de merkstem (`brand-voice.md`) en de huisstijl (`brand-identity.md`).
 * `tools/` bevat `test.js` en `check.js` (zie Testen).
 * `404.html` is de foutpagina die GitHub Pages zelf serveert bij een onbekend adres. Hij deelt `style.css` met de homepage, zodat ticker, navigatie en knoppen op exact dezelfde plek en met dezelfde animatie staan.
 * `style.css`, `engine.js` en `ui.js` worden met een versie-hash geladen (`?v=…`, eerste 8 tekens van de sha1) tegen verouderde caches.

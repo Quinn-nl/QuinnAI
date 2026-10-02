@@ -10,10 +10,10 @@
 |---|---|
 | Wat | Nep-AI als grap voor vrienden. Geen model, geen backend: client-side JS die overtuigend doet alsof |
 | Stem | Droog-sarcastisch Nederlands, zelfverzekerd zonder reden |
-| Kleuren | `--ink` #0a1017 (achtergrond), `--butter` #f5c451 (accent/knoppen), `--mint` #77d8ae (status/lokaal), `--rose` #ff7d6b (doorhaling/vergeten) |
-| Tekst | `--paper` #fff, `--muted` #b0becd, `--muted-3` #9ba8b6 (alles ≥ 4,5:1, bewaakt door `tools/check.js`) |
-| Lettertypen | Bricolage Grotesque (koppen), Instrument Serif cursief (pointe in koppen, `.serif`, altijd in `--butter`), Schibsted Grotesk (tekst), IBM Plex Mono (data/labels), allemaal zelf gehost |
-| Merk | Gele "Q"-tegel (verloop `--butter` → `--butter-2`, Q in `--on-butter-mark`) + "QuinnAI" |
+| Kleuren | zie `docs/brand-identity.md` (AI Arcade: lime, pink, violet, cyan op bijna-zwart) |
+| Tekst | `--paper`, `--muted`, `--muted-3` (alles ≥ 4,5:1, bewaakt door `tools/check.js`) |
+| Lettertypen | zie `docs/brand-identity.md` (Bricolage, Boldonse, Pixelify Sans, Instrument Serif, Schibsted, Plex Mono; alle zelf gehost) |
+| Merk | Q-tegel met lime-cyan verloop en roze harde schaduw + "QuinnAI" |
 
 ## Persoonlijkheid (stem)
 
@@ -27,7 +27,7 @@
 ## Vaste elementen
 
 - **Quinn** als personage (antwoordt nooit, "zo even opzoeken") en de running gag over de **groepsapp**.
-- **"Capitalism"**-prijzenpagina (Gratis / Vriendenprijs / Je ziel) en de **"Do Not Click"**-knop (hoort erbij, staat er op dit moment nog niet op).
+- **"Capitalism"**-prijzenpagina (Gratis / Vriendenprijs / Je ziel) en de **"Do Not Click"**-knop (footer: schudt en toont een nep-BSOD; nooit tijdens een crisis-gesprek).
 - **"100% lokaal"**-badge: er wordt niets verstuurd of opgeslagen (geen localStorage, geen cookies, geen externe requests). Privacy-grappen moeten daarom feitelijk kloppen.
 - Disclaimers die zichzelf tegenspreken ("kan eigenlijk alleen maar fouten maken").
 
@@ -49,11 +49,10 @@ schermlezer te verifiëren.
 
 ## Beeld
 
-Concept: **eerlijke terminal**. Een parodie op gladde AI-marketing, met een terminal eronder die de waarheid vertelt: prompt-pil (`$`), chat als terminalvenster (drie stipjes, "geen verbinding"), mono-labels met nummering (`01 · Benchmarks`) en één serif-cursieve pointe per kop.
+Concept: **AI Arcade**, een neon-arcadeautomaat die doet alsof hij een AI is, met een terminal eronder die eerlijk blijft. Uitwerking in `docs/brand-identity.md`.
 
-Donker thema, veel witruimte, kaarten met 1px rand (`--line-soft`), pillen voor labels, één gele
-primaire actie per scherm. Animaties zijn kort (`--dur-fast` 150 ms, `--dur` 220 ms), respecteren
-`prefers-reduced-motion` en kunnen gepauzeerd worden (ticker).
+Donker thema, harde offset-schaduwen, stickers, één lime primaire actie per scherm. Animaties zijn kort,
+respecteren `prefers-reduced-motion` en kunnen gepauzeerd worden (ticker).
 
 ## Privacy (technisch afgedwongen)
 

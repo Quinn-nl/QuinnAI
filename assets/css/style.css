@@ -16,6 +16,7 @@
     --paper:#f4f4f8;
     --muted:#a9a9bd;
     --muted-3:#8e8ea3;
+    --bsod:#0a3fd1;           /* alleen voor de nep-crash (Do Not Click) */
     --lime:#c6ff3d;           /* primair: CTA's, accent, glow */
     --pink:#ff2e93;           /* secundair: stickers, hover, gevaar */
     --violet:#8b5cff;         /* verlopen, lijnen, gloed */
@@ -156,7 +157,7 @@
   .ticker-pauze[aria-pressed="true"]::after{content:"▶";font-size:9px;line-height:1}
 
   /* ---------- hero ---------- */
-  header{padding:clamp(32px,6vh,80px) 0 44px;text-align:center;position:relative;isolation:isolate}
+  header{padding:clamp(32px,6vh,80px) 0 44px;text-align:center;position:relative;isolation:isolate;overflow-x:clip}
   /* cursor-spotlight (alleen fijne pointer, gezet door arcade.js) */
   header::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(520px circle at var(--mx,50%) var(--my,30%),rgba(139,92,255,.22),transparent 65%)}
   /* retro-grid horizon: perspectief-raster onder de hero, pure CSS */
@@ -459,8 +460,35 @@
     .bubble{max-width:calc(100% - 37px)}
   }
   @media (prefers-reduced-motion:reduce){
-    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}   /* ook pseudo-elementen (aurora, retro-grid, glitch) */
   }
+
+  /* ---------- Do Not Click + nep-BSOD ---------- */
+  .dnc-wrap{margin:8px 0 26px}
+  .dnc{font:500 20px/1 var(--font-pixel);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--on-lime);background:var(--pink);border:3px solid var(--on-lime);border-radius:8px;padding:16px 28px;box-shadow:6px 6px 0 var(--lime);transform:rotate(-2deg);transition:transform var(--dur-fast),box-shadow var(--dur-fast)}
+  .dnc:hover{transform:rotate(1deg) translate(-2px,-2px);box-shadow:9px 9px 0 var(--lime);animation:dnc-wiebel .35s steps(3) 2}
+  .dnc:active{transform:rotate(-1deg) translate(4px,4px);box-shadow:1px 1px 0 var(--lime)}
+  @keyframes dnc-wiebel{0%,100%{translate:0 0}33%{translate:-2px 1px}66%{translate:2px -1px}}
+  body.schud{animation:schud .55s linear}
+  @keyframes schud{0%,100%{transform:translate(0,0)}10%{transform:translate(-9px,4px)}20%{transform:translate(8px,-5px)}30%{transform:translate(-7px,-3px)}40%{transform:translate(6px,5px)}50%{transform:translate(-5px,2px)}60%{transform:translate(4px,-4px)}70%{transform:translate(-3px,3px)}80%{transform:translate(2px,-2px)}90%{transform:translate(-1px,1px)}}
+  .bsod{position:fixed;inset:0;z-index:300;background:var(--bsod);color:#fff;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:6vw;overflow:auto}
+  .bsod[hidden]{display:none}
+  .bsod::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px)}
+  .bsod-in{position:relative;z-index:1;max-width:760px;width:100%;min-width:0}
+  @media (max-width:520px){.bsod-rij{flex-direction:column;align-items:flex-start}}
+  .bsod-smiley{font:300 clamp(90px,17vw,190px)/1.2 'Bricolage Grotesque',sans-serif;letter-spacing:-.04em;margin:0;animation:bsod-flik 3.2s steps(1) infinite}
+  @keyframes bsod-flik{0%,92%,100%{transform:none}94%{transform:translate(-6px,0) skewX(-6deg)}96%{transform:translate(6px,0) skewX(5deg)}98%{transform:none}}
+  .bsod h2{font:400 clamp(22px,3.4vw,34px)/1.25 'Schibsted Grotesk',sans-serif;letter-spacing:0;margin:0 0 .6em}
+  .bsod-tekst{font-size:clamp(16px,2vw,19px);line-height:1.55;margin:0 0 1.1em;max-width:62ch}
+  .bsod-pct{font-size:clamp(18px,2.4vw,24px);margin:0 0 1.4em}
+  .bsod-rij{display:flex;gap:20px;align-items:center;margin-bottom:1.8em}
+  .bsod-qr{width:96px;height:96px;flex:none;image-rendering:pixelated;background:#fff;padding:6px;box-sizing:content-box}
+  .bsod-meta{font-size:14px;line-height:1.5;min-width:0}
+  .bsod-meta p{margin:0 0 .5em}
+  .bsod-meta b{font-family:'IBM Plex Mono',monospace;font-weight:500;overflow-wrap:anywhere}
+  .bsod-btn{background:#fff;color:var(--bsod);border-color:#fff;box-shadow:5px 5px 0 var(--ink);font-size:16px;padding:12px 20px}
+  .bsod-btn:hover{background:#fff;box-shadow:7px 7px 0 var(--ink)}
+  .bsod :focus-visible{outline:3px solid #fff;outline-offset:4px}
 
   /* ---------- reveal-on-scroll ---------- */
   .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease}
