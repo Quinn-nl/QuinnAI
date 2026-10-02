@@ -108,7 +108,7 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
   const ratio = (f, bg) => { const a = lum(op(f, bg)), b = lum(rgb(bg).slice(0, 3)); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
   const paren = [
     ['paper', 'ink', 4.5], ['muted', 'ink', 4.5], ['muted-3', 'ink', 4.5], ['butter', 'ink', 4.5], ['mint', 'ink', 4.5], ['rose', 'ink', 4.5],
-    ['paper', 'ink-2', 4.5], ['muted', 'ink-2', 4.5], ['muted-3', 'ink-2', 4.5], ['mint', 'ink-2', 4.5],
+    ['paper', 'ink-2', 4.5], ['text-soft', 'ink', 4.5], ['text-soft', 'ink-2', 4.5], ['muted', 'ink-2', 4.5], ['muted-3', 'ink-2', 4.5], ['mint', 'ink-2', 4.5],
     ['muted', 'ink-3', 4.5], ['line', 'ink', 3], ['line', 'ink-2', 3]
   ];
   let n = 0;
@@ -117,9 +117,12 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
     const r = ratio(kleur[f], kleur[bg]); n++;
     if(r < min) fout('contrast: --' + f + ' op --' + bg + ' is ' + r.toFixed(2) + ':1, minimaal ' + min + ':1 nodig');
   }
-  // knoptekst op de gele knop staat hardgecodeerd (#241802 op --butter)
-  const kn = ratio('#241802', kleur.butter); n++;
-  if(kn < 4.5) fout('contrast: knoptekst #241802 op --butter is ' + kn.toFixed(2) + ':1');
+  // tekst op de gele knop en het Q-merk (tokens --on-butter*)
+  for(const [t, bg] of [['on-butter', 'butter'], ['on-butter', 'butter-hover'], ['on-butter-mark', 'butter'], ['on-butter-mark', 'butter-2']]){
+    if(!kleur[t] || !kleur[bg]){ fout('contrast: --' + t + ' of --' + bg + ' niet gevonden in :root'); continue; }
+    const kn = ratio(kleur[t], kleur[bg]); n++;
+    if(kn < 4.5) fout('contrast: --' + t + ' op --' + bg + ' is ' + kn.toFixed(2) + ':1, minimaal 4.5:1 nodig');
+  }
   goed(n + ' kleurparen halen hun WCAG-contrastdrempel');
 }
 
