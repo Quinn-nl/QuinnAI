@@ -14,9 +14,10 @@ jobs:
           node-version: 22
       - name: Syntax engine.js en test.js
         run: |
-          node --check engine.js
-          node --check test.js
+          node --check assets/js/engine.js
+          node --check assets/js/ui.js
+          node --check tools/test.js
       - name: Repo-controles (inline scripts, lokale bestanden, engine-versie)
-        run: node check.js
+        run: node tools/check.js
       - name: Testsuite
-        run: node test.js
+        run: node tools/test.js

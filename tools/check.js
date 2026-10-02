@@ -2,8 +2,8 @@
 "use strict";
 /* ============================================================
    QUINNAI — REPO-CONTROLES (geen dependencies)
-   Draai met: node check.js         (alleen controleren)
-              node check.js --fix   (engine.js?v=… in index.html bijwerken)
+   Draai met: node tools/check.js         (alleen controleren)
+              node tools/check.js --fix   (engine.js?v=… in index.html bijwerken)
    Controleert:
    1. of de inline scripts in index.html en 404.html syntactisch kloppen
    2. of elk lokaal bestand waarnaar verwezen wordt (scripts, fonts, iconen,
@@ -16,7 +16,7 @@ const path = require('path');
 const vm = require('vm');
 const crypto = require('crypto');
 
-const ROOT = __dirname;
+const ROOT = path.join(__dirname, '..');
 const SITE = 'https://quinnai.tech/';
 const FIX = process.argv.includes('--fix');
 const PAGINAS = ['index.html', '404.html'].filter(f => fs.existsSync(path.join(ROOT, f)));
@@ -34,8 +34,10 @@ for(const pagina of PAGINAS){
   });
   if(scripts.length) goed(pagina + ': ' + scripts.length + ' inline script(s) syntactisch in orde');
 }
-try{ new vm.Script(fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8'), { filename: 'engine.js' }); goed('engine.js: syntax in orde'); }
-catch(e){ fout('engine.js: ' + e.message); }
+for(const js of ['assets/js/engine.js', 'assets/js/ui.js']){
+  try{ new vm.Script(fs.readFileSync(path.join(ROOT, js), 'utf8'), { filename: js }); goed(js + ': syntax in orde'); }
+  catch(e){ fout(js + ': ' + e.message); }
+}
 
 /* 2. lokale verwijzingen */
 function lokaalPad(verw){
@@ -65,19 +67,19 @@ for(const pagina of PAGINAS){
 }
 
 /* 3. cachebuster */
-const engine = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8').replace(/\r\n/g, '\n');
+const engine = fs.readFileSync(path.join(ROOT, 'assets/js/engine.js'), 'utf8').replace(/\r\n/g, '\n');
 const hash = crypto.createHash('sha1').update(engine, 'utf8').digest('hex').slice(0, 8);
 const indexPad = path.join(ROOT, 'index.html');
 let index = fs.readFileSync(indexPad, 'utf8');
-const m = index.match(/<script src="engine\.js\?v=([0-9a-f]+)"><\/script>/);
-if(!m) fout('index.html: <script src="engine.js?v=…"> niet gevonden');
+const m = index.match(/<script src="assets\/js\/engine\.js\?v=([0-9a-f]+)"><\/script>/);
+if(!m) fout('index.html: <script src="assets/js/engine.js?v=…"> niet gevonden');
 else if(m[1] !== hash){
   if(FIX){
-    index = index.replace(m[0], '<script src="engine.js?v=' + hash + '"></script>');
+    index = index.replace(m[0], '<script src="assets/js/engine.js?v=' + hash + '"></script>');
     fs.writeFileSync(indexPad, index);
     console.log('GEFIXT engine.js?v=' + m[1] + ' -> ?v=' + hash);
   } else {
-    fout('index.html laadt engine.js?v=' + m[1] + ', maar engine.js heeft hash ' + hash + '. Draai: node check.js --fix');
+    fout('index.html laadt engine.js?v=' + m[1] + ', maar engine.js heeft hash ' + hash + '. Draai: node tools/check.js --fix');
   }
 } else goed('engine.js?v=' + hash + ' klopt');
 
