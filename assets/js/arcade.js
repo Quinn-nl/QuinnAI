@@ -10,14 +10,29 @@
   var fijn = window.matchMedia('(hover: hover) and (pointer: fine)');
   function stil(){ return reduce.matches || document.body.classList.contains('pauzeer-animaties'); }
 
-  /* cursor-spotlight */
   var hero = document.getElementById('top');
+
+  /* oneindige animaties in de hero (raster, marquee, ping) pauzeren zodra de hero uit beeld is */
+  if(hero && 'IntersectionObserver' in window){
+    new IntersectionObserver(function(l){
+      hero.classList.toggle('buiten-beeld', !l[l.length - 1].isIntersecting);
+    }).observe(hero);
+  }
+
+  /* cursor-spotlight (hooguit één stijlwijziging per frame) */
   if(hero && fijn.matches){
+    var mx = 0, my = 0, wacht = false;
     hero.addEventListener('pointermove', function(e){
       if(stil() || e.pointerType !== 'mouse') return;
       var r = hero.getBoundingClientRect();
-      hero.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-      hero.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      mx = e.clientX - r.left; my = e.clientY - r.top;
+      if(wacht) return;
+      wacht = true;
+      requestAnimationFrame(function(){
+        wacht = false;
+        hero.style.setProperty('--mx', mx + 'px');
+        hero.style.setProperty('--my', my + 'px');
+      });
     });
   }
 
