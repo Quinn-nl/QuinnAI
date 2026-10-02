@@ -8,74 +8,57 @@
 <meta name="description" content="Deze pagina bestaat niet. QuinnAI heeft gezocht, maar vooral naar een reden om op te geven.">
 <meta name="theme-color" content="#0a1017">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+<link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/css/style.css">
 <style>
-@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-weight:200 800;font-display:swap;src:url(/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:400 900;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-:root{
-  --ink:#0a1017;
-  --paper:#ffffff;
-  --muted:#b0becd;
-  --butter:#f5c451;
-  --mint:#77d8ae;
-  --card:#0f1822;
-  --line:rgba(255,255,255,.35);
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;background:var(--ink);color:var(--paper);
-  font-family:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
-  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
-  display:grid;place-items:center;padding:24px;
-  padding-top:max(24px,env(safe-area-inset-top,0px));
-  padding-bottom:max(24px,env(safe-area-inset-bottom,0px));
-  background-image:radial-gradient(900px 520px at 78% -8%, rgba(245,196,81,.10), transparent 62%);
-}
-body{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;place-items:center}
-header{justify-self:stretch;max-width:1000px;width:100%;margin:0 auto;align-self:start}
-.brand{display:inline-flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;font-size:19px;letter-spacing:-.03em;color:var(--paper);text-decoration:none}
-.mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,var(--butter),#e08a3c);display:grid;place-items:center;color:#2a1a04;font-size:14px;font-weight:800;flex:none}
-main{max-width:560px;text-align:center;width:100%}
-.code{
-  font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;
-  font-size:clamp(88px,26vw,168px);margin:0;color:var(--butter);
-}
-h1{
-  font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.025em;line-height:1.05;
-  font-size:clamp(26px,6vw,38px);margin:6px 0 0;
-}
-p{color:var(--muted);margin:18px 0 0;font-size:17px}
-#pad{color:var(--paper);overflow-wrap:anywhere}
-.btn{
-  display:inline-block;margin-top:28px;padding:11px 20px;border-radius:12px;border:0;
-  background:var(--butter);color:#241802;font:inherit;font-weight:700;text-decoration:none;
-}
-.btn:hover{background:#ffd062}
+/* Alleen wat de 404 extra nodig heeft; ticker, nav, knoppen en lettertypen komen uit style.css */
+html{overflow-y:scroll}   /* zelfde scrollbalk als de homepage, zodat het merk op exact dezelfde x-plek staat */
+.nf{min-height:calc(100vh - 190px);display:grid;align-content:center;justify-items:center;text-align:center;padding-top:40px;padding-bottom:70px}
+.nf-code{font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;font-size:clamp(88px,26vw,168px);margin:0;color:var(--butter)}
+h1.nf-h{font-size:clamp(26px,6vw,38px);line-height:1.05;margin-top:6px}
+.nf-p{color:var(--muted);margin-top:18px;font-size:17px;max-width:560px}
 .pad{
-  display:block;max-width:100%;margin:26px auto 0;width:fit-content;padding:7px 14px;border:1px solid var(--line);border-radius:999px;
-  background:var(--card);font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.4;color:var(--muted);
+  display:block;max-width:100%;margin-top:26px;padding:7px 14px;border:1px solid var(--line);border-radius:999px;
+  background:var(--ink-2);font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.4;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .pad b{font-weight:500;color:var(--mint)}
-.acties{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:30px}
-.acties .btn{margin-top:0;padding:13px 26px;font-size:17px}
-.alt{color:var(--muted);font-size:15px;text-underline-offset:4px}
-.alt:hover{color:var(--paper)}
-:focus-visible{outline:2px solid var(--butter);outline-offset:3px;border-radius:6px}
-.klein{font-size:13px;margin-top:34px;color:#9ba8b6}
-@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+#pad{color:var(--paper)}
+.nf .hero-cta{margin-top:30px}
+.klein{font-size:13px;margin-top:34px;color:var(--muted-3)}
 </style>
 </head>
 <body>
-<header><a class="brand" href="/"><span class="mark" aria-hidden="true">Q</span> QuinnAI</a></header>
-<main>
-  <p class="code" aria-hidden="true">404</p>
-  <h1>Deze pagina bestaat niet.</h1>
-  <p>QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het &ldquo;zo even opzoekt&rdquo;.</p>
+<a href="#hoofdinhoud" class="skip-link">Direct naar inhoud</a>
+
+<div class="ticker" role="region" aria-label="Systeemmeldingen">
+  <span class="dot"></span>
+  <span id="ticker-text">Pagina niet gevonden. Quinn is op de hoogte gebracht, via de groepsapp.</span>
+  <button id="ticker-pauze" class="ticker-pauze" aria-pressed="false" aria-label="Berichtenbalk pauzeren"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+</div>
+
+<nav aria-label="Hoofdnavigatie">
+  <div class="nav-in">
+    <a href="/" class="brand"><span class="mark">Q</span> QuinnAI</a>
+    <div class="nav-links">
+      <a href="/#chat">Chat</a>
+      <a href="/#benchmarks">Benchmarks</a>
+      <a href="/#prijzen">Prijzen</a>
+      <a href="/#vragen">Vragen</a>
+    </div>
+    <a href="/#chat" class="btn btn-primary">Gratis proberen</a>
+  </div>
+</nav>
+
+<main id="hoofdinhoud" class="wrap nf" tabindex="-1">
+  <p class="nf-code" aria-hidden="true">404</p>
+  <h1 class="nf-h">Deze pagina bestaat niet.</h1>
+  <p class="nf-p">QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het &ldquo;zo even opzoekt&rdquo;.</p>
   <code class="pad" id="pad-regel" hidden><b>GET</b> <span id="pad"></span> &rarr; 404</code>
-  <div class="acties">
-    <a class="btn" href="/">Terug naar de chat</a>
-    <a class="alt" href="/#prijzen">of bekijk de prijzen (Capitalism)</a>
+  <div class="hero-cta">
+    <a href="/#chat" class="btn btn-primary">Terug naar de chat</a>
+    <a href="/#prijzen" class="btn">Bekijk de prijzen (Capitalism)</a>
   </div>
   <p class="klein">Zekerheid: 99%. Bronnen: 0.</p>
 </main>
@@ -88,6 +71,14 @@ p{color:var(--muted);margin:18px 0 0;font-size:17px}
       document.getElementById('pad-regel').hidden = false;
     }
   }catch(e){ /* kapotte URL-codering: dan maar zonder pad */ }
+  /* WCAG 2.2.2: de knipperende stip in de ticker kan gepauzeerd worden */
+  var knop = document.getElementById('ticker-pauze');
+  knop.addEventListener('click', function(){
+    var aan = knop.getAttribute('aria-pressed') !== 'true';
+    knop.setAttribute('aria-pressed', String(aan));
+    knop.setAttribute('aria-label', aan ? 'Berichtenbalk hervatten' : 'Berichtenbalk pauzeren');
+    document.body.classList.toggle('pauzeer-animaties', aan);
+  });
 })();
 </script>
 </body>
