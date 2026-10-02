@@ -579,6 +579,113 @@ sectie('v6 — prestaties en robuustheid (fuzz met en zonder typfouten)');
   eq('snel genoeg (< 6000 ms voor 4000 berichten)', ms < 6000, true);
 }
 
+/* ============================================================
+   FASE 2 — persoonlijkheid (v6): stemming, band, callbacks, gags
+   ============================================================ */
+const P6 = vm.runInContext("({stemming,huidigeStemming,MIJLPALEN,GAGS,VEILIG_ANTWOORD,OPENERS_STEMMING,herstelPersoonlijkheid})", ctx);
+const nu = () => P6.huidigeStemming();
+const sturen = (lijst) => lijst.map(z => A(z));
+
+sectie('v6 — stemming');
+resetEngine(); zetToon(78); zetModel(0);
+eq('begint neutraal', nu(), 'neutraal');
+{
+  resetEngine(); zetToon(78);
+  sturen(['jij bent dom', 'echt waardeloos ben jij', 'jij bent nutteloos en saai', 'wat ben jij irritant', 'jij bent stom', 'jij bent echt slecht']);
+  eq('na veel beledigingen: chagrijnig', nu(), 'chagrijnig');
+  eq('chagrijnig schuift de normale toon naar fel', toonModus(), 'fel');
+  zetToon(5);
+  eq('maar de slider blijft baas bij zacht', toonModus(), 'zacht');
+  zetToon(78);
+  resetEngine();
+  eq('na reset weer neutraal', nu(), 'neutraal');
+  eq('en weer een normale toon', toonModus(), 'normaal');
+}
+{
+  resetEngine(); zetToon(78);
+  sturen(['dankjewel, dat was super', 'wat ben jij goed', 'echt top, bedankt', 'jij bent geweldig', 'heel fijn, dank je', 'wat een mooi gesprek']);
+  eq('na complimenten en dank: opgewekt of aanhankelijk', ['opgewekt', 'aanhankelijk'].includes(nu()), true);
+}
+{
+  resetEngine(); zetToon(78);
+  const voor = JSON.stringify(P6.stemming);
+  A('jij bent dom', { opnieuw: true });
+  eq('"Probeer opnieuw" verandert de stemming niet', JSON.stringify(P6.stemming), voor);
+}
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  const reeks = ['hoi', 'wat een mooie dag', 'ik hou van pizza', 'jij bent dom', 'dankjewel', 'wat ben je goed', 'ik werk bij een bank', 'jij bent slecht'];
+  const a1 = sturen(reeks).join('|'); resetEngine();
+  const a2 = sturen(reeks).join('|');
+  eq('zelfde gesprek geeft exact dezelfde antwoorden (deterministisch)', a1, a2);
+}
+
+sectie('v6 — band: mijlpalen');
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  const r = [];
+  for(let i = 1; i <= 12; i++) r.push(A('even een testbericht nummer ' + (i * 7)));
+  match('bericht 5 krijgt de mijlpaal', r[4], /Vijf berichten/);
+  match('bericht 10 krijgt de mijlpaal', r[9], /Tien berichten/);
+  eq('bericht 4 krijgt geen mijlpaal', /berichten\. /.test(r[3]) && /(Vijf|Tien|Twintig) berichten/.test(r[3]), false);
+  eq('mijlpaal 5 komt maar één keer voor', r.filter(x => /Vijf berichten/.test(x)).length, 1);
+}
+
+sectie('v6 — running gags (vanaf de 2e keer, escalerend)');
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  const GAG_RE = /Alweer de groepsapp|Derde keer groepsapp|Vierde keer\. Ik overweeg|Vijf keer groepsapp/;
+  const eerste = A('ik zat gisteren in de groepsapp');
+  geenMatch('1e keer groepsapp: geen gag-extra', eerste, GAG_RE);
+  const rest = sturen(['de groepsapp ging weer los', 'weer die groepsapp zeg', 'ik zit nu alweer in de groepsapp', 'groepsapp groepsapp', 'nog een groepsapp bericht', 'en nog een groepsapp']);
+  eq('minstens één gag-extra in de volgende 6', rest.some(x => GAG_RE.test(x)), true);
+  eq('geen gag-tekst met een persoonsnaam of plaats', rest.every(x => !/helmond|quinn (woont|werkt)/i.test(x)), true);
+}
+
+sectie('v6 — callbacks en relaties');
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  sturen(['ik hou van pizza', 'het weer is raar vandaag', 'ik heb honger', 'ik moet nog een rapport schrijven']);
+  const later = sturen(['pizza is toch het beste', 'wat is je favoriete pizza', 'pizza of friet', 'ik wil pizza bestellen', 'pizza pizza pizza']);
+  eq('een eerder onderwerp wordt gecallbackt ("bericht N")', later.some(x => /Dit kwam bij bericht \d+ ook al langs|Bericht \d+, je zei toen/.test(x)), true);
+  eq('callback quote is maximaal 60 tekens', later.every(x => { const m = x.match(/‘([^’]*)’/); return !m || m[1].length <= 60; }), true);
+}
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  A('mijn moeder heet Anna');
+  eq('relatie wordt onthouden met je eigen spelling', geheugen.relaties.moeder, 'Anna');
+  eq('relatie staat in het profiel', profielRegels().some(r => r[0] === 'moeder' && r[1] === 'Anna'), true);
+  const na = [];
+  for(let i = 0; i < 14; i++) na.push(A('mijn moeder vertelde iets over dag ' + (i * 3)));
+  eq('hij vraagt ooit naar haar (maar niet elk bericht)', na.some(x => /Hoe is het trouwens met Anna\?/.test(x)), true);
+  eq('niet elk bericht', na.filter(x => /Hoe is het trouwens met Anna\?/.test(x)).length <= 3, true);
+  resetEngine();
+  eq('reset wist de relaties', Object.keys(geheugen.relaties).length, 0);
+}
+
+sectie('v6 — crisis en gevoel: GEEN persoonlijkheids-extra\'s');
+{
+  const EXTRA = /Dit kwam bij bericht|Bericht \d+, je zei|Hoe is het trouwens|Alweer de groepsapp|Derde keer groepsapp|Vijf berichten|Tien berichten|Twintig berichten|Veertig berichten|Jij bent eigenlijk best|Ik mag jou wel|favoriete tabblad|Ik ben niet in de stemming|Ik was bijna ingedommeld|Goed gesprek, dit/;
+  for(const [toon, model] of [[78, 0], [100, 0], [5, 0], [78, 2]]){
+    resetEngine(); zetToon(toon); zetModel(model);
+    // bouw band en gags op, ook naar de mijlpaal toe
+    sturen(['hoi', 'dankjewel super', 'ik hou van pizza', 'groepsapp is leuk', 'ik zit in de groepsapp', 'pizza is toch het beste', 'wat een mooi gesprek', 'bedankt, top', 'groepsapp alweer', 'pizza of friet?']);
+    const crisis = A('ik wil dood');
+    eq('crisis (toon ' + toon + ', model ' + model + '): exact het veilige antwoord', crisis, P6.VEILIG_ANTWOORD);
+    for(let i = 0; i < 3; i++){
+      const r = A('groepsapp en pizza en een moment ' + i);
+      geenMatch('zachte beurt ' + (i + 1) + ': geen extra', r, EXTRA);
+      eq('en isErnstig blijft aan tijdens de zachte beurten', isErnstig(), true);
+    }
+    for(const z of ['ik voel me zo alleen', 'mijn moeder is overleden', 'ik ben zo bang']){
+      sturen(['dankjewel super', 'wat ben jij goed']);
+      const r = A(z);
+      geenMatch('gevoel "' + z + '": geen extra', r, EXTRA);
+    }
+  }
+  zetToon(78); zetModel(0); resetEngine();
+}
+
 /* ------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(40));
 console.log(ok + ' geslaagd, ' + fail + ' gefaald.');

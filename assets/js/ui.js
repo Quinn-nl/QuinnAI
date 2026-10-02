@@ -147,11 +147,17 @@
     naarBeneden();
   }
 
+  function zetStemming(){
+    const el = $('#mood');
+    if(el && typeof huidigeStemming === 'function') el.textContent = huidigeStemming();
+  }
+
   function aiBericht(vraag){
     const bubble = rij('ai','Q');
     bubble.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
     naarBeneden();
     const antwoord = bedenkAntwoord(vraag);
+    zetStemming();
     if(isErnstig()){ veiligBericht(bubble, antwoord); return; }
     const onderwerp = topicOf(vraag);
     const stappen = DENKSTAPPEN
@@ -266,6 +272,7 @@
 
   $('#vergeet-btn').addEventListener('click', () => {
     resetEngine();
+    zetStemming();
     gehallucineerd = null;
     ververProfiel();
     teller = 0;
