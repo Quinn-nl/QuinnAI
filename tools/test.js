@@ -435,6 +435,150 @@ for(const z of LEVEN_ZINNEN){
 eq('placeholder {dag} lekt nooit', dagKapot, false);
 eq('de weekdag van vandaag (' + vandaagDag + ') komt voor in het levensantwoord', dagGezien, true);
 
+/* ============================================================
+   FASE 1 — begrip (v6): typfouten, stam, scoring, doorvragen
+   ============================================================ */
+const V6 = vm.runInContext("({stam,afstand,herstelWoord,herstelZin,kiesOnderwerpen,ONDERWERPEN,VOCAB,KENNIS,DOORVRAAG,DIEPER})", ctx);
+
+sectie('v6 — geen persoonsgegevens van Quinn (of anderen) in de site');
+{
+  const bronnen = { 'engine.js': engineBron, '404.js': fs.readFileSync(path.join(__dirname, '..', 'assets/js/404.js'), 'utf8'),
+                    'index.html': fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8') };
+  const VERBODEN = [/moeder van quinn/i, /quinns? moeder/i, /\bsinds 2019\b/, /\bna 14 uur\b/, /quinn (woont|werkt|studeert|is geboren|heet eigenlijk)/i,
+                    /achternaam/i, /geboren in/i, /\bquinn schoenmakers\b/i];
+  for(const [naam, tekst] of Object.entries(bronnen)){
+    for(const v of VERBODEN) eq(naam + ' bevat niet ' + v, v.test(tekst), false);
+    // 'helmond' mag alleen voorkomen in de algemene plaatsnamen-lijst als gespreksonderwerp
+    const regels = tekst.split('\n').filter(r => /helmond/i.test(r));
+    eq(naam + ': helmond alleen in de algemene plaatsnamen-regel', regels.every(r => /eindhoven\|brabant\|amsterdam\|helmond\|tilburg/.test(r)), true);
+  }
+}
+
+sectie('v6 — stam() en afstand()');
+eq('hondjes -> hond', V6.stam('hondjes'), 'hond');
+eq('vakanties -> vakanti (zelfde stam als vakantie)', V6.stam('vakanties'), V6.stam('vakantie'));
+eq('honden -> hond', V6.stam('honden'), 'hond');
+eq("pizza's -> pizza", V6.stam("pizza's"), 'pizza');
+eq('korte woorden blijven heel', V6.stam('ik'), 'ik');
+eq('afstand: gelijk', V6.afstand('moeder', 'moeder', 2), 0);
+eq('afstand: omwisseling telt 1', V6.afstand('moedre', 'moeder', 2), 1);
+eq('afstand: verschil > max stopt vroeg', V6.afstand('abcdef', 'uvwxyz', 1) > 1, true);
+
+sectie('v6 — typfouten herstellen (automatisch gegenereerd uit de woordenschat)');
+{
+  const woorden = [...V6.VOCAB].filter(w => w.length >= 6 && !V6.KENNIS.has(w + '#')).slice(0, 400);
+  let gevallen = 0, hersteld = 0, kapot = 0;
+  for(let i = 0; i < woorden.length; i++){
+    const w = woorden[i];
+    const k = 1 + (i % (w.length - 2));               // positie 1..len-2 (eerste letter blijft staan)
+    const typo = [
+      w.slice(0, k) + w.slice(k + 1),                 // letter vergeten
+      w.slice(0, k) + w[k + 1] + w[k] + w.slice(k + 2) // letters omgewisseld
+    ][i % 2];
+    if(typo === w || V6.KENNIS.has(typo)) continue;   // bestaat al als echt woord: dan is het geen typo
+    gevallen++;
+    const r = V6.herstelWoord(typo);
+    if(r === w) hersteld++;
+    else if(V6.VOCAB.has(r) && r !== w) kapot++;      // naar een ánder sleutelwoord gecorrigeerd
+  }
+  console.log('  typo-gevallen: ' + gevallen + ', hersteld: ' + hersteld + ', naar verkeerd woord: ' + kapot);
+  eq('minstens 60 typo-gevallen getest', gevallen >= 60, true);
+  eq('minstens 80% terug naar het bedoelde sleutelwoord', hersteld / gevallen >= 0.8, true);
+  eq('maximaal 5% naar een verkeerd sleutelwoord', kapot / gevallen <= 0.05, true);
+}
+for(const [typo, goed] of [['priezen','prijzen'],['moedr','moeder'],['abonement','abonnement'],['kortingscdoe','kortingscode'],['enterpirse','enterprise']]){
+  const r = V6.herstelWoord(typo);
+  eq('typo ' + typo + ' -> ' + goed, V6.VOCAB.has(goed) ? r : goed, goed);
+}
+
+sectie('v6 — geen valse correcties');
+eq('kort woord blijft', V6.herstelWoord('naam'), 'naam');
+eq('bekend woord blijft', V6.herstelWoord('gesprek'), 'gesprek');
+eq('naam midden in de zin blijft staan', V6.herstelZin('mijn vriendin Yvonne belt vaak').tokens.includes('yvonne'), true);
+eq('naam Sanne blijft staan', V6.herstelZin('ik ben met Sanne naar huis').tokens.includes('sanne'), true);
+{
+  const origineel = 'ik heet Yvonne en ik hou van pizza';
+  resetEngine(); A(origineel);
+  eq('naam in het geheugen is de originele spelling', geheugen.naam, 'Yvonne');
+}
+
+sectie('v6 — onderwerpen via typfout en stam');
+resetEngine(); match('priezen -> prijzenantwoord', A('wat zijn die priezen'), /date|moeder|tikkie|gratis/i);
+resetEngine(); match('abonnementen (meervoud) -> prijzenantwoord', A('wat kosten jullie abonnementen'), /date|moeder|tikkie|gratis/i);
+resetEngine(); match('moedr -> moederantwoord', A('mijn moedr belt de hele tijd'), /moeder|date|restaurant/i);
+{
+  /* regel-hits blijven de baas: bestaand gedrag voor alle oude onderwerpen is ongewijzigd */
+  const oud = V6.ONDERWERPEN.filter(o => o.re.test('even een test over werk en school'));
+  eq('regex-hits geven nog altijd score 3 (eerste in de lijst wint)', V6.kiesOnderwerpen('even een test over werk en school', normaliseer('even een test over werk en school'))[0].score, oud.length ? 3 : 0);
+}
+
+sectie('v6 — twee onderwerpen in één bericht');
+{
+  let gecombineerd = 0, pogingen = 0;
+  for(const z of ['wat een gezeur op mijn werk en daarna nog gedoe met de prijzen van jullie abonnementen',
+                  'mijn moeder zegt dat de prijzen te hoog zijn en dat mijn baas ook niet helpt',
+                  'ik moet naar school maar mijn moeder wil dat ik voor haar het abonnement uitzoek']){
+    resetEngine(); pogingen++;
+    const r = A(z);
+    if(/En over |Dan nog dit|En wat .* betreft|Terwijl we het toch over|Over .* ook nog/.test(r)) gecombineerd++;
+  }
+  eq('minstens 2 van de 3 tweeluiken krijgen een gecombineerd antwoord', gecombineerd >= 2, true);
+  resetEngine();
+  geenMatch('korte berichten worden niet gecombineerd', A('prijzen en moeder'), /En over |Dan nog dit|Terwijl we het toch over/);
+  zetModel(1); resetEngine();
+  geenMatch('Nano houdt het kort (geen combinatie)', A('wat een gezeur op mijn werk en daarna nog gedoe met de prijzen van jullie abonnementen'), /En over |Dan nog dit|Terwijl we het toch over/);
+  zetModel(0);
+}
+
+sectie('v6 — doorvragen op het vorige antwoord');
+resetEngine(); A('wat kost enterprise');
+for(const dv of ['waarom dan', 'vertel meer', 'hoezo', 'echt?']){
+  const r = A(dv);
+  match('doorvraag "' + dv + '" verwijst naar het onderwerp', r, /enterprise/i);
+}
+resetEngine(); A('wat kost enterprise'); A('ik ben moe'); 
+{
+  const r = A('waarom dan');
+  geenMatch('doorvraag na een ander bericht verwijst niet meer naar het oude onderwerp', r, /enterprise/i);
+}
+resetEngine();
+geenMatch('doorvraag zonder eerder onderwerp blijft bij het oude gedrag', A('vertel meer'), /\{t\}/);
+for(const d of V6.DIEPER) eq('DIEPER-regel heeft {t}', /\{t\}/.test(d), true);
+
+sectie('v6 — crisis/zacht blijft zacht met de nieuwe herkenning');
+for(const z of ['ik wil dood', 'mijn moedr is overleden', 'ik heb geen zin meer in het levn']){
+  resetEngine();
+  const r = A(z);
+  geenMatch('geen onderwerp-grap bij: ' + z, r, /date met je moeder|tikkie|En over |Dan nog dit/);
+}
+
+sectie('v6 — prestaties en robuustheid (fuzz met en zonder typfouten)');
+{
+  const alfabet = 'abcdefghijklmnopqrstuvwxyz     ,.?!\'';
+  let s = 12345; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const woordenlijst = [...V6.VOCAB];
+  const t0 = Date.now(); let crash = 0, leeg = 0;
+  resetEngine();
+  for(let i = 0; i < 4000; i++){
+    let m;
+    if(i % 2){ m = Array.from({length: 3 + Math.floor(rnd() * 12)}, () => alfabet[Math.floor(rnd() * alfabet.length)]).join(''); }
+    else {
+      m = Array.from({length: 2 + Math.floor(rnd() * 5)}, () => {
+        const w = woordenlijst[Math.floor(rnd() * woordenlijst.length)];
+        const k = 1 + Math.floor(rnd() * Math.max(1, w.length - 2));
+        return rnd() < .5 ? w.slice(0, k) + w.slice(k + 1) : w;
+      }).join(' ');
+    }
+    try{ const r = A(m); if(typeof r !== 'string' || !r.trim()) leeg++; }catch(e){ crash++; }
+    if(i % 500 === 499) resetEngine();
+  }
+  const ms = Date.now() - t0;
+  console.log('  8000 berichten (4000 ruis, 4000 met typfouten) in ' + ms + ' ms');
+  eq('geen crashes', crash, 0);
+  eq('nooit een leeg antwoord', leeg, 0);
+  eq('snel genoeg (< 6000 ms voor 4000 berichten)', ms < 6000, true);
+}
+
 /* ------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(40));
 console.log(ok + ' geslaagd, ' + fail + ' gefaald.');
