@@ -12,6 +12,11 @@ Getraind op 14 jaar groepsapp. Antwoordt binnen 0,4 seconden. Zelden nuttig.
 * **Lokaal Geheugen:** Onthoudt wat je zegt tijdens één sessie, puur om het later passief-agressief tegen je te gebruiken.
 * **Benchmarks:** Verslaat de concurrentie moeiteloos op de enige metriek die telt: 'Zelfvertrouwen zonder onderbouwing' (99,4%).
 
+## Lettertypes
+Zelf gehoste lettertypen (latin-subset, woff2), zodat de pagina geen verbinding met Google Fonts maakt.
+Bron: de @fontsource-pakketten op npm (Bricolage Grotesque, Schibsted Grotesk, IBM Plex Mono).
+Alle drie vallen onder de SIL Open Font License 1.1; de licentieteksten staan naast de bestanden.
+
 ## 🚀 Hoe werkt het?
 Dit project heeft geen backend, geen server en geen internetverbinding nodig na het laden. Er is ook geen build-stap en geen framework:
 
