@@ -1,15 +1,16 @@
 /* Alleen wat de 404 extra nodig heeft; ticker, nav, knoppen en lettertypen komen uit style.css */
 html{overflow-y:scroll}   /* zelfde scrollbalk als de homepage, zodat het merk op exact dezelfde x-plek staat */
 .nf{min-height:min(72vh,640px);display:grid;align-content:center;justify-items:center;text-align:center;padding-top:40px;padding-bottom:70px}
-.nf-code{font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;font-size:clamp(88px,26vw,168px);margin:0;color:var(--lime)}
+.nf-code{font-family:var(--font-display);font-weight:400;letter-spacing:-.02em;line-height:1.35;padding:0 .08em;font-size:clamp(60px,17vw,150px);margin:0 0 -.12em;color:var(--lime);filter:drop-shadow(6px 6px 0 var(--pink))}
 @supports (background-clip:text) or (-webkit-background-clip:text){
   .nf-code{background:linear-gradient(150deg,var(--lime),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 }
+.nf .eyebrow{margin-top:0}
 h1.nf-h{font-size:clamp(32px,6.5vw,56px);line-height:1;letter-spacing:-.034em;margin-top:10px}
 h1.nf-h .serif{font-size:1.07em}
 .nf-p{color:var(--muted);margin-top:18px;font-size:17px;max-width:560px}
 .pad{
-  display:block;max-width:100%;margin-top:26px;padding:7px 14px;border:1px solid var(--line);border-radius:999px;
+  display:block;max-width:100%;margin-top:26px;padding:8px 16px;border:2px solid var(--cyan);border-radius:999px;box-shadow:3px 3px 0 var(--cyan);
   background:var(--ink-2);font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.4;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
