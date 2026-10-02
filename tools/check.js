@@ -109,7 +109,7 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
   const paren = [
     ['paper', 'ink', 4.5], ['muted', 'ink', 4.5], ['muted-3', 'ink', 4.5], ['butter', 'ink', 4.5], ['mint', 'ink', 4.5], ['rose', 'ink', 4.5],
     ['paper', 'ink-2', 4.5], ['text-soft', 'ink', 4.5], ['text-soft', 'ink-2', 4.5], ['muted', 'ink-2', 4.5], ['muted-3', 'ink-2', 4.5], ['mint', 'ink-2', 4.5],
-    ['muted', 'ink-3', 4.5], ['line', 'ink', 3], ['line', 'ink-2', 3]
+    ['muted', 'ink-3', 4.5], ['line', 'ink', 3], ['butter-2', 'ink', 3], ['line', 'ink-2', 3]
   ];
   let n = 0;
   for(const [f, bg, min] of paren){

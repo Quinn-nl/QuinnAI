@@ -15,8 +15,11 @@
 <style>
 /* Alleen wat de 404 extra nodig heeft; ticker, nav, knoppen en lettertypen komen uit style.css */
 html{overflow-y:scroll}   /* zelfde scrollbalk als de homepage, zodat het merk op exact dezelfde x-plek staat */
-.nf{min-height:calc(100vh - 190px);display:grid;align-content:center;justify-items:center;text-align:center;padding-top:40px;padding-bottom:70px}
+.nf{min-height:min(72vh,640px);display:grid;align-content:center;justify-items:center;text-align:center;padding-top:40px;padding-bottom:70px}
 .nf-code{font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;font-size:clamp(88px,26vw,168px);margin:0;color:var(--butter)}
+@supports (background-clip:text) or (-webkit-background-clip:text){
+  .nf-code{background:linear-gradient(150deg,var(--butter),var(--butter-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+}
 h1.nf-h{font-size:clamp(26px,6vw,38px);line-height:1.05;margin-top:6px}
 .nf-p{color:var(--muted);margin-top:18px;font-size:17px;max-width:560px}
 .pad{
@@ -26,6 +29,7 @@ h1.nf-h{font-size:clamp(26px,6vw,38px);line-height:1.05;margin-top:6px}
 }
 .pad b{font-weight:500;color:var(--mint)}
 #pad{color:var(--paper)}
+.cursor{display:inline-block;width:.55em;height:1em;background:var(--butter);margin-left:4px;vertical-align:-2px;animation:blink 1s steps(1) infinite}   /* blink: zie style.css; uit bij reduced motion en gepauzeerde animaties */
 .nf .hero-cta{margin-top:30px}
 .klein{font-size:13px;margin-top:34px;color:var(--muted-3)}
 </style>
@@ -55,24 +59,98 @@ h1.nf-h{font-size:clamp(26px,6vw,38px);line-height:1.05;margin-top:6px}
 <main id="hoofdinhoud" class="wrap nf" tabindex="-1">
   <p class="nf-code" aria-hidden="true">404</p>
   <h1 class="nf-h">Deze pagina bestaat niet.</h1>
-  <p class="nf-p">QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het &ldquo;zo even opzoekt&rdquo;.</p>
-  <code class="pad" id="pad-regel" hidden><b>GET</b> <span id="pad"></span> &rarr; 404</code>
+  <p class="nf-p" id="nf-regel">QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het &ldquo;zo even opzoekt&rdquo;.</p>
+  <code class="pad" id="pad-regel" hidden><b>GET</b> <span id="pad"></span> &rarr; 404<span class="cursor" aria-hidden="true"></span></code>
   <div class="hero-cta">
-    <a href="/#chat" class="btn btn-primary">Terug naar de chat</a>
-    <a href="/#prijzen" class="btn">Bekijk de prijzen</a>
+    <a href="/#chat" class="btn btn-primary" id="nf-hoofd" aria-describedby="nf-klein">Terug naar de chat</a>
+    <a href="/#prijzen" class="btn" id="nf-tweede">Bekijk de prijzen</a>
   </div>
-  <p class="klein">Zekerheid: 99%. Bronnen: 0.</p>
+  <p class="klein" id="nf-klein">Zekerheid: 99%. Bronnen: 0.</p>
 </main>
+
+<footer>
+  <div class="wrap">
+    <div class="brand foot-brand"><span class="mark">Q</span> QuinnAI</div>
+    
+    <nav aria-label="Footernavigatie" class="footer-nav">
+      <a href="/#chat">Chat</a>
+      <a href="/#benchmarks">Benchmarks</a>
+      <a href="/#prijzen">Prijzen</a>
+      <a href="/#vragen">Vragen</a>
+    </nav>
+
+    <div class="badges">
+      <span class="badge">ISO 9001 — zelf geprint</span>
+      <span class="badge">AVG-proof — we slaan niks op, want dat kunnen we niet</span>
+      <span class="badge">Draait op 100% groene stroom van je eigen laptop</span>
+      <span class="badge">SOC 2 — betekenis onbekend</span>
+    </div>
+    <p>© <span id="year">2026</span> QuinnAI. Geen bedrijf, geen model, geen aansprakelijkheid.</p>
+    <p class="foot-real">Dit is een grap van en voor vrienden. Er wordt niets verstuurd, opgeslagen of geanalyseerd. Alles wat je hier leest is verzonnen, inclusief de benchmarks, de certificeringen en het zelfvertrouwen.</p>
+  </div>
+</footer>
 <script>
 (function(){
-  try{
-    var p = decodeURIComponent(location.pathname + location.search);
-    if(p && p !== '/'){
-      document.getElementById('pad').textContent = p;
-      document.getElementById('pad-regel').hidden = false;
+  var pad = '';
+  try{ pad = decodeURIComponent(location.pathname + location.search); }catch(e){ /* kapotte URL-codering: dan maar zonder pad */ }
+  var padEl = document.getElementById('pad');
+  if(pad && pad !== '/'){
+    padEl.textContent = pad;
+    document.getElementById('pad-regel').hidden = false;
+  }
+
+  /* Wisselende droge regel (alleen weergave, niets wordt opgeslagen). De HTML-tekst blijft de standaard zonder JS. */
+  var regels = [
+    'QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het “zo even opzoekt”.',
+    'Deze pagina is net zo echt als de bronnen van QuinnAI.',
+    'Quinn zegt dat hij het zo even opzoekt. Dat zegt hij al sinds 2019.',
+    'QuinnAI heeft deze pagina nooit gezien, maar is er wel 99% zeker van dat hij bestaat.',
+    'Waarschijnlijk is dit de schuld van de groepsapp.',
+    'Hier stond ooit iets. Of nooit. QuinnAI weet het niet meer.'
+  ];
+  document.getElementById('nf-regel').textContent = regels[Math.floor(Math.random() * regels.length)];
+
+  /* "Bedoelde je ...?": dichtste bestemming bij het getypte pad, puur lokaal. */
+  var bestemmingen = [
+    { naam: 'de chat',       href: '/#chat',       woorden: ['chat','gesprek','praat','praten','home','index','start','quinn','ai','bot'] },
+    { naam: 'de benchmarks', href: '/#benchmarks', woorden: ['benchmarks','benchmark','bench','cijfers','scores','stats','statistieken','resultaten'] },
+    { naam: 'de prijzen',    href: '/#prijzen',    woorden: ['prijzen','prijs','price','prices','pricing','kosten','abonnement','abonnementen','betalen','capitalism','tikkie'] },
+    { naam: 'de vragen',     href: '/#vragen',     woorden: ['vragen','vraag','faq','help','contact','support','info','about','over','privacy'] }
+  ];
+  function afstand(a, b){
+    var m = a.length, n = b.length, d = [], i, j;
+    for(i = 0; i <= m; i++){ d[i] = [i]; }
+    for(j = 1; j <= n; j++){ d[0][j] = j; }
+    for(i = 1; i <= m; i++){
+      for(j = 1; j <= n; j++){
+        d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a.charAt(i-1) === b.charAt(j-1) ? 0 : 1));
+      }
     }
-  }catch(e){ /* kapotte URL-codering: dan maar zonder pad */ }
-  /* WCAG 2.2.2: de knipperende stip in de ticker kan gepauzeerd worden */
+    return d[m][n];
+  }
+  function score(token, woord){
+    if(token === woord) return 3;
+    if(token.length >= 3 && woord.length >= 3 && (woord.indexOf(token) === 0 || token.indexOf(woord) === 0)) return 2;
+    if(token.length >= 4 && woord.length >= 4 && afstand(token, woord) <= Math.max(1, Math.floor(Math.min(token.length, woord.length) / 4))) return 1;
+    return 0;
+  }
+  var tokens = pad.toLowerCase().split(/[^a-zà-ÿ]+/).filter(Boolean);
+  var beste = null, bestScore = 0;
+  bestemmingen.forEach(function(b){
+    var s = 0;
+    tokens.forEach(function(t){ b.woorden.forEach(function(w){ s = Math.max(s, score(t, w)); }); });
+    if(s > bestScore){ bestScore = s; beste = b; }
+  });
+  if(beste){
+    var hoofd = document.getElementById('nf-hoofd'), tweede = document.getElementById('nf-tweede');
+    hoofd.href = beste.href;
+    hoofd.textContent = 'Bedoelde je ' + beste.naam + '?';
+    if(beste.href === '/#chat'){ /* tweede knop blijft de prijzen */ }
+    else { tweede.href = '/#chat'; tweede.textContent = 'Terug naar de chat'; }
+    document.getElementById('nf-klein').textContent = 'QuinnAI is er ' + (bestScore === 3 ? '99' : '87') + '% zeker van. Bronnen: 0.';
+  }
+
+  /* WCAG 2.2.2: de knipperende stip in de ticker en de cursor kunnen gepauzeerd worden */
   var knop = document.getElementById('ticker-pauze');
   knop.addEventListener('click', function(){
     var aan = knop.getAttribute('aria-pressed') !== 'true';
@@ -80,6 +158,7 @@ h1.nf-h{font-size:clamp(26px,6vw,38px);line-height:1.05;margin-top:6px}
     knop.setAttribute('aria-label', aan ? 'Berichtenbalk hervatten' : 'Berichtenbalk pauzeren');
     document.body.classList.toggle('pauzeer-animaties', aan);
   });
+  var jaar = document.getElementById('year'); if(jaar) jaar.textContent = new Date().getFullYear();
 })();
 </script>
 </body>
