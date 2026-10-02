@@ -12,9 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Syntax engine.js en test.js
+      - name: Syntax engine, ui.js en test.js
         run: |
-          node --check assets/js/engine.js
+          for f in assets/js/engine/*.js; do node --check "$f"; done
           node --check assets/js/ui.js
           node --check tools/test.js
       - name: Repo-controles (inline scripts, lokale bestanden, engine-versie)

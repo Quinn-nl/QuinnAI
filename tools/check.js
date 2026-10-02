@@ -18,6 +18,7 @@ const vm = require('vm');
 const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..');
+const ENGINE = require('./engine-files.js');
 const SITE = 'https://quinnai.tech/';
 const FIX = process.argv.includes('--fix');
 const PAGINAS = ['index.html', '404.html'].filter(f => fs.existsSync(path.join(ROOT, f)));
@@ -35,7 +36,7 @@ for(const pagina of PAGINAS){
   });
   if(scripts.length) goed(pagina + ': ' + scripts.length + ' inline script(s) syntactisch in orde');
 }
-for(const js of ['assets/js/engine.js', 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/bsod.js', 'assets/js/404.js']){
+for(const js of [...ENGINE, 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/bsod.js', 'assets/js/404.js']){
   try{ new vm.Script(fs.readFileSync(path.join(ROOT, js), 'utf8'), { filename: js }); goed(js + ': syntax in orde'); }
   catch(e){ fout(js + ': ' + e.message); }
 }
@@ -69,7 +70,7 @@ for(const pagina of PAGINAS){
 
 /* 3. cachebuster: elk eigen css/js-bestand krijgt ?v=<eerste 8 tekens sha1, CRLF genormaliseerd> */
 const ASSETS = {
-  'index.html': ['assets/css/style.css', 'assets/js/engine.js', 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/bsod.js'],
+  'index.html': ['assets/css/style.css', ...ENGINE, 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/bsod.js'],
   '404.html':   ['assets/css/style.css', 'assets/css/404.css', 'assets/js/proof.js', 'assets/js/404.js']
 };
 const hashVan = rel => crypto.createHash('sha1')
@@ -93,12 +94,21 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
   }
 }
 
-/* 3b. grootte-budget voor de engine (geen build-stap: alles wordt ongeminificeerd geladen) */
+/* 3b. grootte-budget voor de engine (geen build-stap: alles wordt ongeminificeerd geladen) + laadvolgorde in index.html */
 {
-  const kb = fs.statSync(path.join(ROOT, 'assets/js/engine.js')).size / 1024;
-  const BUDGET_KB = 200;
-  if(kb > BUDGET_KB) fout('engine.js is ' + kb.toFixed(0) + ' KB, budget is ' + BUDGET_KB + ' KB');
-  else goed('engine.js: ' + kb.toFixed(0) + ' KB (budget ' + BUDGET_KB + ' KB)');
+  const BUDGET_BESTAND_KB = 80, BUDGET_TOTAAL_KB = 200;
+  let totaal = 0;
+  for(const f of ENGINE){
+    const kb = fs.statSync(path.join(ROOT, f)).size / 1024;
+    totaal += kb;
+    if(kb > BUDGET_BESTAND_KB) fout(f + ' is ' + kb.toFixed(0) + ' KB, budget per bestand is ' + BUDGET_BESTAND_KB + ' KB');
+  }
+  if(totaal > BUDGET_TOTAAL_KB) fout('engine is samen ' + totaal.toFixed(0) + ' KB, budget is ' + BUDGET_TOTAAL_KB + ' KB');
+  else goed('engine: ' + ENGINE.length + ' bestanden, samen ' + totaal.toFixed(0) + ' KB (budget ' + BUDGET_TOTAAL_KB + ' KB)');
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const inHtml = [...html.matchAll(/<script[^>]*src="\/?(assets\/js\/engine\/[a-z]+\.js)/g)].map(m => m[1]);
+  if(inHtml.join() !== ENGINE.join()) fout('index.html laadt de engine-bestanden in een andere volgorde dan tools/engine-files.js: ' + inHtml.join(', '));
+  else goed('index.html laadt de engine-bestanden in de juiste volgorde');
 }
 
 /* 4. contrast (WCAG 1.4.3 tekst 4,5:1 / 1.4.11 niet-tekst 3:1), berekend met relatieve luminantie

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 /* ============================================================
-   QUINNAI — TESTSUITE VOOR engine.js
+   QUINNAI — TESTSUITE VOOR de engine (assets/js/engine/*.js)
    Draai met: node tools/test.js
-   Geen dependencies, geen browser nodig: laadt engine.js in een
+   Geen dependencies, geen browser nodig: laadt de engine-bestanden in een
    losse VM-context (dus los van index.html) en test 'm daar.
    Exitcode 0 = alles groen, 1 = er faalt iets (handig voor CI).
    ============================================================ */
@@ -11,10 +11,10 @@ const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
 
-const ENGINE_PATH = path.join(__dirname, '..', 'assets', 'js', 'engine.js');
+const ENGINE_BESTANDEN = require('./engine-files.js').map(f => path.join(__dirname, '..', f));
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(ENGINE_PATH, 'utf8'), ctx, { filename: ENGINE_PATH });
+for(const f of ENGINE_BESTANDEN) vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: f });
 
 // Alles wat engine.js top-level declareert is zichtbaar in ctx; we lichten
 // er hier uit wat de tests nodig hebben (zelfde manier waarop index.html
@@ -420,7 +420,7 @@ resetEngine(); zetToon(78); zetModel(0);
 }
 
 sectie('C — weekdag niet hardcoded');
-const engineBron = fs.readFileSync(ENGINE_PATH, 'utf8');
+const engineBron = ENGINE_BESTANDEN.map(f => fs.readFileSync(f, 'utf8')).join('\n');
 eq('geen hardcoded weekdag in het levensantwoord', /het is nu al (maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)/.test(engineBron), false);
 resetEngine(); zetModel(0); zetToon(78);
 const vandaagDag = new Date().toLocaleDateString('nl-NL', { weekday: 'long' });
