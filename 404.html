@@ -16,6 +16,8 @@
   --paper:#ffffff;
   --muted:#b0becd;
   --butter:#f5c451;
+  --mint:#77d8ae;
+  --card:#0f1822;
   --line:rgba(255,255,255,.35);
 }
 *{box-sizing:border-box}
@@ -29,7 +31,11 @@ body{
   padding-bottom:max(24px,env(safe-area-inset-bottom,0px));
   background-image:radial-gradient(900px 520px at 78% -8%, rgba(245,196,81,.10), transparent 62%);
 }
-main{max-width:560px;text-align:center}
+body{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;place-items:center}
+header{justify-self:stretch;max-width:1000px;width:100%;margin:0 auto;align-self:start}
+.brand{display:inline-flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;font-size:19px;letter-spacing:-.03em;color:var(--paper);text-decoration:none}
+.mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,var(--butter),#e08a3c);display:grid;place-items:center;color:#2a1a04;font-size:14px;font-weight:800;flex:none}
+main{max-width:560px;text-align:center;width:100%}
 .code{
   font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;
   font-size:clamp(88px,26vw,168px);margin:0;color:var(--butter);
@@ -39,22 +45,38 @@ h1{
   font-size:clamp(26px,6vw,38px);margin:6px 0 0;
 }
 p{color:var(--muted);margin:18px 0 0;font-size:17px}
-#pad{color:var(--paper)}
+#pad{color:var(--paper);overflow-wrap:anywhere}
 .btn{
   display:inline-block;margin-top:28px;padding:11px 20px;border-radius:12px;border:0;
   background:var(--butter);color:#241802;font:inherit;font-weight:700;text-decoration:none;
 }
 .btn:hover{background:#ffd062}
+.pad{
+  display:block;max-width:100%;margin:26px auto 0;width:fit-content;padding:7px 14px;border:1px solid var(--line);border-radius:999px;
+  background:var(--card);font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.4;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pad b{font-weight:500;color:var(--mint)}
+.acties{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:30px}
+.acties .btn{margin-top:0;padding:13px 26px;font-size:17px}
+.alt{color:var(--muted);font-size:15px;text-underline-offset:4px}
+.alt:hover{color:var(--paper)}
 :focus-visible{outline:2px solid var(--butter);outline-offset:3px;border-radius:6px}
 .klein{font-size:13px;margin-top:34px;color:#9ba8b6}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
 </head>
 <body>
+<header><a class="brand" href="/"><span class="mark" aria-hidden="true">Q</span> QuinnAI</a></header>
 <main>
   <p class="code" aria-hidden="true">404</p>
   <h1>Deze pagina bestaat niet.</h1>
-  <p>QuinnAI heeft overal gezocht. Dat wil zeggen: op één plek, en daar stond niets. <span id="pad-zin" hidden>Het adres <span id="pad"></span> bestaat in elk geval niet, maar Quinn zou het &ldquo;zo even opzoeken&rdquo;.</span></p>
-  <a class="btn" href="/">Terug naar de chat</a>
+  <p>QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het &ldquo;zo even opzoekt&rdquo;.</p>
+  <code class="pad" id="pad-regel" hidden><b>GET</b> <span id="pad"></span> &rarr; 404</code>
+  <div class="acties">
+    <a class="btn" href="/">Terug naar de chat</a>
+    <a class="alt" href="/#prijzen">of bekijk de prijzen (Capitalism)</a>
+  </div>
   <p class="klein">Zekerheid: 99%. Bronnen: 0.</p>
 </main>
 <script>
@@ -62,8 +84,8 @@ p{color:var(--muted);margin:18px 0 0;font-size:17px}
   try{
     var p = decodeURIComponent(location.pathname + location.search);
     if(p && p !== '/'){
-      document.getElementById('pad').textContent = p.length > 60 ? p.slice(0, 57) + '…' : p;
-      document.getElementById('pad-zin').hidden = false;
+      document.getElementById('pad').textContent = p;
+      document.getElementById('pad-regel').hidden = false;
     }
   }catch(e){ /* kapotte URL-codering: dan maar zonder pad */ }
 })();
