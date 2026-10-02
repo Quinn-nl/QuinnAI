@@ -147,59 +147,142 @@
     naarBeneden();
   }
 
+  function zetStemming(){
+    const el = $('#mood');
+    if(el && typeof huidigeStemming === 'function') el.textContent = huidigeStemming();
+  }
+
+
+  /* Zelfcorrectie: typ het antwoord met een verkeerde laatste zin, wis die, en typ "Oeps, ik bedoelde: ...".
+     Alleen met animaties aan; de schermlezer krijgt alleen de eindtekst (typ() verbergt tijdens het typen). */
+  function typMetCorrectie(el, antwoord, corr, klaar){
+    const zinnen = antwoord.split(/(?<=[.!?])\s+/).filter(Boolean);
+    if(zinnen.length < 2){ typ(el, antwoord, klaar); return; }
+    const staart = zinnen.pop();
+    const kop = zinnen.join(' ');
+    const fout = ' ' + corr.fout;
+    const eind = kop + ' ' + corr.tussen + ' ' + staart;
+    el.setAttribute('aria-hidden', 'true');
+    el.textContent = '';
+    const caret = document.createElement('span'); caret.className = 'caret'; el.appendChild(caret);
+    const tn = document.createTextNode('');           // één tekstknoop: makkelijk wissen
+    el.insertBefore(tn, caret);
+    let i = 0, fase = 'kop', tekst = kop + fout;
+    const stap = () => {
+      if(beweegMinder()){ caret.remove(); el.textContent = eind; el.removeAttribute('aria-hidden'); announce(eind); klaar && klaar(); return; }
+      if(fase === 'kop' || fase === 'staart'){
+        if(i < tekst.length){
+          const brok = tekst.slice(i, i + (Math.random() > 0.8 ? 2 : 1));
+          tn.nodeValue += brok; i += brok.length;
+          if(/\S/.test(brok) && i % 2 === 0) speelTik();
+          if(i % 8 === 0) naarBeneden();
+          setTimeout(stap, 14 + Math.random()*22); return;
+        }
+        if(fase === 'kop'){ fase = 'pauze'; setTimeout(stap, 650); return; }
+        caret.remove(); el.removeAttribute('aria-hidden'); announce(eind); klaar && klaar(); return;
+      }
+      if(fase === 'pauze'){ fase = 'wis'; stap(); return; }
+      // fase 'wis': de foute zin letter voor letter terugdraaien
+      if(tn.nodeValue.length > kop.length){
+        tn.nodeValue = tn.nodeValue.slice(0, Math.max(kop.length, tn.nodeValue.length - 3));
+        setTimeout(stap, 12); return;
+      }
+      fase = 'staart'; i = 0; tekst = ' ' + corr.tussen + ' ' + staart; setTimeout(stap, 380);
+    };
+    stap();
+  }
+
+  /* Metabalk onder een antwoord: zekerheid, tokens, hallucinatie, bronnen (verzonnen), opnieuw, kopieer. */
+  let bronId = 0;
+  function bouwMetaBalk(bubble, vraag, antwoord, meta0){
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const zekerheid = meta0 && meta0.zekerheid != null ? meta0.zekerheid
+      : Math.min(99, 28 + Math.min(vraag.length, 42) + (/\?/.test(vraag) ? 12 : 0) + Math.floor(Math.random()*18));
+    const tokens = Math.max(8, Math.round(antwoord.split(/\s+/).length * 1.3));
+    const maak = (tekst) => { const s = document.createElement('span'); s.textContent = tekst; return s; };
+    meta.appendChild(maak('zekerheid ' + zekerheid + '%'));
+    meta.appendChild(maak(tokens + ' tokens'));
+    if(meta0 && meta0.hallucinatie != null) meta.appendChild(maak('hallucinatie ' + meta0.hallucinatie + '%'));
+    meta.appendChild(maak('0 bronnen'));
+    let bronnenLijst = null;
+    if(meta0 && meta0.bronnen && meta0.bronnen.length){
+      const id = 'bronnen-' + (++bronId);
+      const knop = document.createElement('button');
+      knop.type = 'button'; knop.textContent = 'Toon bronnen';
+      knop.setAttribute('aria-expanded', 'false'); knop.setAttribute('aria-controls', id);
+      bronnenLijst = document.createElement('ul');
+      bronnenLijst.className = 'bronnen'; bronnenLijst.id = id; bronnenLijst.hidden = true;
+      const kop = document.createElement('li'); kop.className = 'bronnen-kop';
+      kop.textContent = 'Geraadpleegd: 0. Verzonnen: ' + meta0.bronnen.length + '.';
+      bronnenLijst.appendChild(kop);
+      meta0.bronnen.forEach(b => { const li = document.createElement('li'); li.textContent = b.naam + ' (zekerheid ' + b.zekerheid + '%)'; bronnenLijst.appendChild(li); });
+      knop.onclick = () => {
+        const open = knop.getAttribute('aria-expanded') === 'true';
+        knop.setAttribute('aria-expanded', String(!open));
+        knop.textContent = open ? 'Toon bronnen' : 'Verberg bronnen';
+        bronnenLijst.hidden = open;
+        naarBeneden();
+      };
+      meta.appendChild(knop);
+    }
+    const opnieuw = document.createElement('button');
+    opnieuw.textContent = 'Probeer opnieuw';
+    opnieuw.onclick = () => {
+      if(bezig) return;
+      meta.remove(); if(bronnenLijst) bronnenLijst.remove();
+      bezig = true;
+      // andere formulering afdwingen door de vraag minimaal te variëren
+      const alt = bedenkAntwoord(vraag, { opnieuw: true });
+      typ(bubble, alt, () => { bezig = false; bubble.appendChild(meta); if(bronnenLijst){ bronnenLijst.hidden = true; bubble.appendChild(bronnenLijst); } });
+    };
+    meta.appendChild(opnieuw);
+    const kopieer = document.createElement('button');
+    kopieer.textContent = 'Kopieer';
+    kopieer.onclick = () => {
+      const tekst = bubble.textContent.replace(meta.textContent, '').replace(bronnenLijst ? bronnenLijst.textContent : '', '').trim();
+      navigator.clipboard?.writeText(tekst).then(
+        () => { kopieer.textContent = 'Gekopieerd'; setTimeout(() => kopieer.textContent = 'Kopieer', 1600); },
+        () => { kopieer.textContent = 'Lukt niet'; }
+      );
+    };
+    meta.appendChild(kopieer);
+    bubble.appendChild(meta);
+    if(bronnenLijst) bubble.appendChild(bronnenLijst);
+    naarBeneden();
+    bezig = false;
+  }
+
   function aiBericht(vraag){
     const bubble = rij('ai','Q');
     bubble.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
     naarBeneden();
     const antwoord = bedenkAntwoord(vraag);
+    zetStemming();
     if(isErnstig()){ veiligBericht(bubble, antwoord); return; }
+    const meta0 = (typeof laatsteMeta === 'function' && laatsteMeta()) || null;
     const onderwerp = topicOf(vraag);
-    const stappen = DENKSTAPPEN
-      .slice()
-      .sort(() => Math.random() - .5)
-      .slice(0, 2 + Math.floor(Math.random()*2))
-      .map(s => s.replace('{t}', onderwerp));
+    // Denkstappen komen uit de engine (onderwerp-specifiek, stemming-afhankelijk); de oude lijst is de terugval.
+    const stappen = (meta0 && meta0.denkstappen && meta0.denkstappen.length)
+      ? meta0.denkstappen
+      : DENKSTAPPEN.slice().sort(() => Math.random() - .5).slice(0, 2 + Math.floor(Math.random()*2)).map(s => s.replace('{t}', () => onderwerp));
 
     let n = 0;
+    const toonStap = tekst => {
+      bubble.textContent = '';
+      const s = document.createElement('span'); s.className = 'think'; s.textContent = tekst + '…';
+      bubble.appendChild(s);
+    };
     const denk = () => {
       if(n < stappen.length){
-        bubble.innerHTML = '<span class="think">' + stappen[n] + '…</span>';
+        toonStap(stappen[n]);
         n++;
         setTimeout(denk, 320 + Math.random()*340);
       } else {
-        bubble.innerHTML = '';
-        typ(bubble, antwoord, () => {
-          const meta = document.createElement('div');
-          meta.className = 'meta';
-          const zekerheid = Math.min(99, 28 + Math.min(vraag.length, 42) +
-            (/\?/.test(vraag) ? 12 : 0) + Math.floor(Math.random()*18));
-          meta.innerHTML = '<span>zekerheid ' + zekerheid + '%</span><span>' +
-            (8 + Math.floor(Math.random()*90)) + ' tokens</span><span>0 bronnen</span>';
-          const opnieuw = document.createElement('button');
-          opnieuw.textContent = 'Probeer opnieuw';
-          opnieuw.onclick = () => {
-            if(bezig) return;
-            meta.remove();
-            bezig = true;
-            // andere formulering afdwingen door de vraag minimaal te variëren
-            const alt = bedenkAntwoord(vraag, { opnieuw: true });
-            typ(bubble, alt, () => { bezig = false; bubble.appendChild(meta); });
-          };
-          meta.appendChild(opnieuw);
-          const kopieer = document.createElement('button');
-          kopieer.textContent = 'Kopieer';
-          kopieer.onclick = () => {
-            const tekst = bubble.textContent.replace(meta.textContent, '').trim();
-            navigator.clipboard?.writeText(tekst).then(
-              () => { kopieer.textContent = 'Gekopieerd'; setTimeout(() => kopieer.textContent = 'Kopieer', 1600); },
-              () => { kopieer.textContent = 'Lukt niet'; }
-            );
-          };
-          meta.appendChild(kopieer);
-          bubble.appendChild(meta);
-          naarBeneden();
-          bezig = false;
-        });
+        bubble.textContent = '';
+        const klaarMetMeta = () => bouwMetaBalk(bubble, vraag, antwoord, meta0);
+        if(meta0 && meta0.correctie && !beweegMinder()) typMetCorrectie(bubble, antwoord, meta0.correctie, klaarMetMeta);
+        else typ(bubble, antwoord, klaarMetMeta);
       }
     };
     setTimeout(denk, 260);
@@ -266,6 +349,7 @@
 
   $('#vergeet-btn').addEventListener('click', () => {
     resetEngine();
+    zetStemming();
     gehallucineerd = null;
     ververProfiel();
     teller = 0;

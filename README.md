@@ -20,6 +20,7 @@ Dit project heeft geen backend, geen server en geen internetverbinding nodig na 
 * `assets/js/engine.js` is de nep-AI zelf: zinsontleding, voornaamwoord-omdraaiing, werkwoordvervoeging, gespreksgeheugen en een hoop sjablonen. Wordt vóór `ui.js` geladen.
 * `assets/js/ui.js` is de UI-laag (chat, profielkaart, knoppen).
 * `assets/js/arcade.js` (spotlight, tilt, chat-glow, flits) en `assets/js/bsod.js` (Do Not Click) zijn de effecten-laag.
+* `docs/engine.md` beschrijft de engine (lagen, harde regels, hoe je een onderwerp toevoegt).
 * `assets/js/proof.js` meet live wat de pagina zelf doet (externe verzoeken, cookies, opgeslagen bytes) en toont dat.
 * `assets/css/404.css` en `assets/js/404.js` horen bij de foutpagina (geen inline code, vanwege de CSP).
 * `assets/fonts/` bevat de zelf gehoste lettertypen (woff2, latin-subset, OFL-licentie), zodat de pagina geen verbinding met Google Fonts maakt.

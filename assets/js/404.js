@@ -11,7 +11,7 @@
   var regels = [
     'QuinnAI heeft gezocht, op één plek. Daar stond niets. Quinn zegt dat hij het “zo even opzoekt”.',
     'Deze pagina is net zo echt als de bronnen van QuinnAI.',
-    'Quinn zegt dat hij het zo even opzoekt. Dat zegt hij al sinds 2019.',
+    'Quinn zegt dat hij het zo even opzoekt. Dat zegt hij vaker.',
     'QuinnAI heeft deze pagina nooit gezien, maar is er wel 99% zeker van dat hij bestaat.',
     'Waarschijnlijk is dit de schuld van de groepsapp.',
     'Hier stond ooit iets. Of nooit. QuinnAI weet het niet meer.'
