@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 — QuinnAI heeft dit niet gevonden</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Deze pagina bestaat niet. QuinnAI heeft gezocht, maar vooral naar een reden om op te geven.">
+<meta name="theme-color" content="#0a1017">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+<style>
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-weight:200 800;font-display:swap;src:url(/fonts/bricolage-grotesque-latin-opsz-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:400 900;font-display:swap;src:url(/fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{
+  --ink:#0a1017;
+  --paper:#ffffff;
+  --muted:#b0becd;
+  --butter:#f5c451;
+  --line:rgba(255,255,255,.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--ink);color:var(--paper);
+  font-family:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  display:grid;place-items:center;padding:24px;
+  padding-top:max(24px,env(safe-area-inset-top,0px));
+  padding-bottom:max(24px,env(safe-area-inset-bottom,0px));
+  background-image:radial-gradient(900px 520px at 78% -8%, rgba(245,196,81,.10), transparent 62%);
+}
+main{max-width:560px;text-align:center}
+.code{
+  font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.04em;line-height:1;
+  font-size:clamp(88px,26vw,168px);margin:0;color:var(--butter);
+}
+h1{
+  font-family:'Bricolage Grotesque',Georgia,serif;font-weight:800;letter-spacing:-.025em;line-height:1.05;
+  font-size:clamp(26px,6vw,38px);margin:6px 0 0;
+}
+p{color:var(--muted);margin:18px 0 0;font-size:17px}
+#pad{color:var(--paper)}
+.btn{
+  display:inline-block;margin-top:28px;padding:11px 20px;border-radius:12px;border:0;
+  background:var(--butter);color:#241802;font:inherit;font-weight:700;text-decoration:none;
+}
+.btn:hover{background:#ffd062}
+:focus-visible{outline:2px solid var(--butter);outline-offset:3px;border-radius:6px}
+.klein{font-size:13px;margin-top:34px;color:#9ba8b6}
+</style>
+</head>
+<body>
+<main>
+  <p class="code" aria-hidden="true">404</p>
+  <h1>Deze pagina bestaat niet.</h1>
+  <p>QuinnAI heeft overal gezocht. Dat wil zeggen: op één plek, en daar stond niets. <span id="pad-zin" hidden>Het adres <span id="pad"></span> bestaat in elk geval niet, maar Quinn zou het &ldquo;zo even opzoeken&rdquo;.</span></p>
+  <a class="btn" href="/">Terug naar de chat</a>
+  <p class="klein">Zekerheid: 99%. Bronnen: 0.</p>
+</main>
+<script>
+(function(){
+  try{
+    var p = decodeURIComponent(location.pathname + location.search);
+    if(p && p !== '/'){
+      document.getElementById('pad').textContent = p.length > 60 ? p.slice(0, 57) + '…' : p;
+      document.getElementById('pad-zin').hidden = false;
+    }
+  }catch(e){ /* kapotte URL-codering: dan maar zonder pad */ }
+})();
+</script>
+</body>
+</html>
