@@ -245,7 +245,7 @@
   .chat-top .right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .slider-wrap{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
   input[type=range]{height:24px;width:88px;accent-color:var(--lime);cursor:pointer}
-  .log{padding:22px 20px;min-height:300px;height:auto;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;background:repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px),radial-gradient(500px 220px at 50% 0,rgba(198,255,61,.05),transparent 70%);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+  .log{padding:22px 20px;height:clamp(300px,52vh,460px);overflow-y:auto;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;background:repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px),radial-gradient(500px 220px at 50% 0,rgba(198,255,61,.05),transparent 70%);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
   .log::-webkit-scrollbar{width:9px}
   .log::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:9px}
   .row{display:flex;gap:13px;align-items:flex-start;max-width:100%;animation:message-in .28s ease both}
@@ -352,6 +352,8 @@
   @media (min-width:761px){.tier.best{--ty:-14px}.tier.best:hover{--ty:-18px}}
   .price{font-family:var(--font-display);font-weight:400;font-size:clamp(24px,2.6vw,30px);letter-spacing:-.01em}
   .price small{font-family:'Schibsted Grotesk',sans-serif;font-size:14px;font-weight:400;color:var(--muted)}
+  .price-lang{font-size:clamp(17px,1.9vw,21px);line-height:1.25}
+  .price-lang small{display:block;margin-top:6px}
   .tier-lede{font-size:14.5px}
   .tier ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;font-size:14.5px;flex:1}
   .tier li{display:flex;gap:10px;color:var(--text-soft)}

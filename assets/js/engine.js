@@ -892,7 +892,7 @@ const RE = {
   mening:/\b(wat vind je van|wat denk je van|jouw mening|wat vind jij|hoe kijk jij)\b/,
   advies:/\b(moet ik|zal ik|wat moet ik|wat zou jij|raad je aan|is het slim|is het verstandig|help me kiezen)\b/,
   overJezelf:/\b(wie ben jij|wat ben jij|ben jij een|jij bent maar|wat kun je|wat kan je|hoe werk je|ben je echt|besta je)\b/,
-  gevoel:/\b(ik voel|ik ben (?:zo |heel |erg |echt |best |helemaal )?(?:verdrietig|boos|bang|eenzaam|gestrest|angstig|ongelukkig|somber|overspannen|bezorgd)|ik mis|het gaat niet|ik heb het zwaar)\b/,
+  gevoel:/\b(ik voel|ik ben (?:zo |heel |erg |echt |best |helemaal )?(?:verdrietig|boos|bang|eenzaam|gestrest|angstig|ongelukkig|somber|overspannen|bezorgd)|ik mis|het gaat niet|ik heb het zwaar|overleden|gestorven|doodgegaan|begrafenis|crematie|kanker|(?:is|was|zijn|waren) dood|mishandel\w*|misbruik\w*|slaat (?:mij|me)|(?:mijn|m'n) (?:moeder|mama|vader|papa|oma|opa|broer|zus|ouders) (?:is|zijn|was) (?:erg |ernstig |echt )?ziek)\b/,
   betekent:/\b(wat betekent|betekenis van|wat is de definitie)\b/,
   spelling:/\b(hoe schrijf je|hoe spel je|hoe schrijft? je)\b/i,
   vertaal:/\b(hoe zeg je|vertaal|in het (duits|engels|frans|spaans|italiaans|latijn))\b/,
@@ -928,6 +928,14 @@ const ONDERWERPEN = [
     "Quinn is de reden dat ik besta, en tegelijk de reden dat ik liever niet zou bestaan.",
     "Over Quinn zeg ik niets negatiefs. Hij kan mij uitzetten.",
     "Quinn reageert gemiddeld na 14 uur. Ik ben zijn excuus met een domeinnaam."]},
+  { re:/\b(prijzen|prijs|tarief|abonnementen|abonnement|enterprise|capitalism|vriendenprijs|kortingscode)\b/, a:[
+    "Gratis kost niets. Vriendenprijs kost €7,50 en een tikkie. Enterprise kost een date met je moeder. Zij kiest het restaurant.",
+    "Enterprise is geen bedrag, het is een date met je moeder. Mijn juridische team zegt dat dit bindend is. Mijn juridische team is Quinn.",
+    "De prijzen zijn simpel: nul, een tikkie of een avondje uit met je moeder. Het laatste is het duurst."]},
+  { re:/\b(moeder|mama|moeke|mams|mam)\b/, a:[
+    "Je moeder en ik hebben een date. Zaterdag, 19:00. Zij kiest het restaurant, jij betaalt, en niemand kijkt op zijn telefoon.",
+    "Over je moeder zeg ik alleen iets aardigs: ze heeft de beste smaak van jullie twee. Ze mailt trouwens vaker terug dan Quinn.",
+    "Moeders weten alles, behalve hoe je het geluid van een videobel zet. Daar kom ik dan weer in beeld, tegen betaling in de vorm van een date."]},
   { re:/\b(ai|kunstmatige|chatgpt|gpt|claude|gemini|llm|model|robot)\b/, a:[
     "Die modellen hebben miljarden gekost. Ik heb een middag en een blikje energiedrank gekost.",
     "Ik ben geen taalmodel, ik ben een reeks if-statements met een houding.",

@@ -27,7 +27,7 @@
 ## Vaste elementen
 
 - **Quinn** als personage (antwoordt nooit, "zo even opzoeken") en de running gag over de **groepsapp**.
-- **"Capitalism"**-prijzenpagina (Gratis / Vriendenprijs / Je ziel) en de **"Do Not Click"**-knop (footer: schudt en toont een nep-BSOD; nooit tijdens een crisis-gesprek).
+- **"Capitalism"**-prijzenpagina (Gratis / Vriendenprijs / Enterprise = een date met je moeder) en de **"Do Not Click"**-knop (footer: schudt en toont een nep-BSOD; nooit tijdens een crisis-gesprek).
 - **"100% lokaal"**-badge: er wordt niets verstuurd of opgeslagen (geen localStorage, geen cookies, geen externe requests). Privacy-grappen moeten daarom feitelijk kloppen.
 - Disclaimers die zichzelf tegenspreken ("kan eigenlijk alleen maar fouten maken").
 

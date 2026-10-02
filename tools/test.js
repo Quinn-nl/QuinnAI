@@ -263,6 +263,12 @@ resetEngine();
 match('tentamenweek', A('het is weer tentamenweek en ik ben nog niet begonnen'), /tentamen|herkansing|leren/i);
 resetEngine();
 match('dating app', A('ik heb een match op tinder'), /swipen|match|ghost/i);
+resetEngine();
+match('enterprise-prijs', A('wat kost het enterprise abonnement'), /date|moeder/i);
+resetEngine();
+match('prijzen', A('wat zijn de prijzen'), /date|moeder|tikkie|gratis/i);
+resetEngine();
+match('moeder', A('mijn moeder belt de hele tijd'), /moeder|date|restaurant/i);
 
 sectie('B3 — callback op eerder verteld feit');
 resetEngine(); zetToon(78); zetModel(0);
@@ -401,7 +407,7 @@ const ZACHT_PATROON = /Fijn dat je het even kwijt|Neem je tijd|het mag ook verve
 const SNEER_PATROON = /Caps lock|bloeddruk|HARDER PRATEN|sollicitatiebrief|Dit vroeg je net|Herhalen maakt|We hebben dit gehad|sarcastisch|met minder warmte|niet doorvertelt/;
 for(const [toon, model] of [[100,0],[78,0],[5,0],[5,2]]){
   resetEngine(); zetToon(toon); zetModel(model);
-  for(const z of ['IK BEN ZO BANG','ik voel me alleen','ik voel me alleen','ik ben zo eenzaam','ik heb het zwaar']){
+  for(const z of ['IK BEN ZO BANG','ik voel me alleen','ik voel me alleen','ik ben zo eenzaam','ik heb het zwaar','mijn moeder is overleden','mijn mama is dood','mijn moeder is ziek','mijn moeder slaat mij']){
     const r = A(z);
     match('gevoel zacht (toon ' + toon + ', model ' + model + '): ' + z, r, ZACHT_PATROON);
     geenMatch('gevoel zonder sneer (toon ' + toon + ', model ' + model + '): ' + z, r, SNEER_PATROON);
