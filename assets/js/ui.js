@@ -553,7 +553,7 @@ function pasModelToe(){
     ki = (e.key === KONAMI[ki]) ? ki+1 : 0;
     if(ki === KONAMI.length){
       ki = 0;
-      document.documentElement.style.setProperty('--butter','#ff7d6b');
+      document.documentElement.style.setProperty('--lime','#ff7d6b');
       $('#ticker-text').textContent = "Godmodus actief. Er verandert niets, maar het is nu oranje.";
       const x = rij('ai','Q');
       typ(x, "Je hebt de Konami-code ingetypt op een nepwebsite. Ik weet niet of ik onder de indruk ben of bezorgd.");
