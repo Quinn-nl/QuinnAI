@@ -342,7 +342,7 @@ zetToon(78);
 sectie('C3 — lichte typo-normalisatie');
 resetEngine(); zetModel(0); zetToon(78);
 eq('afkorting wordt herkend voor "even"', normaliseer('kun je dat ff doen'), normaliseer('kun je dat even doen'));
-match('afkorting in echte zin verandert herkenning', A('ik ga wrs naar de kroeg'), /kroeg|bier|pilsener|drank/i);
+match('afkorting in echte zin verandert herkenning', A('ik ga wrs naar de kroeg'), /kroeg|bier|pilsener|drank|water tussendoor|kater|borrel/i);
 
 
 /* ------------------------------------------------------------ */
@@ -685,6 +685,61 @@ sectie('v6 — crisis en gevoel: GEEN persoonlijkheids-extra\'s');
   }
   zetToon(78); zetModel(0); resetEngine();
 }
+
+/* ============================================================
+   FASE 3 — inhoud (v6): onderwerpen, kalender
+   ============================================================ */
+const K6 = vm.runInContext("({kalenderRegels,paasdatum,KALENDER_TEKST,ONDERWERPEN})", ctx);
+
+sectie('v6 — nieuwe onderwerpen: kwaliteit en herkenning');
+{
+  const lijst = K6.ONDERWERPEN;
+  console.log('  onderwerpen in totaal: ' + lijst.length);
+  eq('minstens 80 onderwerpen', lijst.length >= 80, true);
+  const TOEGESTAAN = /\{(dag|t|t2|c|C|cap|T|woorden|getal|tijd|x|X)\}/g;
+  let fouten = 0;
+  lijst.forEach((o, i) => {
+    const alle = [...o.a, ...(o.d || [])];
+    if(o.a.length < 3){ fouten++; console.log('  te weinig antwoorden bij', i); }
+    if(i >= 31 && o.a.length < 5){ fouten++; console.log('  nieuw onderwerp met < 5 antwoorden', i); }
+    if(new Set(o.a).size !== o.a.length){ fouten++; console.log('  dubbele antwoorden bij', i); }
+    for(const a of alle){
+      const kaal = a.replace(TOEGESTAAN, '');
+      if(/[{}]/.test(kaal)){ fouten++; console.log('  kale accolade:', a); }
+      if(a.length > 300 || a.length < 12){ fouten++; console.log('  lengte-afwijking:', a); }
+      if(!/[.!?’'"]$/.test(a)){ fouten++; console.log('  eindigt niet op leesteken:', a); }
+    }
+  });
+  eq('geen kwaliteitsfouten in de antwoordlijsten', fouten, 0);
+  // elk nieuw onderwerp is te triggeren met zijn eerste enkelvoudige sleutelwoord
+  let gemist = 0;
+  lijst.forEach((o, i) => {
+    if(i < 31) return;
+    const w = (o.re.source.match(/\(([^()]+)\)/) || [,''])[1].replace(/^\?:/, '').split('|').find(x => /^[a-z]{4,}$/.test(x));
+    if(!w) return;
+    const k = V6.kiesOnderwerpen('even iets over ' + w, normaliseer('even iets over ' + w));
+    if(!k.some(c => c.i === i)){ gemist++; console.log('  niet te triggeren:', i, w); }
+  });
+  eq('elk nieuw onderwerp is te triggeren', gemist, 0);
+}
+resetEngine(); zetToon(78); zetModel(0);
+match('koffie', A('ik heb echt koffie nodig'), /koffie|cafe|kop|thee|ochtend/i);
+resetEngine(); match('belasting', A('ik moet nog mijn belastingaangifte doen'), /belasting|aangifte|btw|toeslag|formulier/i);
+resetEngine(); match('wifi', A('de wifi doet het weer niet'), /wifi|router|internet|verbinding|buffer/i);
+resetEngine(); match('sinterklaas', A('het is bijna sinterklaas hier'), /sinterklaas|feestdag|gedicht|surprise|kerst|gezellig|oliebol|cadeau|jaar/i);
+
+sectie('v6 — kalender');
+eq('Sinterklaas op 5 december', K6.kalenderRegels(new Date(2026, 11, 5)).some(x => /Sinterklaas/.test(x)), true);
+eq('Kerst op 25 december', K6.kalenderRegels(new Date(2026, 11, 25)).some(x => /kerst/i.test(x)), true);
+eq('Oud en nieuw op 31 december', K6.kalenderRegels(new Date(2026, 11, 31)).some(x => /voornemens|nieuwe jaar/.test(x)), true);
+eq('Koningsdag op 27 april', K6.kalenderRegels(new Date(2026, 3, 27)).some(x => /Koningsdag/.test(x)), true);
+eq('Valentijn op 14 februari', K6.kalenderRegels(new Date(2026, 1, 14)).some(x => /Valentijn/.test(x)), true);
+eq('Pasen 2026 = 5 april', K6.paasdatum(2026).getMonth() === 3 && K6.paasdatum(2026).getDate() === 5, true);
+eq('Pasen 2027 = 28 maart', K6.paasdatum(2027).getMonth() === 2 && K6.paasdatum(2027).getDate() === 28, true);
+eq('eerste paasdag levert een paasregel', K6.kalenderRegels(new Date(2026, 3, 5)).some(x => /Pasen/.test(x)), true);
+eq('gewone zomerdag: zomerregel', K6.kalenderRegels(new Date(2026, 6, 15)).some(x => /zomer/i.test(x)), true);
+eq('maandag krijgt een maandagregel', K6.kalenderRegels(new Date(2026, 9, 5)).some(x => /maandag/i.test(x)), true);
+eq('altijd minstens één regel (hele jaar)', Array.from({length: 366}, (_, i) => K6.kalenderRegels(new Date(2026, 0, 1 + i)).length).every(n => n > 0), true);
 
 /* ------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(40));
