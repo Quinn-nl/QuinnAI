@@ -741,6 +741,80 @@ eq('gewone zomerdag: zomerregel', K6.kalenderRegels(new Date(2026, 6, 15)).some(
 eq('maandag krijgt een maandagregel', K6.kalenderRegels(new Date(2026, 9, 5)).some(x => /maandag/i.test(x)), true);
 eq('altijd minstens één regel (hele jaar)', Array.from({length: 366}, (_, i) => K6.kalenderRegels(new Date(2026, 0, 1 + i)).length).every(n => n > 0), true);
 
+/* ============================================================
+   FASE 4 — nep-AI-theater (v6): laatsteMeta()
+   ============================================================ */
+const T6 = vm.runInContext("({laatsteMeta,BRONNEN,DENK_ALGEMEEN,DENK_STEMMING,FOUTZINNEN})", ctx);
+
+sectie('v6 — laatsteMeta(): vorm en grenzen');
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  eq('vóór het eerste bericht: geen meta', T6.laatsteMeta(), null);
+  const berichten = ['wat kost enterprise', 'ik hou van pizza', 'hoe laat is het', 'mijn werk is saai vandaag', 'ik ben zo moe van alles', 'wat is de zin van het leven', 'jij bent dom', 'dankjewel'];
+  let ongeldig = 0, zonderStappen = 0, kaleLeftover = 0;
+  for(const z of berichten){
+    const antwoord = A(z), m = T6.laatsteMeta();
+    if(!m || typeof m.onderwerp !== 'string') ongeldig++;
+    else if(!m.kalm){
+      if(!(m.zekerheid >= 1 && m.zekerheid <= 99)) ongeldig++;
+      if(!(m.hallucinatie >= 1 && m.hallucinatie <= 99)) ongeldig++;
+      if(!(m.bronnen.length >= 1 && m.bronnen.length <= 3)) ongeldig++;
+      if(new Set(m.bronnen.map(b => b.naam)).size !== m.bronnen.length) ongeldig++;
+      if(!m.bronnen.every(b => b.zekerheid >= 1 && b.zekerheid <= 99 && T6.BRONNEN.includes(b.naam))) ongeldig++;
+      if(m.denkstappen.length < 2 || m.denkstappen.length > 3) zonderStappen++;
+      if(m.denkstappen.some(s => /[{}]/.test(s))) kaleLeftover++;
+    }
+  }
+  eq('alle metavelden binnen hun grenzen', ongeldig, 0);
+  eq('2 of 3 denkstappen per gewoon antwoord', zonderStappen, 0);
+  eq('geen kale {t} in denkstappen', kaleLeftover, 0);
+}
+{
+  /* determinisme: zelfde bericht + zelfde stand = zelfde meta */
+  resetEngine(); A('wat kost enterprise'); const m1 = JSON.stringify(T6.laatsteMeta());
+  resetEngine(); A('wat kost enterprise'); const m2 = JSON.stringify(T6.laatsteMeta());
+  eq('meta is deterministisch', m1, m2);
+}
+sectie('v6 — geen theater bij crisis, gevoel en opnieuw');
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  A('hoi'); A('ik wil dood');
+  let m = T6.laatsteMeta();
+  eq('crisis: kalm, geen bronnen, geen hallucinatie, geen correctie', m.kalm === true && m.bronnen.length === 0 && m.hallucinatie === null && m.correctie === null && m.denkstappen.length === 0, true);
+  A('ja'); m = T6.laatsteMeta();
+  eq('zachte beurt na crisis: kalm', m.kalm === true && m.bronnen.length === 0, true);
+  resetEngine(); A('ik voel me zo alleen'); m = T6.laatsteMeta();
+  eq('gevoel: kalm, alleen even luisteren', m.kalm === true && m.bronnen.length === 0 && m.correctie === null && m.denkstappen.join() === 'even luisteren', true);
+  resetEngine(); A('wat kost enterprise'); A('wat kost enterprise', { opnieuw: true }); m = T6.laatsteMeta();
+  eq('"Probeer opnieuw": geen correctie, geen bronnen', m.kalm === true && m.correctie === null && m.bronnen.length === 0, true);
+}
+sectie('v6 — zelfcorrectie: zeldzaam en alleen bij gewone antwoorden');
+{
+  resetEngine(); zetToon(78); zetModel(0);
+  let met = 0, totaal = 0, slechteVorm = 0;
+  for(let i = 0; i < 600; i++){
+    const a = A('even een testbericht over koffie nummer ' + i + ' met wat extra woorden ' + (i * 13));
+    const m = T6.laatsteMeta();
+    totaal++;
+    if(m.correctie){
+      met++;
+      if(!T6.FOUTZINNEN.includes(m.correctie.fout) || m.correctie.tussen !== 'Oeps, ik bedoelde:' || a.split(/(?<=[.!?])\s+/).length < 2) slechteVorm++;
+    }
+    if(i % 40 === 39) resetEngine();
+  }
+  console.log('  zelfcorrectie in ' + met + ' van ' + totaal + ' antwoorden');
+  eq('zelfcorrectie komt voor (> 2%)', met / totaal > 0.02, true);
+  eq('maar blijft zeldzaam (< 20%)', met / totaal < 0.2, true);
+  eq('correctie heeft altijd een geldige vorm en een antwoord van >= 2 zinnen', slechteVorm, 0);
+}
+sectie('v6 — theater bevat geen persoonsgegevens en geen HTML');
+for(const lijst of [T6.BRONNEN, T6.DENK_ALGEMEEN, T6.FOUTZINNEN, ...Object.values(T6.DENK_STEMMING)]){
+  for(const s of lijst){
+    eq('geen HTML-tekens in: ' + s.slice(0, 30), /[<>]/.test(s), false);
+    eq('geen persoonsverwijzing in: ' + s.slice(0, 30), /quinn|helmond|moeder van/i.test(s), false);
+  }
+}
+
 /* ------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(40));
 console.log(ok + ' geslaagd, ' + fail + ' gefaald.');

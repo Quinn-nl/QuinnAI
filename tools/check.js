@@ -93,6 +93,14 @@ for(const [pagina, lijst] of Object.entries(ASSETS)){
   }
 }
 
+/* 3b. grootte-budget voor de engine (geen build-stap: alles wordt ongeminificeerd geladen) */
+{
+  const kb = fs.statSync(path.join(ROOT, 'assets/js/engine.js')).size / 1024;
+  const BUDGET_KB = 200;
+  if(kb > BUDGET_KB) fout('engine.js is ' + kb.toFixed(0) + ' KB, budget is ' + BUDGET_KB + ' KB');
+  else goed('engine.js: ' + kb.toFixed(0) + ' KB (budget ' + BUDGET_KB + ' KB)');
+}
+
 /* 4. contrast (WCAG 1.4.3 tekst 4,5:1 / 1.4.11 niet-tekst 3:1), berekend met relatieve luminantie
       op de échte achtergrond uit :root in style.css */
 {

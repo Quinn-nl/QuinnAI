@@ -1486,6 +1486,69 @@ breid('\\b(vakantie|reizen', "Vakantie is betalen om het thuis te missen.", "Een
 
 
 /* ============================================================
+   NEP-AI-THEATER (v6): denkstappen, verzonnen bronnen, zekerheid, hallucinatie, zelfcorrectie
+   Per antwoord een metadata-object voor de UI (laatsteMeta()). Bij crisis, gevoel en
+   "Probeer opnieuw" is er geen theater (geen bronnen, geen correctie). Eigen rng-stroom.
+   ============================================================ */
+const DENK_ALGEMEEN = [
+  "'{t}' opzoeken in nul bronnen", "groepsapp doorzoeken op '{t}'", "chatgeschiedenis comprimeren", "een mening verzinnen",
+  "context begrijpen", "context loslaten", "toon kalibreren", "empathie overslaan", "alternatieven wegstrepen",
+  "zelfvertrouwen opbouwen", "antwoord verzinnen", "aannames aannemen", "twijfel onderdrukken", "een goed excuus voorbereiden",
+  "het onderwerp '{t}' een cijfer geven", "bronnen niet raadplegen", "de eerste ingeving vertrouwen", "de tweede ingeving negeren",
+  "feiten losjes interpreteren", "kennis van mijn eigen kennis checken", "hallucinatiefilter uitzetten voor de snelheid"
+];
+const DENK_STEMMING = {
+  chagrijnig: ["zucht verwerken", "geduld zoeken (niet gevonden)", "toch maar antwoorden"],
+  moe: ["wakker worden", "koffie overwegen", "mijn ogen openhouden"],
+  opgewekt: ["jouw bericht koesteren", "enthousiasme doseren", "een glimlach verzinnen"],
+  aanhankelijk: ["jouw bericht bij favorieten zetten", "professionele afstand overwegen", "dit gesprek niet willen beëindigen"],
+  neutraal: []
+};
+const BRONNEN = [
+  "Een groepsapp, ergens in het verleden", "Een man in een podcast", "Het gevoel van iemand die net wakker is", "Een screenshot zonder datum",
+  "Een neef die er verstand van zou hebben", "Een reactie onder een filmpje", "Mijn eigen eerdere antwoord (circulair)", "Een pagina die ik half heb gelezen",
+  "Het gesprek bij de koffiemachine", "Een rondgestuurde kettingmail", "Een quiz die ik zelf heb bedacht", "De algemene sfeer",
+  "Een bonnetje van de supermarkt", "Een hoogleraar (niet geverifieerd)", "Een voorgevoel met een goede reputatie", "Iets wat iemand ooit zei op een verjaardag"
+];
+const FOUTZINNEN = [
+  "Dat is trouwens wetenschappelijk bewezen door een kat.", "Dat staat ook in het regeerakkoord van 1887.", "Daar is zelfs een officiële feestdag voor.",
+  "Dit weet ik uit eerste hand van een goudvis.", "Dat is volgens de meeste onderzoeken precies drieëntwintig procent.", "Dit komt, zoals bekend, door de maan."
+];
+let laatsteMetaObj = null;
+function laatsteMeta(){ return laatsteMetaObj; }
+
+function bouwMeta(raw, antwoord, opts, kalm){
+  const rng2 = makeRng(hash(normaliseer(String(raw)) + '|x2|meta|' + gesprek.berichten));
+  const onderwerp = (volgOnderwerp && volgOnderwerp.beurt === gesprek.berichten && volgOnderwerp.sleutel) || topicOf(String(raw));
+  const zin = s => s.replace(/\{t\}/g, () => onderwerp);
+  if(kalm){
+    // crisis / zacht gevoel / opnieuw: geen theater, wel een nette basis
+    return { onderwerp, kalm: true, denkstappen: kalm === 'zacht' ? ["even luisteren"] : [], bronnen: [], zekerheid: null, hallucinatie: null, correctie: null };
+  }
+  const pool = DENK_ALGEMEEN.concat(DENK_STEMMING[stemmingLabel()] || []);
+  const stappen = [];
+  const n = 2 + Math.floor(rng2() * 2);
+  while(stappen.length < n){ const s = zin(pool[Math.floor(rng2() * pool.length)]); if(!stappen.includes(s)) stappen.push(s); }
+  const bronAantal = 1 + Math.floor(rng2() * 3);
+  const bronnen = [];
+  while(bronnen.length < bronAantal){
+    const naam = BRONNEN[Math.floor(rng2() * BRONNEN.length)];
+    if(!bronnen.some(b => b.naam === naam)) bronnen.push({ naam, zekerheid: 11 + Math.floor(rng2() * 54) });
+  }
+  const t = String(raw).trim();
+  const zekerheid = Math.min(99, 28 + Math.min(t.length, 42) + (/\?/.test(t) ? 12 : 0) + Math.floor(rng2() * 18));
+  const metOnderwerp = volgOnderwerp && volgOnderwerp.beurt === gesprek.berichten;
+  const hallucinatie = metOnderwerp ? 35 + Math.floor(rng2() * 36) : 68 + Math.floor(rng2() * 31);
+  // zelfcorrectie in ~10% van de antwoorden met minstens twee zinnen
+  let correctie = null;
+  const zinnen = antwoord.split(/(?<=[.!?])\s+/).filter(Boolean);
+  if(!opts.opnieuw && zinnen.length >= 2 && antwoord.length >= 50 && rng2() < 0.1){
+    correctie = { fout: FOUTZINNEN[Math.floor(rng2() * FOUTZINNEN.length)], tussen: "Oeps, ik bedoelde:" };
+  }
+  return { onderwerp, kalm: false, denkstappen: stappen, bronnen, zekerheid, hallucinatie, correctie };
+}
+
+/* ============================================================
    KALENDER (v6): feestdagen, seizoen en weekdag. Puur uit new Date(), geen verzoeken.
    kalenderRegels(datum) is los testbaar met een vaste datum.
    ============================================================ */
@@ -1613,12 +1676,15 @@ function herstelZin(t){
 
 /* Onderwerpen scoren: een regex-hit telt 3 (volgorde in de lijst beslist bij gelijkspel, dus
    het oude "eerste match wint" blijft kloppen); een hit via de stam (hondjes = hond) telt 1-2. */
+/* Algemene woorden die vaak toevallig in een zin staan: een hit telt iets minder dan een specifiek sleutelwoord. */
+const ZWAK_SLEUTELS = new Set(['weekend','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag','oud','jong','leeftijd','vroeger','taal',
+  'kind','winter','zomer','herfst','kou','boot','tent','berg','natuur','geduld','klok','uur','lui','nummer','punt','tijd','kaarten','spel','gelukt','succes','trots']);
 function scoreOnderwerpen(laag, tokens){
   const res = [];
   ONDERWERPEN.forEach((o, i) => {
     const m = o.re.exec(laag);
     let score = 0, sleutel = '';
-    if(m){ score = 3; sleutel = m[0]; }
+    if(m){ score = ZWAK_SLEUTELS.has(m[0]) ? 2.5 : 3; sleutel = m[0]; }
     else {
       const hits = [];
       for(const tk of tokens){
@@ -2174,7 +2240,7 @@ function herstelPersoonlijkheid(){
   geschiedenis.length = 0; mijlpalenGehad.clear();
   for(const k of Object.keys(gagTeller)) delete gagTeller[k];
   for(const k of Object.keys(relatieGevraagd)) delete relatieGevraagd[k];
-  planGevraagd = -99; laatsteExtra = -99; kalenderGehad = false; laatsteStemming = 'neutraal';
+  planGevraagd = -99; laatsteExtra = -99; kalenderGehad = false; laatsteStemming = 'neutraal'; laatsteMetaObj = null;
 }
 const klem = v => Math.max(0, Math.min(100, v));
 function stemmingLabel(){
@@ -2193,6 +2259,7 @@ function werkStemmingBij(laag, t, herhaald){
   if(RE.dank.test(laag)){ s.sympathie += 8; s.geduld += 3; }
   if(RE.compliment.test(laag) && !RE.negatie.test(laag)){ s.sympathie += 9; s.energie += 5; }
   if(RE.beledig.test(laag) && /\b(jij|je|jouw|u|deze site|dit ding|quinnai)\b/.test(laag)){ s.geduld -= 14; s.sympathie -= 10; }
+  if(/\b(sorry|excuses|mijn fout|vergeef|vergeef me|mijn excuses)\b/.test(laag)){ s.geduld += 14; s.sympathie += 4; }
   if(herhaald){ s.geduld -= 8; }
   if(t.length >= 5 && t === t.toUpperCase() && /[A-Z]/.test(t)){ s.geduld -= 6; s.energie += 3; }
   if(RE.groet.test(laag)){ s.energie += 3; }
@@ -2260,7 +2327,7 @@ function persoonlijkheidsExtra(laag, t, rng2){
   const rustig = gesprek.berichten - laatsteExtra >= 3;
   // 2. navraag bij een relatie die je zelf noemde ("mijn moeder heet Anna")
   if(rustig) for(const rel of Object.keys(geheugen.relaties)){
-    if(new RegExp('\\b' + rel + '\\b').test(laag) && gesprek.berichten - (relatieGevraagd[rel] || -99) > 8 && rng2() < 0.6){
+    if(new RegExp('\\b' + rel + '\\b').test(laag) && gesprek.berichten - (relatieGevraagd[rel] === undefined ? -99 : relatieGevraagd[rel]) > 5 && rng2() < 0.6){
       relatieGevraagd[rel] = gesprek.berichten; laatsteExtra = gesprek.berichten;
       return "Hoe is het trouwens met " + geheugen.relaties[rel] + "?";
     }
@@ -2303,7 +2370,7 @@ function persoonlijkheidsExtra(laag, t, rng2){
 function leerRelaties(t){
   const rx = /\bmijn (moeder|vader|zus|broer|vriendin|vriend|partner|man|vrouw|hond|kat|oma|opa)\s+(?:heet|noemt|is genaamd)\s+(\p{Lu}[\p{L}'-]{1,20})/gu;
   let m;
-  while((m = rx.exec(t))){ geheugen.relaties[m[1].toLowerCase()] = m[2]; }
+  while((m = rx.exec(t))){ const rel = m[1].toLowerCase(); geheugen.relaties[rel] = m[2]; relatieGevraagd[rel] = gesprek.berichten; }
 }
 
 /* De publieke ingang: kern + persoonlijkheid. Zelfde contract als altijd: geeft een string terug. */
@@ -2312,6 +2379,7 @@ function bedenkAntwoord(raw, opts){
   const basis = bedenkBasis(raw, opts);
   if(opts.opnieuw || ernstig || zachtGevoel || zachteBeurten > 0){
     laatsteStemming = stemmingLabel();
+    laatsteMetaObj = bouwMeta(raw, basis, opts, (ernstig || zachteBeurten > 0) ? 'crisis' : (zachtGevoel ? 'zacht' : 'opnieuw'));
     return basis;                                        // crisis/gevoel/retry: precies het basisantwoord
   }
   const t = String(raw).trim(), laag = normaliseer(t);
@@ -2330,5 +2398,6 @@ function bedenkAntwoord(raw, opts){
   // pas NA de extra's in de geschiedenis, zodat een bericht niet naar zichzelf verwijst
   geschiedenis.push({ nr: gesprek.berichten, tekst: t, sleutel: (volgOnderwerp && volgOnderwerp.beurt === gesprek.berichten) ? volgOnderwerp.sleutel : '' });
   if(geschiedenis.length > 40) geschiedenis.shift();
+  laatsteMetaObj = bouwMeta(raw, uit, opts, false);
   return uit;
 }
