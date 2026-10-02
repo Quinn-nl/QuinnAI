@@ -2,7 +2,7 @@
 "use strict";
 /* ============================================================
    QUINNAI — TESTSUITE VOOR engine.js
-   Draai met: node test.js
+   Draai met: node tools/test.js
    Geen dependencies, geen browser nodig: laadt engine.js in een
    losse VM-context (dus los van index.html) en test 'm daar.
    Exitcode 0 = alles groen, 1 = er faalt iets (handig voor CI).
@@ -11,7 +11,7 @@ const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
 
-const ENGINE_PATH = path.join(__dirname, 'engine.js');
+const ENGINE_PATH = path.join(__dirname, '..', 'assets', 'js', 'engine.js');
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(ENGINE_PATH, 'utf8'), ctx, { filename: ENGINE_PATH });

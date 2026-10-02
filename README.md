@@ -15,9 +15,13 @@ Getraind op 14 jaar groepsapp. Antwoordt binnen 0,4 seconden. Zelden nuttig.
 ## 🚀 Hoe werkt het?
 Dit project heeft geen backend, geen server en geen internetverbinding nodig na het laden. Er is ook geen build-stap en geen framework:
 
-* `index.html` bevat de opmaak, de CSS en de UI-laag (chat, profielkaart, knoppen).
-* `engine.js` is de nep-AI zelf: zinsontleding, voornaamwoord-omdraaiing, werkwoordvervoeging, gespreksgeheugen en een hoop sjablonen. Wordt vóór het inline script in `index.html` geladen, met een versie-hash (`engine.js?v=…`) tegen verouderde caches.
-* `fonts/` bevat de zelf gehoste lettertypen (woff2, latin-subset, OFL-licentie), zodat de pagina geen verbinding met Google Fonts maakt.
+* `index.html` bevat alleen de opmaak (markup); de rest staat in `assets/`.
+* `assets/css/style.css` is de styling.
+* `assets/js/engine.js` is de nep-AI zelf: zinsontleding, voornaamwoord-omdraaiing, werkwoordvervoeging, gespreksgeheugen en een hoop sjablonen. Wordt vóór `ui.js` geladen, met een versie-hash (`engine.js?v=…`) tegen verouderde caches.
+* `assets/js/ui.js` is de UI-laag (chat, profielkaart, knoppen).
+* `assets/fonts/` bevat de zelf gehoste lettertypen (woff2, latin-subset, OFL-licentie), zodat de pagina geen verbinding met Google Fonts maakt.
+* `assets/img/` bevat `og-image.png` en `apple-touch-icon.png`.
+* `tools/` bevat `test.js` en `check.js` (zie Testen).
 * `404.html` is de foutpagina die GitHub Pages zelf serveert bij een onbekend adres.
 
 Host het simpelweg via GitHub Pages, open de link en laat je beledigen.
@@ -26,17 +30,17 @@ Host het simpelweg via GitHub Pages, open de link en laat je beledigen.
 Dit is een grap van en voor vrienden. Er wordt niets verstuurd, opgeslagen of geanalyseerd. Alles wat je hier leest is verzonnen, inclusief de benchmarks, de certificeringen en het zelfvertrouwen.
 
 ## 🧪 Testen
-`engine.js` heeft een testsuite die los van de browser draait (in Node, via een losse VM-context).
+`assets/js/engine.js` heeft een testsuite die los van de browser draait (in Node, via een losse VM-context).
 
-    node test.js
+    node tools/test.js
 
 Test de taalkunde (voornaamwoord-omdraaiing, vervoeging), het geheugen, rekenkunde, de
 veiligheidsmodus en 4000 willekeurige berichten op crashes. Exitcode 0 = alles groen.
 
-    node check.js
+    node tools/check.js
 
-Controleert of de inline scripts syntactisch kloppen, of alle lokale bestanden waarnaar
+Controleert of de scripts syntactisch kloppen, of alle lokale bestanden waarnaar
 verwezen wordt (fonts, iconen, og-image) bestaan en of `index.html` `engine.js` met de juiste
-versie-hash laadt. Heb je `engine.js` aangepast? Draai dan `node check.js --fix` om die hash
+versie-hash laadt. Heb je `engine.js` aangepast? Draai dan `node tools/check.js --fix` om die hash
 bij te werken. Beide scripts draaien ook automatisch via GitHub Actions
 (`.github/workflows/test.yml`) bij elke push.
