@@ -201,7 +201,7 @@ for(const invoer of randInputs){
 }
 
 sectie('fuzzing — 4000 willekeurige berichten, over alle modellen en toonstanden');
-const WOORDEN = 'ik jij je mijn dat omdat als ben heb ga kan wil moet niet pizza vlaai werk huis waarom hoe wat of en maar hou van haat voel me moe blij Sam 25 jaar woon in Breda studeer ga naar liep kocht dom stom saai irritant tinder kamer zoeken tentamen'.split(' ');
+const WOORDEN = 'ik jij je mijn dat omdat als ben heb ga kan wil moet niet pizza vlaai werk huis waarom hoe wat of en maar hou van haat voel me moe blij Sam 25 jaar woon in Breda studeer ga naar liep kocht dom stom saai irritant tinder kamer zoeken tentamen $& $\' 12:30 20:5 gevoel bang eenzaam'.split(' ');
 let seed = 7;
 const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 let fuzzFout = false;
