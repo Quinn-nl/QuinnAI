@@ -352,6 +352,8 @@
   @media (min-width:761px){.tier.best{--ty:-14px}.tier.best:hover{--ty:-18px}}
   .price{font-family:var(--font-display);font-weight:400;font-size:clamp(24px,2.6vw,30px);letter-spacing:-.01em}
   .price small{font-family:'Schibsted Grotesk',sans-serif;font-size:14px;font-weight:400;color:var(--muted)}
+  .price-lang{font-size:clamp(17px,1.9vw,21px);line-height:1.25}
+  .price-lang small{display:block;margin-top:6px}
   .tier-lede{font-size:14.5px}
   .tier ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;font-size:14.5px;flex:1}
   .tier li{display:flex;gap:10px;color:var(--text-soft)}
