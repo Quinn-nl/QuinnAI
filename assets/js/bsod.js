@@ -1,7 +1,7 @@
 /* Do Not Click: nep-BSOD. Volledig lokaal, niets opgeslagen (de teller leeft alleen in dit geheugen).
    - Esc of de knop sluit; focus gaat terug naar de knop; achtergrond is inert zolang de crash open staat
    - bij reduced motion / gepauzeerde animaties: geen schudden, voortgang meteen op 100%
-   - nooit tijdens een crisis-gesprek (isErnstig() uit engine.js): dan alleen een zachte zin
+   - nooit tijdens een crisis-gesprek (isErnstig() uit de engine): dan alleen een zachte zin
    - geen tijdslimiet: de crash sluit nooit vanzelf (WCAG 2.2.1) */
 (function(){
   "use strict";

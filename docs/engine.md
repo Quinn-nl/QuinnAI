@@ -1,8 +1,26 @@
 # QuinnAI engine ("Quinn 6")
 
-`assets/js/engine.js` is de nep-AI. Geen model, geen API: zinsontleding, sjablonen, een klein geheugen en wat trucage.
-Eén bestand, gewone global scope (geen modules), geladen vóór `ui.js`. Contract met de UI:
+De engine staat in `assets/js/engine/` en is de nep-AI. Geen model, geen API: zinsontleding, sjablonen, een klein geheugen en wat trucage.
+Negen classic scripts die globals delen (geen modules), geladen met `defer` vóór `ui.js`. Contract met de UI:
 `bedenkAntwoord(tekst, opties)` geeft altijd een **string**; extra's via `laatsteMeta()` en `huidigeStemming()`.
+
+## Bestanden en laadvolgorde
+De volgorde staat op één plek: `tools/engine-files.js` (index.html, `test.js` en `check.js` gebruiken die; `check.js` controleert ook `index.html`).
+Een bestand mag alleen globals gebruiken die in een eerder bestand (of zelf) staan, tenzij het pas bij een functie-aanroep gebeurt.
+
+| Bestand | Inhoud |
+|---|---|
+| `kern.js` | hash, rng, toon, normaliseer, onderwerp, zinsherbouw, voornaamwoorden omdraaien |
+| `geheugen.js` | gespreksgeheugen, dialoog, anti-herhaling (`pick`) |
+| `sjablonen.js` | antwoordlijsten, mad-libs, veiligheids-/zachte modus |
+| `herkenning.js` | `RE`, `EMOTIE`, `ANALYSE`, basis-onderwerpen |
+| `inhoud.js` | v6-onderwerpen en extra antwoorden (hier voeg je een onderwerp toe) |
+| `theater.js` | denkstappen, bronnen, zekerheid, kalender |
+| `begrip.js` | typfouten, stam, scoring, doorvragen |
+| `brein.js` | `gesprek`, `resetEngine`, rekenen, vertalen, `bedenkBasis`, `kern` |
+| `persoonlijkheid.js` | stemming, band, gags en de publieke `bedenkAntwoord` |
+
+Nieuw bestand? Zet het in `tools/engine-files.js` en in `index.html` op dezelfde plek, daarna `node tools/check.js --fix`.
 
 ## Lagen (van binnen naar buiten)
 1. **Kern** (`bedenkBasis` -> `kern`): veiligheid eerst (`VEILIG`, zachte modus), dan rekenen/vertalen/geheugen, korte reacties, gevoel,
@@ -31,4 +49,4 @@ In `ONDERWERPEN.push({ re:/\b(woord|woord2)\b/, a:[...5+ antwoorden...], d:[...o
 - De tests controleren: >= 5 antwoorden, geen dubbelen, geen kale `{...}`, lengte 12-300, eindigt op leesteken, onderwerp is triggerbaar.
 
 ## Testen
-`node tools/test.js` (4500+ tests, incl. 4000 fuzzberichten en 4000 met typfouten) en `node tools/check.js` (hashes, contrast, engine-grootte-budget 200 KB).
+`node tools/test.js` (4500+ tests, incl. 4000 fuzzberichten en 4000 met typfouten) en `node tools/check.js` (hashes, contrast, engine-grootte-budget 80 KB per bestand en 200 KB totaal).

@@ -7,7 +7,7 @@
   const $ = s => document.querySelector(s);
   const log = $('#log'), input = $('#input'), sendBtn = $('#send');
   const sarc = $('#sarcasme'), sarcVal = $('#sarc-val'), modelSel = $('#model');
-  window.sarc = sarc; window.modelSel = modelSel; // engine.js draait als apart script en heeft dit nodig
+  window.sarc = sarc; window.modelSel = modelSel; // de engine draait als apart script en heeft dit nodig
   $('#year').textContent = new Date().getFullYear();
   // Bewegingsvoorkeur: mq.matches is live (voor scrollen/typen), reduceerBeweging is de stand bij laden.
   const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -26,7 +26,7 @@
 
   /* ============================================================
      2. DE CHAT-INTERFACE
-     (de taalkundige kern zelf staat in engine.js)
+     (de taalkundige kern zelf staat in assets/js/engine/)
      ============================================================ */
   const DENKSTAPPEN = [
     "'{t}' opzoeken in nul bronnen",
@@ -452,11 +452,11 @@ function pasModelToe(){
     modelTimer = setTimeout(pasModelToe, 700);
   });
 
-  // eerste bericht — of een nette melding als engine.js niet geladen is, zodat de chat niet stil breekt
+  // eerste bericht — of een nette melding als de engine niet geladen is, zodat de chat niet stil breekt
   setTimeout(() => {
     const b = rij('ai','Q');
     if(typeof bedenkAntwoord !== 'function'){
-      b.textContent = "Ik ben niet helemaal wakker geworden: engine.js is niet geladen. Ververs de pagina, of probeer het later nog eens.";
+      b.textContent = "Ik ben niet helemaal wakker geworden: de engine is niet geladen. Ververs de pagina, of probeer het later nog eens.";
       b.removeAttribute('aria-hidden'); announce(b.textContent);
       input.disabled = true; sendBtn.disabled = true;
       input.placeholder = "Chat niet beschikbaar — ververs de pagina";
