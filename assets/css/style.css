@@ -132,7 +132,7 @@
 
   .ticker-pauze{
     background:none;border:1px solid var(--line);border-radius:6px;color:var(--muted);
-    width:28px;height:28px;flex:none;display:grid;place-items:center;cursor:pointer;margin-left:4px;
+    width:32px;height:32px;flex:none;display:grid;place-items:center;cursor:pointer;margin-left:4px;
   }
   .ticker-pauze[hidden]{display:none}
   .ticker-pauze:hover{color:var(--paper);border-color:var(--line)}
@@ -301,14 +301,20 @@
   .qa .a p{padding:0 40px 0 0;max-width:68ch}
 
   /* footer */
-  footer{border-top:1px solid var(--line-soft);padding:54px 0 70px;font-size:13.5px;color:var(--muted-3)}
-  .foot-brand{font-size:17px;margin-bottom:12px}
-  .footer-nav{margin-bottom:22px;display:flex;gap:18px;flex-wrap:wrap}
-  .footer-nav a{color:var(--muted-3);text-decoration:underline;text-underline-offset:3px}
+  footer{border-top:1px solid var(--line-soft);padding:54px 0 70px;font-size:13.5px;color:var(--muted-3);text-align:center}
+  .foot-brand{font-size:17px;margin-bottom:12px;justify-content:center}
+  .footer-nav{position:static;background:none;backdrop-filter:none;border-bottom:0;box-shadow:none;margin-bottom:22px;display:flex;gap:6px 10px;flex-wrap:wrap;justify-content:center}
+  .footer-nav a{color:var(--muted-3);text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;min-height:32px;padding:0 8px;transition:color var(--dur-fast)}
   .footer-nav a:hover{color:var(--paper)}
-  .badges{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0}
-  .badge{border:1px solid var(--line-soft);border-radius:8px;padding:5px 10px;font-size:12px}
-  .foot-real{margin-top:26px;padding-top:22px;border-top:1px solid var(--line-soft);color:#7b8a99;max-width:64ch}
+  .badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:22px 0}
+  .badge{border:1px solid var(--line-soft);border-radius:999px;padding:7px 14px;font-size:12px;background:var(--surface-1)}
+  .foot-real{margin:26px auto 0;padding-top:22px;border-top:1px solid var(--line-soft);color:#7b8a99;max-width:64ch}
+
+  /* tablet: status links, instellingen (model, geluid, toon) op een eigen regel over de volle breedte */
+  @media (max-width:900px) and (min-width:761px){
+    .chat-top .right{width:100%;margin-left:0}
+    .chat-top .sound-btn{margin-left:auto}
+  }
 
   @media (max-width:760px){
     .wrap{padding-left:16px;padding-right:16px}
