@@ -281,6 +281,7 @@
   .qa .a > p{overflow:hidden;min-height:0}
   /* De 24px onderruimte staat op .a, niet op de p: padding op een overflow:hidden grid-item
      houdt de rij op minimaal die hoogte, waardoor inklappen halverwege 'bottomt' en abrupt eindigt. */
+  .noscript-melding{border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:18px;color:var(--muted)}
   .qa .a p{padding:0 40px 0 0;max-width:68ch}
 
   /* footer */

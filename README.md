@@ -17,12 +17,13 @@ Dit project heeft geen backend, geen server en geen internetverbinding nodig na 
 
 * `index.html` bevat alleen de opmaak (markup); de rest staat in `assets/`.
 * `assets/css/style.css` is de styling.
-* `assets/js/engine.js` is de nep-AI zelf: zinsontleding, voornaamwoord-omdraaiing, werkwoordvervoeging, gespreksgeheugen en een hoop sjablonen. Wordt vóór `ui.js` geladen, met een versie-hash (`engine.js?v=…`) tegen verouderde caches.
+* `assets/js/engine.js` is de nep-AI zelf: zinsontleding, voornaamwoord-omdraaiing, werkwoordvervoeging, gespreksgeheugen en een hoop sjablonen. Wordt vóór `ui.js` geladen.
 * `assets/js/ui.js` is de UI-laag (chat, profielkaart, knoppen).
 * `assets/fonts/` bevat de zelf gehoste lettertypen (woff2, latin-subset, OFL-licentie), zodat de pagina geen verbinding met Google Fonts maakt.
 * `assets/img/` bevat `og-image.png` en `apple-touch-icon.png`.
 * `tools/` bevat `test.js` en `check.js` (zie Testen).
-* `404.html` is de foutpagina die GitHub Pages zelf serveert bij een onbekend adres.
+* `404.html` is de foutpagina die GitHub Pages zelf serveert bij een onbekend adres. Hij deelt `style.css` met de homepage, zodat ticker, navigatie en knoppen op exact dezelfde plek en met dezelfde animatie staan.
+* `style.css`, `engine.js` en `ui.js` worden met een versie-hash geladen (`?v=…`, eerste 8 tekens van de sha1) tegen verouderde caches.
 
 Host het simpelweg via GitHub Pages, open de link en laat je beledigen.
 
@@ -39,8 +40,9 @@ veiligheidsmodus en 4000 willekeurige berichten op crashes. Exitcode 0 = alles g
 
     node tools/check.js
 
-Controleert of de scripts syntactisch kloppen, of alle lokale bestanden waarnaar
-verwezen wordt (fonts, iconen, og-image) bestaan en of `index.html` `engine.js` met de juiste
-versie-hash laadt. Heb je `engine.js` aangepast? Draai dan `node tools/check.js --fix` om die hash
-bij te werken. Beide scripts draaien ook automatisch via GitHub Actions
+Controleert of de scripts syntactisch kloppen, of alle lokale bestanden waarnaar verwezen wordt
+(fonts, iconen, og-image) bestaan, of `style.css`, `engine.js` en `ui.js` met de juiste
+versie-hash geladen worden en of de kleurparen uit `:root` hun WCAG-contrastdrempel halen
+(4,5:1 voor tekst, 3:1 voor randen). Heb je een van die bestanden aangepast? Draai dan
+`node tools/check.js --fix` om de hashes bij te werken. Beide scripts draaien ook automatisch via GitHub Actions
 (`.github/workflows/test.yml`) bij elke push.
