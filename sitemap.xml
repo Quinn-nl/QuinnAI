@@ -6,4 +6,20 @@
        <lastmod>2026-10-02T00:00:00+00:00</lastmod>
        <priority>1.0000</priority>
   </url>
+
+  <url>
+       <loc>https://quinnai.tech/voorwaarden</loc>
+       <lastmod>2026-10-10T00:00:00+00:00</lastmod>
+       <priority>0.3000</priority>
+  </url>
+  <url>
+       <loc>https://quinnai.tech/privacy</loc>
+       <lastmod>2026-10-10T00:00:00+00:00</lastmod>
+       <priority>0.3000</priority>
+  </url>
+  <url>
+       <loc>https://quinnai.tech/cookies</loc>
+       <lastmod>2026-10-10T00:00:00+00:00</lastmod>
+       <priority>0.3000</priority>
+  </url>
 </urlset>

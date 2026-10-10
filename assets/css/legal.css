@@ -1,0 +1,26 @@
+/* Juridische pagina's (voorwaarden, privacy, cookies). Lettertypen, ticker-loze nav en footer komen uit style.css. */
+html{overflow-y:scroll}
+.legal{max-width:760px;padding-top:clamp(36px,7vh,80px);padding-bottom:clamp(48px,9vh,100px)}
+.legal h1{font-size:clamp(36px,7vw,64px);line-height:1;letter-spacing:-.034em;margin-top:6px}
+.legal h1 .serif{font-size:1.06em}
+.legal-intro{color:var(--muted);font-size:18px;margin-top:18px;max-width:56ch}
+.legal-meta{color:var(--muted-3);font-size:13.5px;margin-top:14px}
+.legal-toc{margin:30px 0 8px;padding:16px 20px;border:2px solid var(--line-soft);border-radius:14px;background:var(--ink-2)}
+.legal-toc ol{margin:0;padding:0;list-style:none;display:grid;gap:6px 24px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));font-size:14.5px}
+.legal-toc a{color:var(--muted);text-decoration:none}
+.legal-toc a:hover,.legal-toc a:focus-visible{color:var(--cyan);text-decoration:underline}
+.legal section{margin-top:36px;padding:0;border:0;scroll-margin-top:84px;content-visibility:visible}
+.legal h2{font-size:clamp(22px,3.4vw,30px);line-height:1.12;letter-spacing:-.025em;margin-bottom:12px}
+.legal p+p,.legal p+ul,.legal ul+p{margin-top:12px}
+.legal p,.legal li{color:var(--muted);font-size:16.5px;line-height:1.65}
+.legal strong{color:var(--paper);font-weight:600}
+.legal ul{margin:0;padding-left:1.2em;display:grid;gap:8px}
+.legal li::marker{color:var(--lime)}
+.legal a{color:var(--cyan);text-underline-offset:3px}
+.legal a:hover{color:var(--paper)}
+.legal code{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:.92em;color:var(--paper);background:var(--ink-2);padding:1px 6px;border-radius:6px}
+.legal-groot{font-size:clamp(20px,3.4vw,26px)!important;line-height:1.3!important;color:var(--paper)!important}
+.legal-groot b{color:var(--lime);font-family:var(--font-display)}
+.legal .proof{margin-top:16px;justify-content:flex-start}
+.footer-legal{margin-top:-6px}
+@media (max-width:560px){.legal-toc ol{grid-template-columns:1fr}}

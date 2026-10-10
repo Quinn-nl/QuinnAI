@@ -27,6 +27,7 @@ Dit project heeft geen backend, geen server en geen internetverbinding nodig na 
 * `assets/img/` bevat `og-image.png` en `apple-touch-icon.png`.
 * `docs/` bevat de merkstem (`brand-voice.md`) en de huisstijl (`brand-identity.md`).
 * `tools/` bevat `test.js` en `check.js` (zie Testen).
+* `voorwaarden.html`, `privacy.html` en `cookies.html` zijn de juridische pagina's (stijl: `assets/css/legal.css`). Ze bevatten bewust geen naam, adres of e-mailadres; houd de teksten in lijn met wat de site echt doet (geen cookies, geen opslag, geen externe verzoeken).
 * `404.html` is de foutpagina die GitHub Pages zelf serveert bij een onbekend adres. Hij deelt `style.css` met de homepage, zodat ticker, navigatie en knoppen op exact dezelfde plek en met dezelfde animatie staan.
 * `style.css`, de engine-bestanden en `ui.js` worden met een versie-hash geladen (`?v=…`, eerste 8 tekens van de sha1) tegen verouderde caches.
 

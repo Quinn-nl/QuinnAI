@@ -21,7 +21,7 @@ const ROOT = path.join(__dirname, '..');
 const ENGINE = require('./engine-files.js');
 const SITE = 'https://quinnai.tech/';
 const FIX = process.argv.includes('--fix');
-const PAGINAS = ['index.html', '404.html'].filter(f => fs.existsSync(path.join(ROOT, f)));
+const PAGINAS = ['index.html', '404.html', 'voorwaarden.html', 'privacy.html', 'cookies.html'].filter(f => fs.existsSync(path.join(ROOT, f)));
 let fouten = 0;
 const fout = m => { fouten++; console.log('FOUT  ' + m); };
 const goed = m => console.log('ok    ' + m);
@@ -48,6 +48,7 @@ function lokaalPad(verw){
   if(v.startsWith(SITE)) v = v.slice(SITE.length);
   else if(/^[a-z][a-z0-9+.-]*:/i.test(v) || v.startsWith('//')) return null;   // externe URL
   v = v.split('#')[0].split('?')[0].replace(/^\//, '');
+  if(v && !path.extname(v) && fs.existsSync(path.join(ROOT, v + '.html'))) v += '.html';   // GitHub Pages serveert /privacy als privacy.html
   return v || null;
 }
 for(const pagina of PAGINAS){
@@ -71,6 +72,9 @@ for(const pagina of PAGINAS){
 /* 3. cachebuster: elk eigen css/js-bestand krijgt ?v=<eerste 8 tekens sha1, CRLF genormaliseerd> */
 const ASSETS = {
   'index.html': ['assets/css/style.css', ...ENGINE, 'assets/js/proof.js', 'assets/js/arcade.js', 'assets/js/ui.js', 'assets/js/bsod.js'],
+  'voorwaarden.html': ['assets/css/style.css', 'assets/css/legal.css'],
+  'privacy.html': ['assets/css/style.css', 'assets/css/legal.css'],
+  'cookies.html': ['assets/css/style.css', 'assets/css/legal.css', 'assets/js/proof.js'],
   '404.html':   ['assets/css/style.css', 'assets/css/404.css', 'assets/js/proof.js', 'assets/js/404.js']
 };
 const hashVan = rel => crypto.createHash('sha1')

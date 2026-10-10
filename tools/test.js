@@ -443,7 +443,10 @@ const V6 = vm.runInContext("({stam,afstand,herstelWoord,herstelZin,kiesOnderwerp
 sectie('v6 — geen persoonsgegevens van Quinn (of anderen) in de site');
 {
   const bronnen = { 'engine.js': engineBron, '404.js': fs.readFileSync(path.join(__dirname, '..', 'assets/js/404.js'), 'utf8'),
-                    'index.html': fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8') };
+                    'index.html': fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8'),
+                    'voorwaarden.html': fs.readFileSync(path.join(__dirname, '..', 'voorwaarden.html'), 'utf8'),
+                    'privacy.html': fs.readFileSync(path.join(__dirname, '..', 'privacy.html'), 'utf8'),
+                    'cookies.html': fs.readFileSync(path.join(__dirname, '..', 'cookies.html'), 'utf8') };
   const VERBODEN = [/moeder van quinn/i, /quinns? moeder/i, /\bsinds 2019\b/, /\bna 14 uur\b/, /quinn (woont|werkt|studeert|is geboren|heet eigenlijk)/i,
                     /achternaam/i, /geboren in/i, /\bquinn schoenmakers\b/i];
   for(const [naam, tekst] of Object.entries(bronnen)){
